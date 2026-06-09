@@ -1327,7 +1327,7 @@ function ActivityTab() {
                 </table>
               </div>
             </Card>
-          )
+          
       }
     </div>
   );

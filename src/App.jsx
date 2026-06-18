@@ -106,6 +106,22 @@ const STAFF_PINS = [
   { name:"Su",                pin:"8888", role:"staff" },
 ];
 
+// ── Daily price check access ──────────────────────────────────────────────────
+// Edit these two lists when roles change — names must match STAFF_PINS exactly.
+const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri"];
+const COST_MARGIN_USERS = ["Fei (Accounts)", "Mira (Purchase)"];
+
+function canAccessDaily(sess) {
+  if (!sess) return false;
+  if (sess.role === "owner") return true;
+  return DAILY_CHECK_USERS.includes(sess.name);
+}
+function canSeeCostMargin(sess) {
+  if (!sess) return false;
+  if (sess.role === "owner") return true;
+  return COST_MARGIN_USERS.includes(sess.name);
+}
+
 // Session storage key
 const SESSION_KEY = "mgas_session";
 
@@ -413,6 +429,9 @@ export default function App() {
     { key:"log",       label:"📋 Rekod Tawaran" },
     { key:"scenarios", label:"🧠 Senario AI" },
     { key:"summary",   label:"📊 Ringkasan" },
+    ...(canAccessDaily(session) ? [
+      { key:"daily", label:"📋 Semak Harga Harian" },
+    ] : []),
     ...(session.role==="owner" ? [
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
@@ -472,6 +491,7 @@ export default function App() {
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
+        {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} />}
       </div>
     </div>
   );
@@ -1476,6 +1496,447 @@ function ActivityTab() {
             </Card>
           )
       }
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TAB 8 — SEMAK HARGA HARIAN — helpers
+// ════════════════════════════════════════════════════════════════════════════
+
+function parseBenchmark(wb, XLSX) {
+  const allEntries = new Map();
+
+  for (const sheetName of wb.SheetNames) {
+    const ws   = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+    if (rows.length < 2) continue;
+
+    const hdr = rows[0].map(h => String(h).trim().toLowerCase());
+    const findCol = (names, fallback) => {
+      for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; }
+      return fallback;
+    };
+
+    const C_CODE     = findCol(["product code"], 0);
+    const C_RRP      = findCol(["rrp"], 1);
+    const C_DESC     = findCol(["product description"], 2);
+    const C_COST     = findCol(["cost $", "cost$", "cost"], 14);
+    const C_MARGIN   = findCol(["pm %", "pm%"], 26);
+    const C_UNITTYPE = findCol(["unit_type", "unittype"], 39);
+    const BAND_PAIRS = [[3,4],[5,6],[7,8],[9,10],[11,12]];
+
+    const parseNum = v => { const n = parseFloat(String(v).replace(/[$%\s]/g,"")); return isNaN(n) ? 0 : n; };
+
+    for (let r = 1; r < rows.length; r++) {
+      const row  = rows[r];
+      const code = String(row[C_CODE] || "").trim();
+      if (!code) continue;
+
+      const bands = [];
+      for (const [qi, pi] of BAND_PAIRS) {
+        const minQty = parseNum(row[qi]);
+        const price  = parseNum(row[pi]);
+        if (minQty > 0 && price > 0) bands.push({ minQty, price });
+      }
+      if (bands.length === 0) continue;
+
+      const entry = {
+        bands,
+        rrp:      parseNum(row[C_RRP]),
+        desc:     String(row[C_DESC] || "").trim(),
+        cost:     parseNum(row[C_COST]),
+        margin:   parseNum(row[C_MARGIN]),
+        unitType: String(row[C_UNITTYPE] || "").trim().toUpperCase() || "PER_PCS",
+        tabName:  sheetName,
+      };
+
+      if (!allEntries.has(code)) allEntries.set(code, []);
+      allEntries.get(code).push(entry);
+    }
+  }
+
+  const productMap = new Map();
+  const conflicts  = new Set();
+
+  for (const [code, entries] of allEntries) {
+    if (entries.length === 1) {
+      productMap.set(code, entries[0]);
+    } else {
+      const priceKey = e => e.bands.map(b => `${b.minQty}:${b.price}`).join("|");
+      const keys = entries.map(priceKey);
+      if (keys.every(k => k === keys[0])) {
+        productMap.set(code, entries[0]);
+      } else {
+        conflicts.add(code);
+        productMap.set(code, { _conflict:true, candidates:entries });
+      }
+    }
+  }
+
+  return { productMap, conflicts };
+}
+
+// ── Sales xlsx column indices — update here if export format changes ──────────
+const SC = { date:0, docNo:2, customer:4, itemCode:3, desc2:5, qty:6, unitPrice:8 };
+
+// ── Skip / hardware-later code lists ─────────────────────────────────────────
+const SKIP_CODES  = new Set(["TC","S CUT","S CUT +M","S LASER CUT +M","S FABRICATION","RTN5CENTS"]);
+const HW_PREFIXES = ["ARG","CO2","OXY","DA TONG"];
+
+function parseSales(wb, XLSX) {
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+  const lines = [];
+  let lastDocNo = "", lastDate = "", lastCustomer = "";
+
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (row.every(v => String(v).trim() === "")) continue;
+
+    const docNo    = String(row[SC.docNo]    || "").trim() || lastDocNo;
+    const date     = String(row[SC.date]     || "").trim() || lastDate;
+    const customer = String(row[SC.customer] || "").trim() || lastCustomer;
+    if (docNo)    lastDocNo    = docNo;
+    if (date)     lastDate     = date;
+    if (customer) lastCustomer = customer;
+
+    const rawCode   = String(row[SC.itemCode]  || "").trim();
+    const desc2     = String(row[SC.desc2]     || "").trim();
+    const qty       = parseFloat(String(row[SC.qty]       || "").replace(/[^\d.]/g,"")) || 0;
+    const unitPrice = parseFloat(String(row[SC.unitPrice] || "").replace(/[^\d.]/g,"")) || 0;
+
+    if (!rawCode || qty === 0) continue;
+    lines.push({ docNo, date, customer, rawCode, desc2, qty, unitPrice });
+  }
+  return lines;
+}
+
+function isBoundary(ch) {
+  return ch === undefined || ch === " " || ch === "-" || ch === "." || ch === ",";
+}
+function longestPrefixMatch(raw, sortedCodes) {
+  const up = raw.toUpperCase();
+  for (const code of sortedCodes) {
+    if (up.startsWith(code.toUpperCase()) && isBoundary(raw[code.length])) return code;
+  }
+  return null;
+}
+function buildSortedCodes(productMap) {
+  return [...productMap.keys()].sort((a, b) => b.length - a.length);
+}
+function matchCode(rawCode, sortedCodes) {
+  let hit = longestPrefixMatch(rawCode, sortedCodes);
+  if (hit) return hit;
+
+  const base = rawCode.replace(/\s{2,}.*$/, "").trim();
+
+  const noZero = base.replace(/^0+/, "");
+  if (noZero && noZero !== base) { hit = longestPrefixMatch(noZero, sortedCodes); if (hit) return hit; }
+
+  for (const pat of [/ CQ$/i, /CQ$/i]) {
+    const noCQ = base.replace(pat, "");
+    if (noCQ !== base) { hit = longestPrefixMatch(noCQ, sortedCodes); if (hit) return hit; }
+  }
+
+  const token = base.split(" ")[0];
+  if (token !== base) { hit = longestPrefixMatch(token, sortedCodes); if (hit) return hit; }
+
+  const dashNorm = base.replace(/ - /g, "-");
+  if (dashNorm !== base) { hit = longestPrefixMatch(dashNorm, sortedCodes); if (hit) return hit; }
+
+  if (/^PG\d+$/i.test(base)) { hit = longestPrefixMatch(base + " PIPES", sortedCodes); if (hit) return hit; }
+  if (/^GIP/i.test(base))    { hit = longestPrefixMatch(base + "GI",     sortedCodes); if (hit) return hit; }
+
+  const spaced = base.replace(/^(\d+)([A-Z]+)$/i, "$1 $2");
+  if (spaced !== base) { hit = longestPrefixMatch(spaced, sortedCodes); if (hit) return hit; }
+
+  return null;
+}
+
+function bandPrice(qty, bands) {
+  let price = null;
+  for (const b of bands) {
+    if (qty >= b.minQty) price = b.price;
+  }
+  return price === null ? null : Math.round(price * 100) / 100;
+}
+
+function parseLength(desc2) {
+  if (!desc2) return { value:null, unit:null, flag:"REVIEW" };
+  const s = desc2.trim();
+
+  const m1 = s.match(/(\d+)-(\d+)\/(\d+)\s*(KAKI|')/i);
+  if (m1) return { value: parseInt(m1[1]) + parseInt(m1[2])/parseInt(m1[3]), unit:"FOOT", flag:null };
+
+  const m2 = s.match(/(\d+(?:\.\d+)?)'/ );
+  if (m2) return { value: parseFloat(m2[1]), unit:"FOOT", flag:null };
+
+  const m3 = s.match(/(\d+(?:\.\d+)?)\s*KAKI/i);
+  if (m3) return { value: parseFloat(m3[1]), unit:"FOOT", flag:null };
+
+  const m4 = s.match(/(\d+(?:\.\d+)?)\s*metres?/i);
+  if (m4) return { value: parseFloat(m4[1]), unit:"METRE", flag:null };
+
+  const m5 = s.match(/(\d+(?:\.\d+)?)\s*m\b(?!m)/i);
+  if (m5) return { value: parseFloat(m5[1]), unit:"METRE", flag:null };
+
+  return { value:null, unit:null, flag:"REVIEW" };
+}
+
+function checkLine(line, productMap, sortedCodes) {
+  const { rawCode, desc2, qty, unitPrice } = line;
+
+  if (SKIP_CODES.has(rawCode.toUpperCase()))
+    return { ...line, status:"SKIP",     matchedCode:rawCode, entry:null, expectedPrice:null, parsedLength:null };
+
+  if (HW_PREFIXES.some(p => rawCode.toUpperCase().startsWith(p.toUpperCase())))
+    return { ...line, status:"HARDWARE", matchedCode:rawCode, entry:null, expectedPrice:null, parsedLength:null };
+
+  const matchedCode = matchCode(rawCode, sortedCodes);
+  if (!matchedCode)
+    return { ...line, status:"MISSING",  matchedCode:null,    entry:null, expectedPrice:null, parsedLength:null };
+
+  const entry = productMap.get(matchedCode);
+  if (entry._conflict)
+    return { ...line, status:"CONFLICT", matchedCode, entry, expectedPrice:null, parsedLength:null };
+
+  const bp = bandPrice(qty, entry.bands);
+  if (bp === null)
+    return { ...line, status:"NO_PRICE", matchedCode, entry, expectedPrice:null, parsedLength:null };
+
+  const unitType = entry.unitType || "PER_PCS";
+  let expectedPrice = null;
+  let parsedLength  = null;
+
+  if (unitType === "PER_PCS") {
+    expectedPrice = bp;
+  } else {
+    parsedLength = parseLength(desc2);
+    if (parsedLength.flag === "REVIEW" || parsedLength.value === null ||
+        (unitType === "PER_FOOT"  && parsedLength.unit === "METRE") ||
+        (unitType === "PER_METRE" && parsedLength.unit === "FOOT"))
+      return { ...line, status:"REVIEW", matchedCode, entry, expectedPrice:null,
+               parsedLength: { ...parsedLength, flag:"REVIEW" }, bandPrice:bp };
+    expectedPrice = Math.round(bp * parsedLength.value * 100) / 100;
+  }
+
+  const diff = Math.abs(unitPrice - expectedPrice) / expectedPrice;
+  const status = diff <= 0.01 ? "OK" : unitPrice > expectedPrice ? "BELOW" : "DISCOUNT";
+  return { ...line, status, matchedCode, entry, expectedPrice, parsedLength, bandPrice:bp };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TAB 8 — SEMAK HARGA HARIAN
+// ════════════════════════════════════════════════════════════════════════════
+const STATUS_ORDER = {
+  DISCOUNT:0, REVIEW:1, CONFLICT:2, MISSING:3, NO_PRICE:4, BELOW:5, OK:6, SKIP:7, HARDWARE:8
+};
+const STATUS_STYLE = {
+  OK:       { bg:"#dcfce7", text:"#166534", label:"OK" },
+  DISCOUNT: { bg:"#fee2e2", text:"#991b1b", label:"DISKAUN" },
+  BELOW:    { bg:"#fef3e2", text:"#e8780a", label:"ATAS HARGA" },
+  REVIEW:   { bg:"#fef9c3", text:"#854d0e", label:"SEMAK" },
+  MISSING:  { bg:"#f1f5f9", text:"#64748b", label:"HILANG" },
+  NO_PRICE: { bg:"#f1f5f9", text:"#64748b", label:"TIADA HARGA" },
+  CONFLICT: { bg:"#fef9c3", text:"#854d0e", label:"KONFLIK" },
+  SKIP:     { bg:"#f8fafc", text:"#94a3b8", label:"LANGKAU" },
+  HARDWARE: { bg:"#f8fafc", text:"#94a3b8", label:"HARDWARE" },
+};
+
+function DailyCheckTab({ session }) {
+  const [benchFile,   setBenchFile]   = useState(null);
+  const [salesFile,   setSalesFile]   = useState(null);
+  const [results,     setResults]     = useState([]);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState("");
+  const [filter,      setFilter]      = useState("ALL");
+  const [search,      setSearch]      = useState("");
+  const [expandedIdx, setExpandedIdx] = useState(null);
+  const [ran,         setRan]         = useState(false);
+
+  const runCheck = async () => {
+    if (!benchFile || !salesFile) { setError("Sila muat naik kedua-dua fail terlebih dahulu."); return; }
+    setLoading(true); setError(""); setResults([]); setRan(false); setExpandedIdx(null);
+    try {
+      const XLSX = await import("xlsx");
+      const readWb = f => f.arrayBuffer().then(buf => XLSX.read(buf, { type:"array" }));
+      const [benchWb, salesWb] = await Promise.all([readWb(benchFile), readWb(salesFile)]);
+
+      const { productMap } = parseBenchmark(benchWb, XLSX);
+      const sortedCodes    = buildSortedCodes(productMap);
+      const lines          = parseSales(salesWb, XLSX);
+      const checked        = lines.map(line => checkLine(line, productMap, sortedCodes));
+      checked.sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
+      setResults(checked);
+      setRan(true);
+    } catch(e) {
+      setError("Ralat semasa memproses fail: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  const counts = results.reduce((acc, r) => { acc[r.status] = (acc[r.status]||0)+1; return acc; }, {});
+  const FILTER_STATUSES = { DISCOUNT:["DISCOUNT"], REVIEW:["REVIEW"], MISSING:["MISSING","NO_PRICE"], CONFLICT:["CONFLICT"] };
+  const filtered = results.filter(r => {
+    if (filter !== "ALL" && !FILTER_STATUSES[filter]?.includes(r.status)) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      return r.rawCode.toLowerCase().includes(s) ||
+             (r.docNo||"").toLowerCase().includes(s) ||
+             (r.customer||"").toLowerCase().includes(s);
+    }
+    return true;
+  });
+
+  const canSeeMargin = canSeeCostMargin(session);
+
+  return (
+    <div>
+      {/* Upload */}
+      <Card style={{ padding:"14px 16px", marginBottom:12 }}>
+        <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:12 }}>📋 Semak Harga Harian</div>
+        <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
+          <div style={{ flex:1, minWidth:200 }}>
+            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Fail Jualan (.xlsx)</label>
+            <input type="file" accept=".xlsx,.csv"
+              onChange={e => { setSalesFile(e.target.files[0]||null); setRan(false); }}
+              style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${salesFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
+            {salesFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {salesFile.name}</div>}
+          </div>
+          <div style={{ flex:1, minWidth:200 }}>
+            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Senarai Induk (.xlsx)</label>
+            <input type="file" accept=".xlsx"
+              onChange={e => { setBenchFile(e.target.files[0]||null); setRan(false); }}
+              style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${benchFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
+            {benchFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {benchFile.name}</div>}
+          </div>
+          <button onClick={runCheck} disabled={loading||!benchFile||!salesFile} style={{
+            padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
+            background: loading||!benchFile||!salesFile ? C.muted : C.navy, color:C.white,
+            cursor: loading||!benchFile||!salesFile ? "not-allowed" : "pointer" }}>
+            {loading ? "Sedang Semak..." : "▶ Jalankan Semakan"}
+          </button>
+        </div>
+        {error && <div style={{ marginTop:10, color:C.red, fontSize:12, fontWeight:600 }}>{error}</div>}
+      </Card>
+
+      {/* Summary chips */}
+      {ran && (
+        <Card style={{ padding:"12px 16px", marginBottom:12 }}>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+            <span style={{ fontSize:11, fontWeight:700, color:C.muted, marginRight:4 }}>Keputusan:</span>
+            {[["DISCOUNT","🔴"],["BELOW","🟠"],["REVIEW","🟡"],["CONFLICT","⚠️"],
+              ["MISSING","⚪"],["NO_PRICE","⚪"],["OK","✅"],["SKIP","—"],["HARDWARE","🔧"]
+            ].map(([s, icon]) => counts[s] ? (
+              <span key={s} style={{ background:STATUS_STYLE[s].bg, color:STATUS_STYLE[s].text,
+                padding:"4px 12px", borderRadius:20, fontSize:12, fontWeight:700 }}>
+                {icon} {STATUS_STYLE[s].label}: {counts[s]}
+              </span>
+            ) : null)}
+            <span style={{ marginLeft:"auto", fontSize:11, color:C.muted }}>{results.length} baris jumlah</span>
+          </div>
+        </Card>
+      )}
+
+      {/* Filter bar */}
+      {ran && (
+        <Card style={{ padding:"10px 14px", marginBottom:12, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+          {[["ALL","Semua"],["DISCOUNT","🔴 Diskaun"],["REVIEW","🟡 Semak"],
+            ["MISSING","⚪ Hilang"],["CONFLICT","⚠️ Konflik"]].map(([key, label]) => (
+            <button key={key} onClick={() => setFilter(key)} style={{
+              padding:"6px 13px", border:"none", borderRadius:20, cursor:"pointer", fontSize:12, fontWeight:600,
+              background: filter===key ? C.navy : "#f1f5f9",
+              color:      filter===key ? C.white : C.muted }}>
+              {label}
+            </button>
+          ))}
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Cari kod / pelanggan / no. dok..."
+            style={{ marginLeft:"auto", padding:"6px 12px", borderRadius:8,
+              border:`1.5px solid ${C.border}`, fontSize:12, minWidth:220, fontFamily:"inherit" }} />
+        </Card>
+      )}
+
+      {/* Results table */}
+      {ran && filtered.length === 0 && (
+        <Card style={{ padding:40, textAlign:"center" }}>
+          <div style={{ color:C.muted, fontSize:13 }}>Tiada rekod untuk paparan ini.</div>
+        </Card>
+      )}
+      {ran && filtered.length > 0 && (
+        <Card>
+          <div style={{ overflowX:"auto" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+              <thead>
+                <tr style={{ background:C.navy }}>
+                  {["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty",
+                    "Harga Sebenar","Jangkaan","Status"].map(h => (
+                    <th key={h} style={{ padding:"8px 10px", color:C.white, textAlign:"left",
+                      fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.flatMap((r, i) => {
+                  const ss = STATUS_STYLE[r.status] || STATUS_STYLE.MISSING;
+                  const isExpanded = expandedIdx === i;
+                  const mainRow = (
+                    <tr key={i} onClick={() => setExpandedIdx(isExpanded ? null : i)}
+                      style={{ background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, cursor:"pointer" }}>
+                      <td style={{ padding:"7px 10px", fontWeight:700, color:C.accent, whiteSpace:"nowrap" }}>{r.docNo||"—"}</td>
+                      <td style={{ padding:"7px 10px", whiteSpace:"nowrap", color:C.muted, fontSize:11 }}>{r.date||"—"}</td>
+                      <td style={{ padding:"7px 10px", fontSize:11 }}>{r.customer||"—"}</td>
+                      <td style={{ padding:"7px 10px", fontWeight:600, fontFamily:"monospace", fontSize:11 }}>{r.rawCode}</td>
+                      <td style={{ padding:"7px 10px", color:C.muted, fontSize:10, maxWidth:130,
+                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.desc2||"—"}</td>
+                      <td style={{ padding:"7px 10px", textAlign:"right" }}>{r.qty}</td>
+                      <td style={{ padding:"7px 10px", textAlign:"right", fontWeight:700 }}>RM {r.unitPrice.toFixed(2)}</td>
+                      <td style={{ padding:"7px 10px", textAlign:"right", color:r.expectedPrice!=null?C.navy:C.muted }}>
+                        {r.expectedPrice!=null ? `RM ${r.expectedPrice.toFixed(2)}` : "—"}
+                      </td>
+                      <td style={{ padding:"7px 10px" }}>
+                        <span style={{ background:ss.bg, color:ss.text, padding:"2px 10px", borderRadius:12,
+                          fontWeight:700, fontSize:11,
+                          fontStyle:r.status==="SKIP"||r.status==="HARDWARE"?"italic":"normal" }}>
+                          {ss.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                  if (!isExpanded) return [mainRow];
+                  const expRow = (
+                    <tr key={`${i}-exp`} style={{ background:"#f0f9ff" }}>
+                      <td colSpan={9} style={{ padding:"10px 16px", fontSize:11, borderBottom:`1px solid ${C.border}` }}>
+                        <div style={{ display:"flex", gap:24, flexWrap:"wrap" }}>
+                          {r.matchedCode && <span><b>Kod padanan:</b> {r.matchedCode}</span>}
+                          {r.entry?.unitType && <span><b>UNIT_TYPE:</b> {r.entry.unitType}</span>}
+                          {r.parsedLength?.value!=null && <span><b>Panjang:</b> {r.parsedLength.value} {r.parsedLength.unit==="FOOT"?"kaki":"m"}</span>}
+                          {r.bandPrice!=null && <span><b>Harga band:</b> RM {r.bandPrice.toFixed(2)}</span>}
+                          {r.expectedPrice!=null && <span><b>Jangkaan:</b> RM {r.expectedPrice.toFixed(2)}</span>}
+                          {r.entry?.rrp>0 && <span><b>RRP:</b> RM {r.entry.rrp.toFixed(2)}</span>}
+                          {canSeeMargin && r.entry?.cost>0 && <span style={{ color:"#7c3aed" }}><b>Kos:</b> RM {r.entry.cost.toFixed(2)}</span>}
+                          {canSeeMargin && r.entry?.margin>0 && <span style={{ color:"#7c3aed" }}><b>Margin:</b> {r.entry.margin.toFixed(1)}%</span>}
+                          {r.entry?.desc && <span style={{ color:C.muted }}>{r.entry.desc}</span>}
+                          {r.entry?.tabName && <span style={{ color:C.muted }}>Tab: {r.entry.tabName}</span>}
+                          {r.status==="CONFLICT" && r.entry?.candidates && (
+                            <span style={{ color:C.red }}><b>Konflik:</b> {r.entry.candidates.map(c=>`RM ${c.bands[0]?.price.toFixed(2)} (${c.tabName})`).join(" / ")}</span>
+                          )}
+                          {r.status==="HARDWARE" && <span style={{ color:C.muted }}>Harga Hardware — akan dikemaskini</span>}
+                          {r.status==="REVIEW" && r.parsedLength?.flag==="REVIEW" && (
+                            <span style={{ color:"#854d0e" }}>⚠ Panjang tidak dapat dikenal pasti: "{r.desc2}"</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                  return [mainRow, expRow];
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

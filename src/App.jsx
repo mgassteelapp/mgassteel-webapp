@@ -650,18 +650,6 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       </div>
                     </div>
                   </div>
-                  {calcResult.priceF > 0 && (
-                    <div style={{ background:"#f5f3ff", border:"1px solid #c4b5fd", borderRadius:8, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                      <div>
-                        <div style={{ fontSize:11, fontWeight:700, color:"#6d28d9" }}>HARGA KREDIT (fixed)</div>
-                        <div style={{ fontSize:11, color:"#7c3aed", marginTop:2 }}>Tiada diskaun untuk kredit</div>
-                      </div>
-                      <div style={{ textAlign:"right" }}>
-                        <div style={{ fontWeight:800, fontSize:15, color:"#6d28d9" }}>RM {fmtPrice(calcResult.priceF, calcResult.cat)}/unit</div>
-                        <div style={{ fontWeight:600, fontSize:12, color:"#7c3aed" }}>RM {fmtPrice(calcResult.creditTotal, calcResult.cat)} jumlah</div>
-                      </div>
-                    </div>
-                  )}
                   <div style={{ padding:"10px 14px", background:C.accentLight, border:"1px solid #fcd5a0", borderRadius:8, fontSize:12, color:C.accent, fontWeight:600 }}>
                     Harga terbaik untuk {calcResult.qty} unit. Hubungi boss jika pelanggan minta lebih murah.
                   </div>

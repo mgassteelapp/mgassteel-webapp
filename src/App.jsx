@@ -608,7 +608,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                   </div>
                   {codeResults.slice(0,10).map((p,i)=>(
                     <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); }}
-                      style={{ display:"grid", gridTemplateColumns:"1fr 2fr 1fr 1fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, alignItems:"center", cursor:"pointer" }}>
+                      style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, alignItems:"center", cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
                       <div>
                         <div style={{ fontSize:12, fontWeight:700, color:C.navy }}>{p.product}</div>

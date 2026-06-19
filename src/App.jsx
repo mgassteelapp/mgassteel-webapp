@@ -110,7 +110,7 @@ const STAFF_PINS = [
 
 // ── Daily price check access ──────────────────────────────────────────────────
 // Edit these two lists when roles change — names must match STAFF_PINS exactly.
-const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri"];
+const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri", "Syahlin"];
 const COST_MARGIN_USERS = ["Fei (Accounts)", "Mira (Purchase)"];
 
 function canAccessDaily(sess) {

@@ -522,46 +522,35 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
       })
     : [];
 
-  // ── Dynamic Pricing Engine ────────────────────────────────────────────────
-  const MIN_MARGIN          = 0.10;
-  const LOW_MARGIN_DISC     = 0.025;
-  const LOW_MARGIN_THRESHOLD = 10;
-
+  // ── Tier-based Pricing Engine (uses real Qty_min tiers from sheet) ─────────
   const calcResult = selectedProduct && parseFloat(calcQty) > 0 ? (() => {
     const p   = selectedProduct;
     const qty = parseFloat(calcQty) || 0;
     const cat = p.category || "";
-    const priceD  = parseFloat(p.retailPrice || p.price) || 0;
-    const priceE  = parseFloat(p.bulkPrice)  || 0;
-    const priceF  = parseFloat(p.creditPrice)|| 0;
-    const costN   = parseFloat(p.costFloor)  || 0;
-    const marginU = parseFloat(p.marginRetail)|| 0;
-    const marginUPct  = marginU > 0 && marginU < 1 ? marginU * 100 : marginU;
-    const isLowMargin = marginUPct > 0 && marginUPct < LOW_MARGIN_THRESHOLD;
-    const minFloor    = costN > 0 ? costN * (1 + MIN_MARGIN) : priceE;
-    let recPrice, tierLabel;
-    if (qty <= 20) {
-      recPrice = priceD; tierLabel = "1–20 pcs → Harga Retail";
-    } else if (qty <= 49) {
-      recPrice = priceE; tierLabel = "21–49 pcs → Harga Bersaing";
-    } else {
-      if (isLowMargin) {
-        recPrice  = priceD * (1 - LOW_MARGIN_DISC);
-        tierLabel = "50+ pcs → Harga Khas (margin rendah)";
-      } else if (qty < 100) {
-        const ratio = (qty - 50) / 50;
-        recPrice    = Math.max(priceE - (ratio * (priceE - minFloor)), minFloor);
-        tierLabel   = qty + " pcs → Harga Dinamik";
-      } else {
-        recPrice  = minFloor;
-        tierLabel = "100+ pcs → Harga Maksimum Diskaun";
-      }
-    }
-    recPrice = roundPrice(recPrice, cat);
-    const creditRounded = roundPrice(priceF, cat);
-    const totalPrice    = roundPrice(recPrice * qty, cat);
-    const creditTotal   = roundPrice(creditRounded * qty, cat);
-    return { qty, recPrice, tierLabel, isLowMargin, totalPrice, priceF: creditRounded, creditTotal, cat };
+
+    // Build tiers: prefer the tiers array from the script; fall back to legacy fields
+    let tiers = Array.isArray(p.tiers) && p.tiers.length > 0
+      ? p.tiers.map(t => ({ qtyMin: parseFloat(t.qtyMin) || 1, price: parseFloat(t.price) || 0 }))
+                .filter(t => t.price > 0)
+      : [
+          { qtyMin: 1,  price: parseFloat(p.retailPrice || p.price) || 0 },
+          { qtyMin: 20, price: parseFloat(p.bulkPrice)   || 0 },
+          { qtyMin: 40, price: parseFloat(p.creditPrice) || 0 },
+        ].filter(t => t.price > 0);
+
+    // Sort ascending by qtyMin, then pick the highest tier whose qtyMin <= qty
+    tiers.sort((a, b) => a.qtyMin - b.qtyMin);
+    let chosen = tiers[0] || null;
+    for (const t of tiers) { if (qty >= t.qtyMin) chosen = t; }
+
+    if (!chosen) return null;
+
+    const recPrice   = roundPrice(chosen.price, cat);
+    const totalPrice = roundPrice(recPrice * qty, cat);
+    const nextTier   = tiers.find(t => t.qtyMin > qty); // hint for "buy more to save"
+    const tierLabel  = `${chosen.qtyMin}+ unit → Harga Tier`;
+
+    return { qty, recPrice, tierLabel, totalPrice, cat, tiers, nextTier, unitType: p.unitType || "" };
   })() : null;
 
   // ── Send message ──────────────────────────────────────────────────────────

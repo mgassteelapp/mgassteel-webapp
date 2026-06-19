@@ -617,12 +617,6 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       <div style={{ fontWeight:800, fontSize:12, color:(p.retailPrice||p.price)>0?C.accent:"#cbd5e1" }}>
                         {(p.retailPrice||p.price)>0?`RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}`:"—"}
                       </div>
-                      <div style={{ fontWeight:800, fontSize:12, color:p.bulkPrice>0?C.green:"#cbd5e1" }}>
-                        {p.bulkPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.bulkPrice),p.category),p.category)}`:"—"}
-                      </div>
-                      <div style={{ fontWeight:800, fontSize:12, color:p.creditPrice>0?"#6d28d9":"#cbd5e1" }}>
-                        {p.creditPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.creditPrice),p.category),p.category)}`:"—"}
-                      </div>
                     </div>
                   ))}
                   {codeResults.length > 10 && (

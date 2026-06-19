@@ -93,9 +93,9 @@ const OWNER_PIN  = "1234";
 // Change any PIN by editing the number here, then re-upload to GitHub
 const STAFF_PINS = [
   { name:"Weelee (Owner)",    pin:"1234", role:"owner" },
-  { name:"Miss Looi (Owner)", pin:"2345", role:"owner" },
-  { name:"Fei (Accounts)",    pin:"3456", role:"senior" },
-  { name:"Mira (Purchase)",   pin:"4567", role:"senior" },
+  { name:"Miss Looi (Owner)", pin:"1235", role:"owner" },
+  { name:"Fei (Accounts)",    pin:"1236", role:"senior" },
+  { name:"Mira (Purchase)",   pin:"1237", role:"senior" },
   { name:"Izzati",            pin:"1111", role:"staff" },
   { name:"Natasha",           pin:"2222", role:"staff" },
   { name:"Mohd Iqbal",        pin:"3333", role:"staff" },
@@ -104,6 +104,7 @@ const STAFF_PINS = [
   { name:"Han KY",            pin:"6666", role:"staff" },
   { name:"Puteri",            pin:"7777", role:"staff" },
   { name:"Su",                pin:"8888", role:"staff" },
+  { name:"Han",               pin:"9999", role:"staff" },
 ];
 
 // ── Daily price check access ──────────────────────────────────────────────────

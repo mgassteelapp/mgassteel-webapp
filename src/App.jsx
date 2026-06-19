@@ -601,8 +601,8 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
               ? <div style={{ color:C.muted, fontSize:12, padding:"8px 0" }}>Tiada produk dijumpai untuk "{codeSearch}"</div>
               : (
                 <div style={{ border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr 1fr 1fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
-                    {["Kod","Produk","Retail","Bersaing","Kredit"].map(h=>(
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
+                    {["Kod","Produk","Harga"].map(h=>(
                       <div key={h} style={{ color:C.white, fontSize:10, fontWeight:700, textTransform:"uppercase" }}>{h}</div>
                     ))}
                   </div>

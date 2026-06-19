@@ -177,12 +177,11 @@ const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166
 const TWO_DP_TABS = ["THI", "AJIYA", "ASTINO 26"];
 function roundPrice(price, category) {
   if (!price || isNaN(price)) return 0;
-  if (TWO_DP_TABS.some(t => (category||"").toUpperCase().includes(t.toUpperCase()))) return Math.round(price * 100) / 100;
-  return Math.round(price * 10) / 10;
+  return Math.round(price * 100) / 100;
 }
 function fmtPrice(price, category) {
-  if (TWO_DP_TABS.some(t => (category||"").toUpperCase().includes(t.toUpperCase()))) return price.toFixed(2);
-  return price.toFixed(1);
+  const n = Number(price);
+  return isNaN(n) ? "0.00" : n.toFixed(2);
 }
 // ── UI helpers ────────────────────────────────────────────────────────────────
 const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)", ...style }}>{children}</div>;
@@ -467,14 +466,6 @@ export default function App() {
                 color: tab===t.key?C.navy:"#94a3b8",
               }}>{t.label}</button>
             ))}
-            {session.role==="owner" && (
-              <button onClick={()=>setTab("activity")} style={{
-                padding:"8px 13px", border:"none", cursor:"pointer", borderRadius:"8px 8px 0 0",
-                fontWeight:600, fontSize:12,
-                background: tab==="activity"?"#f0f4f8":"transparent",
-                color: tab==="activity"?C.navy:"#94a3b8",
-              }}>📊 Aktiviti</button>
-            )}
             <button onClick={async()=>{ await logActivity(session,"Logout",""); clearSession(); setSession_(null); }}
               style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" }}>
               {session.name.split(" ")[0]} · Keluar
@@ -522,46 +513,35 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
       })
     : [];
 
-  // ── Dynamic Pricing Engine ────────────────────────────────────────────────
-  const MIN_MARGIN          = 0.10;
-  const LOW_MARGIN_DISC     = 0.025;
-  const LOW_MARGIN_THRESHOLD = 10;
-
+  // ── Tier-based Pricing Engine (uses real Qty_min tiers from sheet) ─────────
   const calcResult = selectedProduct && parseFloat(calcQty) > 0 ? (() => {
     const p   = selectedProduct;
     const qty = parseFloat(calcQty) || 0;
     const cat = p.category || "";
-    const priceD  = parseFloat(p.retailPrice || p.price) || 0;
-    const priceE  = parseFloat(p.bulkPrice)  || 0;
-    const priceF  = parseFloat(p.creditPrice)|| 0;
-    const costN   = parseFloat(p.costFloor)  || 0;
-    const marginU = parseFloat(p.marginRetail)|| 0;
-    const marginUPct  = marginU > 0 && marginU < 1 ? marginU * 100 : marginU;
-    const isLowMargin = marginUPct > 0 && marginUPct < LOW_MARGIN_THRESHOLD;
-    const minFloor    = costN > 0 ? costN * (1 + MIN_MARGIN) : priceE;
-    let recPrice, tierLabel;
-    if (qty <= 20) {
-      recPrice = priceD; tierLabel = "1–20 pcs → Harga Retail";
-    } else if (qty <= 49) {
-      recPrice = priceE; tierLabel = "21–49 pcs → Harga Bersaing";
-    } else {
-      if (isLowMargin) {
-        recPrice  = priceD * (1 - LOW_MARGIN_DISC);
-        tierLabel = "50+ pcs → Harga Khas (margin rendah)";
-      } else if (qty < 100) {
-        const ratio = (qty - 50) / 50;
-        recPrice    = Math.max(priceE - (ratio * (priceE - minFloor)), minFloor);
-        tierLabel   = qty + " pcs → Harga Dinamik";
-      } else {
-        recPrice  = minFloor;
-        tierLabel = "100+ pcs → Harga Maksimum Diskaun";
-      }
-    }
-    recPrice = roundPrice(recPrice, cat);
-    const creditRounded = roundPrice(priceF, cat);
-    const totalPrice    = roundPrice(recPrice * qty, cat);
-    const creditTotal   = roundPrice(creditRounded * qty, cat);
-    return { qty, recPrice, tierLabel, isLowMargin, totalPrice, priceF: creditRounded, creditTotal, cat };
+
+    // Build tiers: prefer the tiers array from the script; fall back to legacy fields
+    let tiers = Array.isArray(p.tiers) && p.tiers.length > 0
+      ? p.tiers.map(t => ({ qtyMin: parseFloat(t.qtyMin) || 1, price: parseFloat(t.price) || 0 }))
+                .filter(t => t.price > 0)
+      : [
+          { qtyMin: 1,  price: parseFloat(p.retailPrice || p.price) || 0 },
+          { qtyMin: 20, price: parseFloat(p.bulkPrice)   || 0 },
+          { qtyMin: 40, price: parseFloat(p.creditPrice) || 0 },
+        ].filter(t => t.price > 0);
+
+    // Sort ascending by qtyMin, then pick the highest tier whose qtyMin <= qty
+    tiers.sort((a, b) => a.qtyMin - b.qtyMin);
+    let chosen = tiers[0] || null;
+    for (const t of tiers) { if (qty >= t.qtyMin) chosen = t; }
+
+    if (!chosen) return null;
+
+    const recPrice   = roundPrice(chosen.price, cat);
+    const totalPrice = roundPrice(recPrice * qty, cat);
+    const nextTier   = tiers.find(t => t.qtyMin > qty); // hint for "buy more to save"
+    const tierLabel  = `${chosen.qtyMin}+ unit → Harga Tier`;
+
+    return { qty, recPrice, tierLabel, totalPrice, cat, tiers, nextTier, unitType: p.unitType || "" };
   })() : null;
 
   // ── Send message ──────────────────────────────────────────────────────────
@@ -601,14 +581,14 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
               ? <div style={{ color:C.muted, fontSize:12, padding:"8px 0" }}>Tiada produk dijumpai untuk "{codeSearch}"</div>
               : (
                 <div style={{ border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr 1fr 1fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
-                    {["Kod","Produk","Retail","Bersaing","Kredit"].map(h=>(
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
+                    {["Kod","Produk","Harga"].map(h=>(
                       <div key={h} style={{ color:C.white, fontSize:10, fontWeight:700, textTransform:"uppercase" }}>{h}</div>
                     ))}
                   </div>
                   {codeResults.slice(0,10).map((p,i)=>(
                     <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); }}
-                      style={{ display:"grid", gridTemplateColumns:"1fr 2fr 1fr 1fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, alignItems:"center", cursor:"pointer" }}>
+                      style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, alignItems:"center", cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
                       <div>
                         <div style={{ fontSize:12, fontWeight:700, color:C.navy }}>{p.product}</div>
@@ -616,12 +596,6 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       </div>
                       <div style={{ fontWeight:800, fontSize:12, color:(p.retailPrice||p.price)>0?C.accent:"#cbd5e1" }}>
                         {(p.retailPrice||p.price)>0?`RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}`:"—"}
-                      </div>
-                      <div style={{ fontWeight:800, fontSize:12, color:p.bulkPrice>0?C.green:"#cbd5e1" }}>
-                        {p.bulkPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.bulkPrice),p.category),p.category)}`:"—"}
-                      </div>
-                      <div style={{ fontWeight:800, fontSize:12, color:p.creditPrice>0?"#6d28d9":"#cbd5e1" }}>
-                        {p.creditPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.creditPrice),p.category),p.category)}`:"—"}
                       </div>
                     </div>
                   ))}
@@ -667,18 +641,6 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       </div>
                     </div>
                   </div>
-                  {calcResult.priceF > 0 && (
-                    <div style={{ background:"#f5f3ff", border:"1px solid #c4b5fd", borderRadius:8, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                      <div>
-                        <div style={{ fontSize:11, fontWeight:700, color:"#6d28d9" }}>HARGA KREDIT (fixed)</div>
-                        <div style={{ fontSize:11, color:"#7c3aed", marginTop:2 }}>Tiada diskaun untuk kredit</div>
-                      </div>
-                      <div style={{ textAlign:"right" }}>
-                        <div style={{ fontWeight:800, fontSize:15, color:"#6d28d9" }}>RM {fmtPrice(calcResult.priceF, calcResult.cat)}/unit</div>
-                        <div style={{ fontWeight:600, fontSize:12, color:"#7c3aed" }}>RM {fmtPrice(calcResult.creditTotal, calcResult.cat)} jumlah</div>
-                      </div>
-                    </div>
-                  )}
                   <div style={{ padding:"10px 14px", background:C.accentLight, border:"1px solid #fcd5a0", borderRadius:8, fontSize:12, color:C.accent, fontWeight:600 }}>
                     Harga terbaik untuk {calcResult.qty} unit. Hubungi boss jika pelanggan minta lebih murah.
                   </div>

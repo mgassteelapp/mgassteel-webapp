@@ -467,14 +467,6 @@ export default function App() {
                 color: tab===t.key?C.navy:"#94a3b8",
               }}>{t.label}</button>
             ))}
-            {session.role==="owner" && (
-              <button onClick={()=>setTab("activity")} style={{
-                padding:"8px 13px", border:"none", cursor:"pointer", borderRadius:"8px 8px 0 0",
-                fontWeight:600, fontSize:12,
-                background: tab==="activity"?"#f0f4f8":"transparent",
-                color: tab==="activity"?C.navy:"#94a3b8",
-              }}>📊 Aktiviti</button>
-            )}
             <button onClick={async()=>{ await logActivity(session,"Logout",""); clearSession(); setSession_(null); }}
               style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" }}>
               {session.name.split(" ")[0]} · Keluar

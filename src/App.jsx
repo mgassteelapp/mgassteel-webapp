@@ -177,12 +177,11 @@ const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166
 const TWO_DP_TABS = ["THI", "AJIYA", "ASTINO 26"];
 function roundPrice(price, category) {
   if (!price || isNaN(price)) return 0;
-  if (TWO_DP_TABS.some(t => (category||"").toUpperCase().includes(t.toUpperCase()))) return Math.round(price * 100) / 100;
-  return Math.round(price * 10) / 10;
+  return Math.round(price * 100) / 100;
 }
 function fmtPrice(price, category) {
-  if (TWO_DP_TABS.some(t => (category||"").toUpperCase().includes(t.toUpperCase()))) return price.toFixed(2);
-  return price.toFixed(1);
+  const n = Number(price);
+  return isNaN(n) ? "0.00" : n.toFixed(2);
 }
 // ── UI helpers ────────────────────────────────────────────────────────────────
 const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)", ...style }}>{children}</div>;

@@ -96,6 +96,7 @@ const STAFF_PINS = [
   { name:"Miss Looi (Owner)", pin:"1235", role:"owner" },
   { name:"Fei (Accounts)",    pin:"1236", role:"senior" },
   { name:"Mira (Purchase)",   pin:"1237", role:"senior" },
+  { name:"Syahlin",           pin:"1238", role:"senior" },
   { name:"Izzati",            pin:"1111", role:"staff" },
   { name:"Natasha",           pin:"2222", role:"staff" },
   { name:"Mohd Iqbal",        pin:"3333", role:"staff" },

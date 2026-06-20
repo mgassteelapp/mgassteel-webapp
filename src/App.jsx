@@ -185,6 +185,9 @@ function fmtPrice(price, category) {
   const n = Number(price);
   return isNaN(n) ? "0.00" : n.toFixed(2);
 }
+function normCode(v) {
+  return String(v ?? "").trim().replace(/\.0+$/, "").toLowerCase();
+}
 // ── UI helpers ────────────────────────────────────────────────────────────────
 const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)", ...style }}>{children}</div>;
 const Badge = ({ children, color="gray" }) => {
@@ -508,10 +511,12 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
   // ── Price search results ──────────────────────────────────────────────────
   const codeResults = codeSearch.length > 1
     ? prices.filter(p => {
-        const s = codeSearch.toLowerCase();
-        return (p.itemCode||"").toLowerCase().includes(s) ||
-               (p.product||"").toLowerCase().includes(s) ||
-               (p.size||"").toLowerCase().includes(s);
+        const s  = normCode(codeSearch);
+        const sl = codeSearch.toLowerCase();
+        return normCode(p.itemCode).includes(s) ||
+               (p.itemCode||"").toLowerCase().includes(sl) ||
+               (p.product||"").toLowerCase().includes(sl) ||
+               (p.size||"").toLowerCase().includes(sl);
       })
     : [];
 

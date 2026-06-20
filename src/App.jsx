@@ -428,8 +428,11 @@ export default function App() {
   );
 
   const TABS = [
+    const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
-    { key:"prices",    label:"💰 Senarai Harga" },
+    ...((session.role==="owner" || session.role==="senior") ? [
+      { key:"prices", label:"💰 Senarai Harga" },
+    ] : []),
     { key:"log",       label:"📋 Rekod Tawaran" },
     { key:"scenarios", label:"🧠 Senario AI" },
     { key:"summary",   label:"📊 Ringkasan" },
@@ -480,7 +483,7 @@ export default function App() {
       </div>
       <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
-        {tab==="prices"    && <PricesTab    prices={prices} setPrices={persistPrices} session={session} />}
+        {tab==="prices"    && (session.role==="owner"||session.role==="senior") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
@@ -797,7 +800,7 @@ function PricesTab({ prices, setPrices }) {
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead><tr style={{ background:C.gray, borderBottom:`2px solid ${C.border}` }}>
-                    {["Kod","Produk","Gred","Unit","Retail (RM)","Kuantiti (RM)","Kredit (RM)","Tab"].map(h=>(
+                    {["Kod","Produk","Gred","Unit","Harga Tier (RM)","Tab"].map(h=>(
                       <th key={h} style={{ padding:"7px 10px", textAlign:"left", color:C.muted, fontWeight:600, fontSize:11, textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
                     ))}
                   </tr></thead>
@@ -808,9 +811,16 @@ function PricesTab({ prices, setPrices }) {
                         <td style={{ padding:"8px 10px", fontWeight:600 }}>{p.product}{p.size?" "+p.size:""}</td>
                         <td style={{ padding:"8px 10px" }}><Badge color={p.grade&&p.grade.startsWith("SS")?"green":p.grade==="GI"?"yellow":"gray"}>{p.grade||"MS"}</Badge></td>
                         <td style={{ padding:"8px 10px", color:C.muted, fontSize:11 }}>per {p.unit||"length"}</td>
-                        <td style={{ padding:"8px 10px", fontWeight:800, fontSize:13, color:(p.retailPrice||p.price)>0?C.navy:"#cbd5e1" }}>{(p.retailPrice||p.price)>0?`RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}`:"—"}</td>
-                        <td style={{ padding:"8px 10px", fontWeight:700, fontSize:13, color:p.bulkPrice>0?C.green:"#cbd5e1" }}>{p.bulkPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.bulkPrice),p.category),p.category)}`:"—"}</td>
-                        <td style={{ padding:"8px 10px", fontWeight:700, fontSize:13, color:p.creditPrice>0?"#6d28d9":"#cbd5e1" }}>{p.creditPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.creditPrice),p.category),p.category)}`:"—"}</td>
+                        <td style={{ padding:"8px 10px", fontSize:12 }}>
+                          {Array.isArray(p.tiers) && p.tiers.filter(t=>t.price>0 && t.qtyMin>0).length>0
+                            ? p.tiers.filter(t=>t.price>0 && t.qtyMin>0).map((t,ti)=>(
+                                <div key={ti} style={{ whiteSpace:"nowrap" }}>
+                                  <span style={{ color:C.muted, fontWeight:600 }}>{t.qtyMin}+ :</span>{" "}
+                                  <span style={{ fontWeight:800, color:C.navy }}>RM {fmtPrice(roundPrice(parseFloat(t.price),p.category),p.category)}</span>
+                                </div>
+                              ))
+                            : <span style={{ color:"#cbd5e1" }}>—</span>}
+                        </td>
                         <td style={{ padding:"8px 10px", fontSize:11, color:C.muted }}>{p.category||p.updatedAt||"—"}</td>
 
                       </tr>

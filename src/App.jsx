@@ -812,6 +812,7 @@ function PricesTab({ prices, setPrices }) {
                         <td style={{ padding:"8px 10px" }}><Badge color={p.grade&&p.grade.startsWith("SS")?"green":p.grade==="GI"?"yellow":"gray"}>{p.grade||"MS"}</Badge></td>
                         <td style={{ padding:"8px 10px", color:C.muted, fontSize:11 }}>per {p.unit||"length"}</td>
                         <td style={{ padding:"8px 10px", fontSize:12 }}>
+                          <td style={{ padding:"8px 10px", fontSize:12 }}>
                           {Array.isArray(p.tiers) && p.tiers.filter(t=>t.price>0 && t.qtyMin>0).length>0
                             ? p.tiers.filter(t=>t.price>0 && t.qtyMin>0).map((t,ti)=>(
                                 <div key={ti} style={{ whiteSpace:"nowrap" }}>

@@ -528,8 +528,8 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
 
     // Build tiers: prefer the tiers array from the script; fall back to legacy fields
     let tiers = Array.isArray(p.tiers) && p.tiers.length > 0
-      ? p.tiers.map(t => ({ qtyMin: parseFloat(t.qtyMin) || 1, price: parseFloat(t.price) || 0 }))
-                .filter(t => t.price > 0)
+      ? p.tiers.map(t => ({ qtyMin: parseFloat(t.qtyMin), price: parseFloat(t.price) || 0 }))
+                .filter(t => t.price > 0 && t.qtyMin > 0)
       : [
           { qtyMin: 1,  price: parseFloat(p.retailPrice || p.price) || 0 },
           { qtyMin: 20, price: parseFloat(p.bulkPrice)   || 0 },

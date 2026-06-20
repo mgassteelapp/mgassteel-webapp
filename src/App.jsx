@@ -426,8 +426,6 @@ export default function App() {
       <div style={{ color:C.white, fontSize:18 }}>Memuatkan...</div>
     </div>
   );
-
-  const TABS = [
     const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
     ...((session.role==="owner" || session.role==="senior") ? [

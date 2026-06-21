@@ -93,10 +93,9 @@ const OWNER_PIN  = "1234";
 // Change any PIN by editing the number here, then re-upload to GitHub
 const STAFF_PINS = [
   { name:"Weelee (Owner)",    pin:"1234", role:"owner" },
-  { name:"Miss Looi (Owner)", pin:"1235", role:"owner" },
-  { name:"Fei (Accounts)",    pin:"1236", role:"senior" },
-  { name:"Mira (Purchase)",   pin:"1237", role:"senior" },
-  { name:"Syahlin",           pin:"1238", role:"senior" },
+  { name:"Miss Looi (Owner)", pin:"2345", role:"owner" },
+  { name:"Fei (Accounts)",    pin:"3456", role:"senior" },
+  { name:"Mira (Purchase)",   pin:"4567", role:"senior" },
   { name:"Izzati",            pin:"1111", role:"staff" },
   { name:"Natasha",           pin:"2222", role:"staff" },
   { name:"Mohd Iqbal",        pin:"3333", role:"staff" },
@@ -105,12 +104,11 @@ const STAFF_PINS = [
   { name:"Han KY",            pin:"6666", role:"staff" },
   { name:"Puteri",            pin:"7777", role:"staff" },
   { name:"Su",                pin:"8888", role:"staff" },
-  { name:"Han",               pin:"9999", role:"staff" },
 ];
 
 // ── Daily price check access ──────────────────────────────────────────────────
 // Edit these two lists when roles change — names must match STAFF_PINS exactly.
-const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri", "Syahlin"];
+const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri"];
 const COST_MARGIN_USERS = ["Fei (Accounts)", "Mira (Purchase)"];
 
 function canAccessDaily(sess) {
@@ -184,9 +182,6 @@ function roundPrice(price, category) {
 function fmtPrice(price, category) {
   const n = Number(price);
   return isNaN(n) ? "0.00" : n.toFixed(2);
-}
-function normCode(v) {
-  return String(v ?? "").trim().replace(/\.0+$/, "").toLowerCase();
 }
 // ── UI helpers ────────────────────────────────────────────────────────────────
 const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)", ...style }}>{children}</div>;
@@ -392,8 +387,6 @@ export default function App() {
   const [deals,     setDeals]     = useState([]);
   const [prices,    setPrices]    = useState([]);
   const [scenarios, setScenarios] = useState([]);
-  const [dcResults, setDcResults] = useState([]);
-  const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(true);
 
   // Show login if no session
@@ -428,11 +421,10 @@ export default function App() {
       <div style={{ color:C.white, fontSize:18 }}>Memuatkan...</div>
     </div>
   );
+
   const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
-    ...((session.role==="owner" || session.role==="senior") ? [
-      { key:"prices", label:"💰 Senarai Harga" },
-    ] : []),
+    { key:"prices",    label:"💰 Senarai Harga" },
     { key:"log",       label:"📋 Rekod Tawaran" },
     { key:"scenarios", label:"🧠 Senario AI" },
     { key:"summary",   label:"📊 Ringkasan" },
@@ -483,13 +475,14 @@ export default function App() {
       </div>
       <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
-        {tab==="prices"    && (session.role==="owner"||session.role==="senior") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
+        {tab==="prices"    && <PricesTab    prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
-        {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
+        {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
+        {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} />}
       </div>
     </div>
   );
@@ -513,12 +506,10 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
   // ── Price search results ──────────────────────────────────────────────────
   const codeResults = codeSearch.length > 1
     ? prices.filter(p => {
-        const s  = normCode(codeSearch);
-        const sl = codeSearch.toLowerCase();
-        return normCode(p.itemCode).includes(s) ||
-               (p.itemCode||"").toLowerCase().includes(sl) ||
-               (p.product||"").toLowerCase().includes(sl) ||
-               (p.size||"").toLowerCase().includes(sl);
+        const s = codeSearch.toLowerCase();
+        return (p.itemCode||"").toLowerCase().includes(s) ||
+               (p.product||"").toLowerCase().includes(s) ||
+               (p.size||"").toLowerCase().includes(s);
       })
     : [];
 
@@ -530,8 +521,8 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
 
     // Build tiers: prefer the tiers array from the script; fall back to legacy fields
     let tiers = Array.isArray(p.tiers) && p.tiers.length > 0
-      ? p.tiers.map(t => ({ qtyMin: parseFloat(t.qtyMin), price: parseFloat(t.price) || 0 }))
-                .filter(t => t.price > 0 && t.qtyMin > 0)
+      ? p.tiers.map(t => ({ qtyMin: parseFloat(t.qtyMin) || 1, price: parseFloat(t.price) || 0 }))
+                .filter(t => t.price > 0)
       : [
           { qtyMin: 1,  price: parseFloat(p.retailPrice || p.price) || 0 },
           { qtyMin: 20, price: parseFloat(p.bulkPrice)   || 0 },
@@ -799,7 +790,7 @@ function PricesTab({ prices, setPrices }) {
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead><tr style={{ background:C.gray, borderBottom:`2px solid ${C.border}` }}>
-                    {["Kod","Produk","Gred","Unit","Harga Tier (RM)","Tab"].map(h=>(
+                    {["Kod","Produk","Gred","Unit","Retail (RM)","Kuantiti (RM)","Kredit (RM)","Tab"].map(h=>(
                       <th key={h} style={{ padding:"7px 10px", textAlign:"left", color:C.muted, fontWeight:600, fontSize:11, textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
                     ))}
                   </tr></thead>
@@ -810,16 +801,9 @@ function PricesTab({ prices, setPrices }) {
                         <td style={{ padding:"8px 10px", fontWeight:600 }}>{p.product}{p.size?" "+p.size:""}</td>
                         <td style={{ padding:"8px 10px" }}><Badge color={p.grade&&p.grade.startsWith("SS")?"green":p.grade==="GI"?"yellow":"gray"}>{p.grade||"MS"}</Badge></td>
                         <td style={{ padding:"8px 10px", color:C.muted, fontSize:11 }}>per {p.unit||"length"}</td>
-                          <td style={{ padding:"8px 10px", fontSize:12 }}>
-                          {Array.isArray(p.tiers) && p.tiers.filter(t=>t.price>0 && t.qtyMin>0).length>0
-                            ? p.tiers.filter(t=>t.price>0 && t.qtyMin>0).map((t,ti)=>(
-                                <div key={ti} style={{ whiteSpace:"nowrap" }}>
-                                  <span style={{ color:C.muted, fontWeight:600 }}>{t.qtyMin}+ :</span>{" "}
-                                  <span style={{ fontWeight:800, color:C.navy }}>RM {fmtPrice(roundPrice(parseFloat(t.price),p.category),p.category)}</span>
-                                </div>
-                              ))
-                            : <span style={{ color:"#cbd5e1" }}>—</span>}
-                        </td>
+                        <td style={{ padding:"8px 10px", fontWeight:800, fontSize:13, color:(p.retailPrice||p.price)>0?C.navy:"#cbd5e1" }}>{(p.retailPrice||p.price)>0?`RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}`:"—"}</td>
+                        <td style={{ padding:"8px 10px", fontWeight:700, fontSize:13, color:p.bulkPrice>0?C.green:"#cbd5e1" }}>{p.bulkPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.bulkPrice),p.category),p.category)}`:"—"}</td>
+                        <td style={{ padding:"8px 10px", fontWeight:700, fontSize:13, color:p.creditPrice>0?"#6d28d9":"#cbd5e1" }}>{p.creditPrice>0?`RM ${fmtPrice(roundPrice(parseFloat(p.creditPrice),p.category),p.category)}`:"—"}</td>
                         <td style={{ padding:"8px 10px", fontSize:11, color:C.muted }}>{p.category||p.updatedAt||"—"}</td>
 
                       </tr>
@@ -1721,14 +1705,17 @@ const STATUS_STYLE = {
   SKIP:     { bg:"#f8fafc", text:"#94a3b8", label:"LANGKAU" },
   HARDWARE: { bg:"#f8fafc", text:"#94a3b8", label:"HARDWARE" },
 };
-function DailyCheckTab({ session, results, setResults, ran, setRan }) {
+
+function DailyCheckTab({ session }) {
   const [benchFile,   setBenchFile]   = useState(null);
   const [salesFile,   setSalesFile]   = useState(null);
+  const [results,     setResults]     = useState([]);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState("");
   const [filter,      setFilter]      = useState("ALL");
   const [search,      setSearch]      = useState("");
   const [expandedIdx, setExpandedIdx] = useState(null);
+  const [ran,         setRan]         = useState(false);
 
   const runCheck = async () => {
     if (!benchFile || !salesFile) { setError("Sila muat naik kedua-dua fail terlebih dahulu."); return; }
@@ -1775,14 +1762,14 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
           <div style={{ flex:1, minWidth:200 }}>
             <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Fail Jualan (.xlsx)</label>
             <input type="file" accept=".xlsx,.csv"
-              onChange={e => { setSalesFile(e.target.files[0]||null); }}
+              onChange={e => { setSalesFile(e.target.files[0]||null); setRan(false); }}
               style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${salesFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
             {salesFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {salesFile.name}</div>}
           </div>
           <div style={{ flex:1, minWidth:200 }}>
             <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Senarai Induk (.xlsx)</label>
             <input type="file" accept=".xlsx"
-              onChange={e => { setBenchFile(e.target.files[0]||null); }}
+              onChange={e => { setBenchFile(e.target.files[0]||null); setRan(false); }}
               style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${benchFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
             {benchFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {benchFile.name}</div>}
           </div>

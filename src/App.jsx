@@ -1765,6 +1765,21 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
   });
 
   const canSeeMargin = canSeeCostMargin(session);
+  const downloadDailyCSV = () => {
+    const headers = ["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty","Harga Sebenar (RM)","Jangkaan (RM)","Status","% Beza"];
+    const rows = results.map(r => [
+      r.docNo||"", r.date||"", r.customer||"", r.rawCode||"", r.desc2||"",
+      r.qty, r.unitPrice,
+      r.expectedPrice!=null ? r.expectedPrice.toFixed(2) : "",
+      (STATUS_STYLE[r.status]||STATUS_STYLE.MISSING).label,
+      r.expectedPrice!=null && r.expectedPrice ? (((r.unitPrice - r.expectedPrice)/r.expectedPrice)*100).toFixed(1)+"%" : ""
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(c => `"${(c==null?"":c).toString().replace(/"/g,'""')}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv" }));
+    a.download = `MGasSteel_SemakHarga_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  };
 
   return (
     <div>
@@ -1830,6 +1845,12 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
             placeholder="Cari kod / pelanggan / no. dok..."
             style={{ marginLeft:"auto", padding:"6px 12px", borderRadius:8,
               border:`1.5px solid ${C.border}`, fontSize:12, minWidth:220, fontFamily:"inherit" }} />
+              <button onClick={downloadDailyCSV} style={{
+                  marginLeft:8, padding:"7px 14px", border:"none", borderRadius:8,
+                  background:C.navy, color:C.white, fontWeight:600, fontSize:12,
+                  cursor:"pointer", whiteSpace:"nowrap" }}>
+                  ⬇ Muat Turun CSV
+                </button>
         </Card>
       )}
 

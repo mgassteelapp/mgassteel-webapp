@@ -481,7 +481,7 @@ export default function App() {
           </div>
         </div>
       </div>
-      <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 60px" }}>
+      <div style={{ maxWidth: tab==="daily" ? 1280 : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
         {tab==="prices"    && (session.role==="owner"||session.role==="senior") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
@@ -595,7 +595,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       <div key={h} style={{ color:C.white, fontSize:10, fontWeight:700, textTransform:"uppercase" }}>{h}</div>
                     ))}
                   </div>
-                  {codeResults.slice(0,10).map((p,i)=>(
+                  {codeResults.slice(0,15).map((p,i)=>(
                     <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); }}
                       style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, alignItems:"center", cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
@@ -1846,7 +1846,7 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
               <thead>
                 <tr style={{ background:C.navy }}>
                   {["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty",
-                    "Harga Sebenar","Jangkaan","Status"].map(h => (
+                    "Harga Sebenar","Jangkaan","Status","% Beza"].map(h => (
                     <th key={h} style={{ padding:"8px 10px", color:C.white, textAlign:"left",
                       fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
                   ))}
@@ -1877,6 +1877,13 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
                           {ss.label}
                         </span>
                       </td>
+                      <td style={{ padding:"7px 10px", textAlign:"right", fontWeight:700, fontSize:11,
+                            color: r.expectedPrice==null||!r.expectedPrice ? C.muted
+                              : (r.unitPrice - r.expectedPrice) < 0 ? "#dc2626" : "#16a34a" }}>
+                            {r.expectedPrice!=null && r.expectedPrice
+                              ? `${(((r.unitPrice - r.expectedPrice) / r.expectedPrice) * 100).toFixed(1)}%`
+                              : "—"}
+                          </td>
                     </tr>
                   );
                   if (!isExpanded) return [mainRow];

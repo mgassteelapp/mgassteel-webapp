@@ -378,7 +378,7 @@ function LoginScreen({ onLogin }) {
         <div style={{ textAlign:"center", marginTop:20, color:"#e10707", fontSize:13 }}>
           Jika terlupa PIN, hubungi IT.
           AMARAN, UNTUK KEGUNAAN PIHAK PEKERJA M GAS STEEL SDN BHD.
-          TIDAK BOLEH BERKONGSI APPLIKASI INI DENGAN PIHAK.
+          TIDAK BOLEH BERKONGSI APPLIKASI INI DENGAN PIHAK LUAR.
           JIKA DIDAPATI SALAH GUNA, PIHAK SYARIKAT BERHAK MENGAMBIL TINDAKAN UNDANG-UNDANG TERHADAP PEKERJA BERKENAAN.
         </div>
       </div>
@@ -453,8 +453,8 @@ export default function App() {
       <div style={{ background:C.navy }}>
         <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 0" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-            <div style={{ color:C.white, fontWeight:800, fontSize:15, letterSpacing:0.5 }}>M GAS STEEL SDN BHD</div>
-            <div style={{ color:"#94a3b8", fontSize:10, letterSpacing:1  }}>SISTEM KEPUTUSAN STAF</div>
+            <div style={{ color:C.white, fontWeight:800, fontSize:30, letterSpacing:0.5 }}>M GAS STEEL SDN BHD</div>
+            <div style={{ color:"#94a3b8", fontSize:15, letterSpacing:1  }}>SISTEM KEPUTUSAN HARGA</div>
             <div style={{ marginLeft:"auto", display:"flex", gap:6, alignItems:"center" }}>
               <span style={{ background:"rgba(255,255,255,0.1)", color:"#94a3b8", fontSize:11, padding:"3px 10px", borderRadius:20 }}>
                 {scenarios.length} senario • {prices.filter(p=>p.hasPrice||p.price>0).length} harga aktif

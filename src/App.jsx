@@ -375,8 +375,11 @@ function LoginScreen({ onLogin }) {
           </button>
         </Card>
 
-        <div style={{ textAlign:"center", marginTop:20, color:"#475569", fontSize:11 }}>
-          Jika terlupa PIN, hubungi Weelee
+        <div style={{ textAlign:"center", marginTop:20, color:"#e10707", fontSize:13 }}>
+          Jika terlupa PIN, hubungi IT.
+          AMARAN, UNTUK KEGUNAAN PIHAK PEKERJA M GAS STEEL SDN BHD.
+          TIDAK BOLEH BERKONGSI APPLIKASI INI DENGAN PIHAK.
+          JIKA DIDAPATI SALAH GUNA, PIHAK SYARIKAT BERHAK MENGAMBIL TINDAKAN UNDANG-UNDANG TERHADAP PEKERJA BERKENAAN.
         </div>
       </div>
     </div>

@@ -1576,7 +1576,14 @@ function parseSales(wb, XLSX) {
     if (row.every(v => String(v).trim() === "")) continue;
 
     const docNo    = String(row[SC.docNo]    || "").trim() || lastDocNo;
-    const date     = String(row[SC.date]     || "").trim() || lastDate;
+    let date = row[SC.date];
+    if (typeof date === "number") {
+      const d = new Date(Math.round((date - 25569) * 86400 * 1000));
+      date = `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}/${d.getUTCFullYear()}`;
+    } else {
+      date = String(date || "").trim();
+    }
+    date = date || lastDate;
     const customer = String(row[SC.customer] || "").trim() || lastCustomer;
     if (docNo)    lastDocNo    = docNo;
     if (date)     lastDate     = date;

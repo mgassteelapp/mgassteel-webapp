@@ -1559,7 +1559,7 @@ function parseBenchmark(wb, XLSX) {
 }
 
 // ── Sales xlsx column indices — update here if export format changes ──────────
-const SC = { date:0, docNo:2, customer:4, itemCode:3, desc2:5, qty:6, unitPrice:8, agent:10 };
+ const SC = { date:0, docNo:2, customer:4, itemCode:3, desc2:5, qty:6, unitPrice:8, agent:10, docRef:11 };
 
 // ── Skip / hardware-later code lists ─────────────────────────────────────────
 const SKIP_CODES  = new Set(["TC","S CUT","S CUT +M","S LASER CUT +M","S FABRICATION","RTN5CENTS"]);
@@ -1594,8 +1594,9 @@ function parseSales(wb, XLSX) {
     const qty       = parseFloat(String(row[SC.qty]       || "").replace(/[^\d.]/g,"")) || 0;
     const unitPrice = parseFloat(String(row[SC.unitPrice] || "").replace(/[^\d.]/g,"")) || 0;
     const agent     = String(row[SC.agent] || "").trim();
+    const docRef    = String(row[SC.docRef] || "").trim();
     if (!rawCode || qty === 0) continue;
-    lines.push({ docNo, date, customer, rawCode, desc2, qty, unitPrice, agent });
+    lines.push({ docNo, date, customer, rawCode, desc2, qty, unitPrice, agent, docRef });
   }
   return lines;
 }
@@ -1776,14 +1777,15 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
 
   const canSeeMargin = canSeeCostMargin(session);
   const downloadDailyCSV = () => {
-    const headers = ["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty","Harga Sebenar (RM)","Jangkaan (RM)","Status","% Beza","Agen"];
+    const headers = ["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty","Harga Sebenar (RM)","Jangkaan (RM)","Status","% Beza","Agen","Ruj. Hantar"];
     const rows = results.map(r => [
       r.docNo||"", r.date||"", r.customer||"", r.rawCode||"", r.desc2||"",
       r.qty, r.unitPrice,
       r.expectedPrice!=null ? r.expectedPrice.toFixed(2) : "",
       (STATUS_STYLE[r.status]||STATUS_STYLE.MISSING).label,
       r.expectedPrice!=null && r.expectedPrice ? (((r.unitPrice - r.expectedPrice)/r.expectedPrice)*100).toFixed(1)+"%" : "",
-      r.agent||""
+      r.agent||"",
+      r.docRef||""
     ]);
     const csv = [headers, ...rows].map(row => row.map(c => `"${(c==null?"":c).toString().replace(/"/g,'""')}"`).join(",")).join("\n");
     const a = document.createElement("a");
@@ -1878,7 +1880,7 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
               <thead>
                 <tr style={{ background:C.navy }}>
                   {["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty",
-                    "Harga Sebenar","Jangkaan","Status","% Beza","Agen"].map(h => (
+                    "Harga Sebenar","Jangkaan","Status","% Beza","Agen","Ruj. Hantar"].map(h => (
                     <th key={h} style={{ padding:"8px 10px", color:C.white, textAlign:"left",
                       fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
                   ))}
@@ -1917,12 +1919,13 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
                               : "—"}
                           </td>
                          <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.agent||"—"}</td> 
+                         <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.docRef||"—"}</td>
                     </tr>
                   );
                   if (!isExpanded) return [mainRow];
                   const expRow = (
                     <tr key={`${i}-exp`} style={{ background:"#f0f9ff" }}>
-                      <td colSpan={9} style={{ padding:"10px 16px", fontSize:11, borderBottom:`1px solid ${C.border}` }}>
+                      <td colSpan={12} style={{ padding:"10px 16px", fontSize:11, borderBottom:`1px solid ${C.border}` }}>
                         <div style={{ display:"flex", gap:24, flexWrap:"wrap" }}>
                           {r.matchedCode && <span><b>Kod padanan:</b> {r.matchedCode}</span>}
                           {r.entry?.unitType && <span><b>UNIT_TYPE:</b> {r.entry.unitType}</span>}

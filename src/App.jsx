@@ -105,7 +105,7 @@ const STAFF_PINS = [
   { name:"Han KY",            pin:"6666", role:"staff" },
   { name:"Puteri (Sup)",      pin:"7777", role:"staff" },
   { name:"Su",                pin:"8888", role:"staff" },
-  { name:"Han",               pin:"9999", role:"staff" },
+  { name:"Ken",               pin:"9999", role:"staff" },
 ];
 
 // ── Daily price check access ──────────────────────────────────────────────────
@@ -132,11 +132,37 @@ function getSession() {
     const s = localStorage.getItem(SESSION_KEY);
     if (!s) return null;
     const parsed = JSON.parse(s);
-    // Expire after 8 hours
-    if (Date.now() - parsed.loginTime > 8 * 60 * 60 * 1000) {
+    const now = Date.now();
+
+    // Rule 1: original 8-hour limit
+    if (now - parsed.loginTime > 8 * 60 * 60 * 1000) {
       localStorage.removeItem(SESSION_KEY);
       return null;
     }
+
+    // Helper: the 5:30pm boundary for a given timestamp's calendar day
+    const cutoffFor = (ts) => {
+      const d = new Date(ts);
+      d.setHours(17, 30, 0, 0); // 5:30:00.000 pm local time
+      return d.getTime();
+    };
+
+    const loginCutoff = cutoffFor(parsed.loginTime);
+
+    if (parsed.loginTime < loginCutoff) {
+      // Logged in BEFORE 5:30pm today -> force logout once 5:30pm passes
+      if (now >= loginCutoff) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+    } else {
+      // Logged in AT/AFTER 5:30pm -> cap this session at 10 minutes
+      if (now - parsed.loginTime > 5 * 60 * 1000) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+    }
+
     return parsed;
   } catch { return null; }
 }
@@ -403,6 +429,15 @@ export default function App() {
   if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
 
   const [gsStatus, setGsStatus] = useState("connecting"); // connecting | ok | error
+
+  // Auto-logout watcher: re-checks session rules every 30s
+  // (handles 5:30pm daily cutoff + 15-min cap on after-hours logins)
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (!getSession()) setSession_(null);
+    }, 30 * 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const run = async () => {

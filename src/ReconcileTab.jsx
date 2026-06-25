@@ -26,6 +26,66 @@ import { useState, useCallback } from 'react';
 // ── Constants ─────────────────────────────────────────────────────────────
 const STOCK_PATTERN = /^(C7565|C7568|C7570|C7575|C7510|MB30K|MB35K)/i;
 
+// ── Built-in monitored codes (THI + AJIYA + ASTINO) ───────────────────────
+// These are pre-loaded so the codes file upload is truly optional
+const BUILTIN_MONITORED_CODES = new Set([
+  'APRG32-THI','APRG30-THI','APRG28-THI','APRG27-THI','APRG26-THI',
+  'APCCG30-THI','APCCG28-THI','APCCC27-THI','APCCG26-THI',
+  'PUFTHI-G28-20mm','PUFTHI-G27-20mm','PUFTHI-G26-20mm',
+  'PUFTHI-G28-25mm','PUFTHI-G27-25mm','PUFTHI-G26-25mm',
+  'PUMTHI-G28-20mm','PUMTHI-G27-20mm','PUMTHI-G26-20mm',
+  'PUMTHI-G28-25mm','PUMTHI-G27-25mm','PUMTHI-G26-25mm',
+  'OPP-THI','APLG32-THI','APLG30-THI','APLG28-THI','APLG27-THI','APLG26-THI',
+  'APURG28-THI','APURG26-THI',
+  'AP188G32-THI','AP188G30-THI','AP188G28-THI','AP188G27-THI','AP188G26-THI',
+  'AP128G32-THI','AP128G30-THI','AP128G28-THI','AP128G27-THI','AP128G26-THI',
+  'C7568-THI','MB30K-THI','C7570-THI','MB35K-THI','ASFB-THI',
+  'CP163875-THI','CP1650100-THI','CP1650125-THI','CP1665150-THI',
+  'CP1675175-THI','CP1675200-THI','CP1675250-THI',
+  'CP203875-THI','CP2050100-THI','CP2050125-THI','CP2065150-THI',
+  'CP2075175-THI','CP2075200-THI','CP2075250-THI',
+  'PUMTHI-G28-20MM','PUMTHI-G27-20MM','PUMTHI-G26-20MM',
+  'PUMTHI-G28-25MM','PUMTHI-G27-25MM','PUMTHI-G26-25MM',
+  'APRG32-AJIYA','APRG30-AJIYA','APRG28-AJIYA','APRG27-AJIYA','APRG26-AJIYA',
+  'APCCG30-AJIYA','APCCG28-AJIYA','APCCC27-AJIYA','APCCG26-AJIYA',
+  'APCNYG30-AJIYA','APCNYG28-AJIYA','TS10',
+  'APLG32-AJIYA','APLG30-AJIYA','APLG28-AJIYA','APLG27-AJIYA','APLG26-AJIYA',
+  'AP188G32-AJIYA','AP188G30-AJIYA','AP188G28-AJIYA','AP188G27-AJIYA','AP188G26-AJIYA',
+  'AP128G32-AJIYA','AP128G30-AJIYA','AP128G28-AJIYA','AP128G27-AJIYA','AP128G26-AJIYA',
+  'AJETG27-AJIYA','AJETG26-AJIYA',
+  'APURG30-AJIYA','APURG28-AJIYA','APURG27-AJIYA','APURG26-AJIYA',
+  'EBCG28-AJIYA','EBCG26-AJIYA',
+  'APPUFG28-AJIYA','APPUFG27-AJIYA','APPUFG26-AJIYA',
+  'APPUMG28-AJIYA','APPUMG27-AJIYA','APPUMG26-AJIYA',
+  'APPUENDCAP-AJIYA','APUAG28-AJIYA','APUAG27-AJIYA',
+  'ACL710G26','ACLIP',
+  'C7565-ECO-AJIYA','C7565-AJIYA','C7568-AJIYA','C7570-AJIYA','C7575-AJIYA',
+  'C7510-AJIYA','MB30K-AJIYA','MB35K-AJIYA',
+  'ASTAP 51','ASAB-1.4MM','ASAB-AJIYA','ASCP-LR','ASFB-0.35MM','ASFB-0.47MM','ASFFB-SHERA',
+  'CP1650100-AJIYA','CP1650125-AJIYA','CP1665150-AJIYA',
+  'CP1675175-AJIYA','CP1675200-AJIYA','CP1675250-AJIYA',
+  'CP203875-AJIYA','CP2050100-AJIYA','CP2050125-AJIYA','CP2065150-AJIYA',
+  'CP2075175-AJIYA','CP2075200-AJIYA','CP2075250-AJIYA',
+  'CP2550100-AJIYA','CP2550125-AJIYA','CP2565150-AJIYA',
+  'CP2575175-AJIYA','CP2575200-AJIYA','CP2575250-AJIYA',
+  'C7565-BROWN','MB30K-BROWN',
+  'CP1675200-ASTINO','CP1675250-ASTINO','CP16100300-ASTINO',
+  'CP163875-TASHIN','CP1650100-TASHIN',
+  'S400','S401','S402','S403','S404','SAGROD',
+  'C7568-ASTINO','MB30K-ASTINO',
+  'APRG30-ALUZINC-0.28MM ASTINO','APRGR28-ALUZINC-0.35MM ASTINO',
+  'APRG27-ALUZINC-0.42MM ASTINO','APRG26-ALUZINC-0.48MM ASTINO',
+  'APRGR30-CAHAYAPLUS-0.30MM ASTINO','APRGR28-CAHAYAPLUS-0.35MM ASTINO',
+  'APRG27-CAHAYAPLUS-0.42MM ASTINO','APRG26-CAHAYAPLUS-0.48MM ASTINO',
+  'APRG30-CAHAYA-0.28MM ASTINO','APRGR30-CAHAYA-0.28MM ASTINO',
+  'APRG28-CAHAYA-0.33MM ASTINO','APRGR28-CAHAYA-0.35MM ASTINO',
+  'PUF20MM-G28-ALUZINC ASTINO','PUF20MM-GR28-ALUZINC ASTINO',
+  'PUF20MM-G27-ALUZINC ASTINO','PUF20MM-G26-ALUZINC ASTINO',
+  'PUF20MM-G28-CAHAYA ASTINO','PUF20MM-GR28-CAHAYA ASTINO',
+  'PUF25MM ASTINO','PUA20MM ASTINO','PUA25MM ASTINO',
+  'PUMWGC20MM ASTINO','PUMWGC25MM ASTINO','PUM20MM ASTINO','PUM25MM ASTINO',
+]);
+
 const STATUS_CFG = {
   'NO REFERENCE':        { bg:'#f3e5f5', text:'#6a0dad', label:'TIADA REF'      },
   'QTY MISMATCH':        { bg:'#fff8e1', text:'#e65100', label:'BEZA QTY'        },
@@ -382,13 +442,8 @@ export default function ReconcileTab({ session }) {
       const poRows    = parsePoFile(poWb, XLSX);
       const salesRows = parseSalesFile(salesWb, XLSX);
       const doRows    = doWb    ? parseDoFile(doWb, XLSX)         : [];
-      const monCodes  = codesWb ? parseCodesFile(codesWb, XLSX)   : new Set();
+      const monCodes  = codesWb ? parseCodesFile(codesWb, XLSX) : BUILTIN_MONITORED_CODES;
       const highCodes = highWb  ? parseCodesFile(highWb, XLSX)    : new Set();
-
-      if (monCodes.size === 0) {
-        setError('Fail kod monitored tiada atau kosong. Sila muat naik fail THI_AJIYA_ASTINO_CODE.');
-        setLoading(false); return;
-      }
 
       const res = runReconciliation(poRows, salesRows, doRows, monCodes, highCodes);
       setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length });
@@ -471,7 +526,7 @@ export default function ReconcileTab({ session }) {
         {/* Row 2: optional files */}
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:12 }}>
           <FileInput label="Fail DO History (.xlsx) — opsional" file={doFile} setFile={setDoFile} />
-          <FileInput label="Kod THI/AJIYA/ASTINO (.xlsx) — opsional" file={codesFile} setFile={setCodesFile} />
+          <FileInput label="Kod THI/AJIYA/ASTINO (.xlsx) — built-in, upload untuk kemaskini" file={codesFile} setFile={setCodesFile} />
           <FileInput label="Kod PO Tinggi/Stok (.xlsx) — opsional" file={highFile} setFile={setHighFile} />
         </div>
 

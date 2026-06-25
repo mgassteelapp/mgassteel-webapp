@@ -106,7 +106,10 @@ const SORT_ORDER = {
 // ── Helpers ────────────────────────────────────────────────────────────────
 function normRef(v) {
   let s = String(v || '').trim();
+  // Handle "IV 26061192" or "DO 26060717" (space separator)
   s = s.replace(/^(IV|CS|DO)\s+/i, (_, p) => p.toUpperCase() + '-');
+  // Handle "DO26060717" or "IV26061192" (no separator at all)
+  s = s.replace(/^(IV|CS|DO)(\d)/i, (_, p, d) => p.toUpperCase() + '-' + d);
   return s.toUpperCase();
 }
 function safeFloat(v) {
@@ -323,20 +326,29 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
       return;
     }
 
-    // ── DO- ref — match directly to specific DO number + item + desc2 + qty ──
+    // ── DO- ref — match directly to specific DO number ────────────────────
     if (rtype === 'DO') {
       const doPool = (salesByDocRef[po.docRef1N] || []);
-      // Match: same item + desc2 + qty (exact DO number already locked)
+      // Cond 1: item + desc2 size + qty
       let doMatch = doPool.find(ln =>
-        ln.itemCode === po.itemCode &&
-        desc2Match(po.desc2, ln.desc2) &&
-        ln.qty === po.qty &&
-        !ln._matched
+        ln.itemCode === po.itemCode && desc2Match(po.desc2, ln.desc2) && ln.qty === po.qty && !ln._matched
       );
-      // Fallback: same item + desc2 (qty may differ)
+      // Cond 2: item + desc2 size (qty differs)
       if (!doMatch) doMatch = doPool.find(ln =>
-        ln.itemCode === po.itemCode &&
-        desc2Match(po.desc2, ln.desc2) &&
+        ln.itemCode === po.itemCode && desc2Match(po.desc2, ln.desc2) && !ln._matched
+      );
+      // Cond 3: item + qty (no desc2 on either side)
+      if (!doMatch) doMatch = doPool.find(ln =>
+        ln.itemCode === po.itemCode && !po.desc2 && !ln.desc2 && ln.qty === po.qty && !ln._matched
+      );
+      // Cond 4: item only
+      if (!doMatch) doMatch = doPool.find(ln =>
+        ln.itemCode === po.itemCode && !po.desc2 && !ln.desc2 && !ln._matched
+      );
+      // Cond 5: item + itemDesc identical (for cut-length items like C Purlin)
+      if (!doMatch) doMatch = doPool.find(ln =>
+        ln.itemCode === po.itemCode && po.itemDesc && ln.itemDesc &&
+        po.itemDesc.trim().toUpperCase() === ln.itemDesc.trim().toUpperCase() &&
         !ln._matched
       );
       if (doMatch) {
@@ -366,13 +378,29 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
     // ── VALID IV-/CS- ref ─────────────────────────────────────────────────
     const lines = salesByDocRef[po.docRef1N];
     if (!lines) {
-      // IV not found — try DO fallback: item + desc2 + qty (strict first, then relaxed)
+      // IV not found — try DO fallback with 5 conditions
       const doPool2 = (doByItemDesc[po.itemCode] || []);
+      // Cond 1: desc2 size + qty
       let doMatch2 = doPool2.find(ln =>
         desc2Match(po.desc2, ln.desc2) && ln.qty === po.qty && !ln._matched
       );
+      // Cond 2: desc2 size only
       if (!doMatch2) doMatch2 = doPool2.find(ln =>
         desc2Match(po.desc2, ln.desc2) && !ln._matched
+      );
+      // Cond 3: qty only (no desc2)
+      if (!doMatch2) doMatch2 = doPool2.find(ln =>
+        !po.desc2 && !ln.desc2 && ln.qty === po.qty && !ln._matched
+      );
+      // Cond 4: item only (no desc2, any qty)
+      if (!doMatch2) doMatch2 = doPool2.find(ln =>
+        !po.desc2 && !ln.desc2 && !ln._matched
+      );
+      // Cond 5: itemDesc identical
+      if (!doMatch2) doMatch2 = doPool2.find(ln =>
+        po.itemDesc && ln.itemDesc &&
+        po.itemDesc.trim().toUpperCase() === ln.itemDesc.trim().toUpperCase() &&
+        !ln._matched
       );
       if (doMatch2) {
         doMatch2._matched = true;

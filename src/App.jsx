@@ -104,16 +104,20 @@ const STAFF_PINS = [
   { name:"Syafiq (Sup)",      pin:"4444", role:"staff" },
   { name:"Azhar",             pin:"5555", role:"staff" },
   { name:"Han KY",            pin:"6666", role:"staff" },
-  { name:"Puteri (Sup)",      pin:"7777", role:"staff" },
   { name:"Su",                pin:"8888", role:"staff" },
   { name:"Ken",               pin:"9999", role:"staff" },
 ];
 
 // ── Daily price check access ──────────────────────────────────────────────────
 // Edit these two lists when roles change — names must match STAFF_PINS exactly.
-const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri", "Syahlin (Acc)"];
+const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Syahlin (Acc)"];
 const COST_MARGIN_USERS = ["Fei (Accounts)"];
 
+function canAccessDaily(sess) {
+  if (!sess) return false;
+  if (sess.role === "owner") return true;
+  return DAILY_CHECK_USERS.includes(sess.name);
+}
 function canAccessReconcile(sess) {
   if (!sess) return false;
   return sess.role === 'owner' || sess.role === 'senior';

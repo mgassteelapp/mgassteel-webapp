@@ -142,6 +142,22 @@ function refType(v) {
 }
 function isStockCode(code) { return STOCK_PATTERN.test(String(code).trim()); }
 
+// ── Extract size/length from desc2, strip colour keywords ─────────────────
+// e.g. "20 KAKI WARNA MERAH" → "20 KAKI", "16' WARNA DARK RED" → "16'"
+function extractSize(desc2) {
+  if (!desc2) return '';
+  const s = String(desc2).trim().toUpperCase();
+  return s.replace(/\s*(WARNA|MATA|DARK|SKY|LIGHT|COLOUR|COLOR|MERAH|BIRU|HIJAU|HITAM|PUTIH|KUNING|BROWN|GREY|GRAY|RED|BLUE|GREEN|BLACK|WHITE|YELLOW|ALUZINK|ALUZINC|CAHAYA|PLUS)\b.*/i, '').trim();
+}
+function desc2Match(pd2, sd2) {
+  if (!pd2 && !sd2) return true;
+  if (!pd2 || !sd2) return pd2 === sd2;
+  // Exact match first
+  if (pd2 === sd2) return true;
+  // Size-only match — strip colour keywords from both sides
+  return extractSize(pd2) === extractSize(sd2) && extractSize(pd2) !== '';
+}
+
 // ── Parse Excel files ──────────────────────────────────────────────────────
 function parsePoFile(wb, XLSX) {
   const ws   = wb.Sheets[wb.SheetNames[0]];
@@ -327,7 +343,7 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
     const useDesc2 = po.desc2 && po.desc2.length > 0;
     const match = lines.find(ln =>
       ln.itemCode === po.itemCode &&
-      (!useDesc2 || ln.desc2 === po.desc2) &&
+      (!useDesc2 || desc2Match(po.desc2, ln.desc2)) &&
       !ln._matched
     );
 

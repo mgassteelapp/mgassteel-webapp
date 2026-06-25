@@ -147,69 +147,67 @@ function parsePoFile(wb, XLSX) {
   const ws   = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
   if (rows.length < 2) return [];
-  // Auto-detect format by header row
-  // 10-col old: Date|DocNo|ItemCode|Supplier|Qty|UOM|UnitPrice|Disc|SubTotal|DocRef1
-  // 12-col new: Date|DocNo|ItemCode|ItemDesc|Desc2|Supplier|Qty|UOM|UnitPrice|Disc|SubTotal|DocRef1
+  // Map by column name — works regardless of column order or count
   const hdr = rows[0].map(h => String(h || '').trim().toLowerCase());
-  const hasDesc = hdr.some(h => h.includes('desc') || h.includes('description'));
-  return rows.slice(1).map(r => {
-    if (hasDesc) {
-      // 12-col format with description columns
-      return {
-        date:      fmtDate(r[0]),
-        poNo:      cleanStr(r[1]),
-        itemCode:  cleanStr(r[2]).toUpperCase(),
-        itemDesc:  cleanStr(r[3]),
-        desc2:     cleanStr(r[4]).toUpperCase(),
-        supplier:  cleanStr(r[5]),
-        qty:       safeFloat(r[6]),
-        uom:       cleanStr(r[7]),
-        unitPrice: safeFloat(r[8]),
-        disc:      safeFloat(r[9]),
-        subTotal:  safeFloat(r[10]),
-        docRef1:   cleanStr(r[11]),
-        docRef1N:  normRef(r[11]),
-      };
-    } else {
-      // 10-col format without description columns
-      return {
-        date:      fmtDate(r[0]),
-        poNo:      cleanStr(r[1]),
-        itemCode:  cleanStr(r[2]).toUpperCase(),
-        itemDesc:  '',
-        desc2:     '',
-        supplier:  cleanStr(r[3]),
-        qty:       safeFloat(r[4]),
-        uom:       cleanStr(r[5]),
-        unitPrice: safeFloat(r[6]),
-        disc:      safeFloat(r[7]),
-        subTotal:  safeFloat(r[8]),
-        docRef1:   cleanStr(r[9]),
-        docRef1N:  normRef(r[9]),
-      };
-    }
-  }).filter(r => r.itemCode && r.qty > 0);
+  const ci  = name => hdr.findIndex(h => h.includes(name));
+  // Find key columns by name
+  const iDate    = ci('date');
+  const iDocNo   = hdr.findIndex(h => h === 'doc no' || h === 'doc_no' || h === 'docno' || h === 'po no' || h === 'po_no');
+  const iItem    = hdr.findIndex(h => h.includes('item code') || h.includes('item_code'));
+  const iDesc2   = hdr.findIndex(h => h.includes('desc2') || h === 'description 2' || h === 'description2');
+  const iItemDesc= hdr.findIndex(h => (h.includes('description') || h.includes('item desc')) && !h.includes('2'));
+  const iSupplier= hdr.findIndex(h => h.includes('company') || h.includes('supplier') || h.includes('vendor'));
+  const iQty     = hdr.findIndex(h => h === 'qty' || h === 'quantity');
+  const iDisc    = hdr.findIndex(h => h.includes('disc'));
+  const iSub     = hdr.findIndex(h => h.includes('subtotal') || h.includes('sub total'));
+  const iRef     = hdr.findIndex(h => h.includes('docref') || h.includes('doc ref') || h.includes('ref 1') || h.includes('ref1'));
+  return rows.slice(1).map(r => ({
+    date:      fmtDate(iDate    >= 0 ? r[iDate]    : r[0]),
+    poNo:      cleanStr(iDocNo  >= 0 ? r[iDocNo]   : r[1]),
+    itemCode:  cleanStr(iItem   >= 0 ? r[iItem]    : r[2]).toUpperCase(),
+    itemDesc:  cleanStr(iItemDesc >= 0 ? r[iItemDesc] : ''),
+    desc2:     cleanStr(iDesc2  >= 0 ? r[iDesc2]   : '').toUpperCase(),
+    supplier:  cleanStr(iSupplier >= 0 ? r[iSupplier] : r[3]),
+    qty:       safeFloat(iQty   >= 0 ? r[iQty]     : r[4]),
+    disc:      safeFloat(iDisc  >= 0 ? r[iDisc]    : 0),
+    subTotal:  safeFloat(iSub   >= 0 ? r[iSub]     : 0),
+    docRef1:   cleanStr(iRef    >= 0 ? r[iRef]     : r[r.length - 1]),
+    docRef1N:  normRef(iRef     >= 0 ? r[iRef]     : r[r.length - 1]),
+  })).filter(r => r.itemCode && r.qty > 0);
 }
 
 function parseSalesFile(wb, XLSX) {
   const ws   = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
   if (rows.length < 2) return [];
-  // Expected: Date | Code | Doc_No | Item_Code | Item_Desc | Desc2 | Customer | Qty | UOM | Unit_Price | SubTotal | Agent
-  return rows.slice(1).map(r => ({
-    date:     fmtDate(r[0]),
-    docNo:    cleanStr(r[2]),
-    docNoN:   normRef(r[2]),
-    itemCode: cleanStr(r[3]).toUpperCase(),
-    itemDesc: cleanStr(r[4]),
-    desc2:    cleanStr(r[5]).toUpperCase(),
-    customer: cleanStr(r[6]),
-    qty:      safeFloat(r[7]),
-    uom:      cleanStr(r[8]),
-    unitPrice:safeFloat(r[9]),
-    subTotal: safeFloat(r[10]),
-    agent:    cleanStr(r[11]),
-  })).filter(r => r.itemCode && r.qty > 0);
+  // Map by column name — robust to column order changes
+  const hdr = rows[0].map(h => String(h || '').trim().toLowerCase());
+  const iDate    = hdr.findIndex(h => h === 'date');
+  const iDocNo   = hdr.findIndex(h => h === 'doc no' || h === 'doc_no' || h === 'docno' || h.includes('invoice'));
+  const iItem    = hdr.findIndex(h => h.includes('item code') || h.includes('item_code'));
+  const iItemDesc= hdr.findIndex(h => (h.includes('item description') || h.includes('item desc')));
+  const iDesc2   = hdr.findIndex(h => h.includes('description 2') || h === 'desc2' || h === 'description2');
+  const iCust    = hdr.findIndex(h => h.includes('company') || h.includes('customer') || h.includes('client'));
+  const iQty     = hdr.findIndex(h => h === 'qty' || h === 'quantity');
+  const iPrice   = hdr.findIndex(h => h.includes('unit price') || h.includes('unitprice'));
+  const iSub     = hdr.findIndex(h => h.includes('subtotal') || h.includes('sub total'));
+  const iAgent   = hdr.findIndex(h => h === 'agent' || h.includes('salesman'));
+  return rows.slice(1).map(r => {
+    const docNo = cleanStr(iDocNo >= 0 ? r[iDocNo] : r[2]);
+    return {
+      date:     fmtDate(iDate  >= 0 ? r[iDate]  : r[0]),
+      docNo,
+      docNoN:   normRef(docNo),
+      itemCode: cleanStr(iItem  >= 0 ? r[iItem]  : r[3]).toUpperCase(),
+      itemDesc: cleanStr(iItemDesc >= 0 ? r[iItemDesc] : ''),
+      desc2:    cleanStr(iDesc2 >= 0 ? r[iDesc2] : '').toUpperCase(),
+      customer: cleanStr(iCust  >= 0 ? r[iCust]  : r[6]),
+      qty:      safeFloat(iQty  >= 0 ? r[iQty]   : r[7]),
+      unitPrice:safeFloat(iPrice >= 0 ? r[iPrice] : 0),
+      subTotal: safeFloat(iSub  >= 0 ? r[iSub]   : 0),
+      agent:    cleanStr(iAgent >= 0 ? r[iAgent]  : ''),
+    };
+  }).filter(r => r.itemCode && r.qty > 0);
 }
 
 function parseDoFile(wb, XLSX) {

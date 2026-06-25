@@ -101,10 +101,10 @@ const STAFF_PINS = [
   { name:"Izzati",            pin:"1111", role:"staff" },
   { name:"Natasha",           pin:"2222", role:"staff" },
   { name:"Mohd Iqbal",        pin:"3333", role:"staff" },
-  { name:"Syafiq (Asst Man)",  pin:"4444", role:"senior" },
+  { name:"Syafiq (Sup)",      pin:"4444", role:"staff" },
   { name:"Azhar",             pin:"5555", role:"staff" },
   { name:"Han KY",            pin:"6666", role:"staff" },
-  { name:"Puteri",            pin:"7777", role:"staff" },
+  { name:"Puteri (Sup)",      pin:"7777", role:"staff" },
   { name:"Su",                pin:"8888", role:"staff" },
   { name:"Ken",               pin:"9999", role:"staff" },
 ];

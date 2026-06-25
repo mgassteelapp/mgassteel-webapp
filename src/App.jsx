@@ -114,10 +114,9 @@ const STAFF_PINS = [
 const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Puteri", "Syahlin (Acc)"];
 const COST_MARGIN_USERS = ["Fei (Accounts)"];
 
-function canAccessDaily(sess) {
+function canAccessReconcile(sess) {
   if (!sess) return false;
-  if (sess.role === "owner") return true;
-  return DAILY_CHECK_USERS.includes(sess.name);
+  return sess.role === 'owner' || sess.role === 'senior';
 }
 function canSeeCostMargin(sess) {
   if (!sess) return false;

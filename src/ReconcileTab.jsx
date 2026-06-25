@@ -154,7 +154,7 @@ function parsePoFile(wb, XLSX) {
   const iDate    = ci('date');
   const iDocNo   = hdr.findIndex(h => h === 'doc no' || h === 'doc_no' || h === 'docno' || h === 'po no' || h === 'po_no');
   const iItem    = hdr.findIndex(h => h.includes('item code') || h.includes('item_code'));
-  const iDesc2   = hdr.findIndex(h => h.includes('desc2') || h === 'description 2' || h === 'description2');
+  const iDesc2   = hdr.findIndex(h => h.includes('description 2') || h.includes('desc2') || h === 'description2');
   const iItemDesc= hdr.findIndex(h => (h.includes('description') || h.includes('item desc')) && !h.includes('2'));
   const iSupplier= hdr.findIndex(h => h.includes('company') || h.includes('supplier') || h.includes('vendor'));
   const iQty     = hdr.findIndex(h => h === 'qty' || h === 'quantity');
@@ -186,7 +186,7 @@ function parseSalesFile(wb, XLSX) {
   const iDocNo   = hdr.findIndex(h => h === 'doc no' || h === 'doc_no' || h === 'docno' || h.includes('invoice'));
   const iItem    = hdr.findIndex(h => h.includes('item code') || h.includes('item_code'));
   const iItemDesc= hdr.findIndex(h => (h.includes('item description') || h.includes('item desc')));
-  const iDesc2   = hdr.findIndex(h => h.includes('description 2') || h === 'desc2' || h === 'description2');
+  const iDesc2   = hdr.findIndex(h => h.includes('description 2') || h.includes('desc2') || h === 'description2');
   const iCust    = hdr.findIndex(h => h.includes('company') || h.includes('customer') || h.includes('client'));
   const iQty     = hdr.findIndex(h => h === 'qty' || h === 'quantity');
   const iPrice   = hdr.findIndex(h => h.includes('unit price') || h.includes('unitprice'));

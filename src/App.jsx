@@ -139,7 +139,7 @@ function getSession() {
     const now = Date.now();
 
     // Rule 1: original 8-hour limit
-    if (now - parsed.loginTime > 8 * 60 * 60 * 1000) {
+    if (now - parsed.loginTime > 10 * 60 * 60 * 1000) {
       localStorage.removeItem(SESSION_KEY);
       return null;
     }

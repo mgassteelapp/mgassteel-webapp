@@ -357,26 +357,14 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
         });
       }
     } else {
-      // Relaxed: same item, any desc2
-      const relaxed = lines.find(ln => ln.itemCode === po.itemCode && !ln._matched);
-      if (relaxed) {
-        relaxed._matched = true;
-        const diff = Math.round((po.qty - relaxed.qty) * 10000) / 10000;
-        exceptions.push({ ...base,
-          status: diff === 0 ? 'QTY MISMATCH' : 'QTY MISMATCH',
-          customer:  relaxed.customer, agent: relaxed.agent,
-          dateSales: relaxed.date,
-          salesQty:  relaxed.qty,     qtyDiff: diff,
-        });
-      } else {
-        const first = lines[0];
-        exceptions.push({ ...base,
-          status: 'ITEM NOT ON INVOICE',
-          customer:  first?.customer || '', agent: first?.agent || '',
-          dateSales: first?.date     || '',
-          salesQty:  'Tiada',              qtyDiff: null,
-        });
-      }
+      // No exact match — flag as ITEM NOT ON INVOICE, do NOT consume other lines
+      const first = lines[0];
+      exceptions.push({ ...base,
+        status: 'ITEM NOT ON INVOICE',
+        customer:  first?.customer || '', agent: first?.agent || '',
+        dateSales: first?.date     || '',
+        salesQty:  'Tiada',              qtyDiff: null,
+      });
     }
   });
 

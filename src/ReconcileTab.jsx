@@ -323,13 +323,23 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
       return;
     }
 
-    // ── DO- ref — match directly to DO rows in sales ────────────────────
+    // ── DO- ref — match directly to specific DO number + item + desc2 + qty ──
     if (rtype === 'DO') {
-      const doLines = (salesByDocRef[po.docRef1N] || []).filter(ln =>
-        ln.itemCode === po.itemCode && desc2Match(po.desc2, ln.desc2) && !ln._matched
+      const doPool = (salesByDocRef[po.docRef1N] || []);
+      // Match: same item + desc2 + qty (exact DO number already locked)
+      let doMatch = doPool.find(ln =>
+        ln.itemCode === po.itemCode &&
+        desc2Match(po.desc2, ln.desc2) &&
+        ln.qty === po.qty &&
+        !ln._matched
       );
-      if (doLines.length > 0) {
-        const doMatch = doLines[0];
+      // Fallback: same item + desc2 (qty may differ)
+      if (!doMatch) doMatch = doPool.find(ln =>
+        ln.itemCode === po.itemCode &&
+        desc2Match(po.desc2, ln.desc2) &&
+        !ln._matched
+      );
+      if (doMatch) {
         doMatch._matched = true;
         const diff = Math.round((po.qty - doMatch.qty) * 10000) / 10000;
         const status = diff === 0 ? 'MATCHED ✓' : 'QTY MISMATCH';
@@ -344,7 +354,6 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
           note:      'Padanan via DO',
         });
       } else {
-        // DO ref but no matching DO rows in sales
         exceptions.push({ ...base,
           status: 'INVALID REF (DO-)',
           customer: '', agent: '', dateSales: '',
@@ -357,22 +366,25 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
     // ── VALID IV-/CS- ref ─────────────────────────────────────────────────
     const lines = salesByDocRef[po.docRef1N];
     if (!lines) {
-      // IV not found — try DO fallback: find DO rows with matching item+desc2
-      const doLines = (doByItemDesc[po.itemCode] || []).filter(ln =>
+      // IV not found — try DO fallback: item + desc2 + qty (strict first, then relaxed)
+      const doPool2 = (doByItemDesc[po.itemCode] || []);
+      let doMatch2 = doPool2.find(ln =>
+        desc2Match(po.desc2, ln.desc2) && ln.qty === po.qty && !ln._matched
+      );
+      if (!doMatch2) doMatch2 = doPool2.find(ln =>
         desc2Match(po.desc2, ln.desc2) && !ln._matched
       );
-      if (doLines.length > 0) {
-        const doMatch = doLines[0];
-        doMatch._matched = true;
-        const diff = Math.round((po.qty - doMatch.qty) * 10000) / 10000;
+      if (doMatch2) {
+        doMatch2._matched = true;
+        const diff = Math.round((po.qty - doMatch2.qty) * 10000) / 10000;
         const status = diff === 0 ? 'MATCHED ✓' : 'QTY MISMATCH';
         const target = status === 'MATCHED ✓' ? matchedRows : exceptions;
         target.push({ ...base,
           status,
-          customer:  doMatch.customer, agent: doMatch.agent,
-          dateSales: doMatch.date,
-          salesDoc:  doMatch.docNoN + ' (DO)',
-          salesQty:  doMatch.qty,
+          customer:  doMatch2.customer, agent: doMatch2.agent,
+          dateSales: doMatch2.date,
+          salesDoc:  doMatch2.docNoN + ' (DO)',
+          salesQty:  doMatch2.qty,
           qtyDiff:   diff === 0 ? null : diff,
           note:      'IV tidak dijumpai — padanan via DO',
         });

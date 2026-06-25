@@ -299,20 +299,23 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
     // ── BLANK ref ────────────────────────────────────────────────────────
     if (rtype === 'BLANK') {
       if (isStockCode(po.itemCode)) {
-        // Try to match by item+desc2+date in sales
+        // Try to match by item+date in sales — list each transaction separately
         const dayMatches = salesRows.filter(s =>
-          s.itemCode === po.itemCode && s.desc2 === po.desc2 && s.date === po.date
+          s.itemCode === po.itemCode && s.date === po.date
         );
         if (dayMatches.length) {
-          matchedRows.push({ ...base,
-            status: 'MATCHED ✓',
-            customer:   dayMatches[0].customer,
-            agent:      dayMatches[0].agent,
-            dateSales:  dayMatches[0].date,
-            salesDoc:   `${dayMatches.length} jualan tarikh sama`,
-            salesQty:   dayMatches.reduce((s, r) => s + r.qty, 0),
-            qtyDiff:    null,
-            note:       'Kod stok — padanan by item+tarikh',
+          // Push each sales line as a separate matched row
+          dayMatches.forEach(dm => {
+            matchedRows.push({ ...base,
+              status:    'MATCHED ✓',
+              customer:  dm.customer,
+              agent:     dm.agent,
+              dateSales: dm.date,
+              salesDoc:  dm.docNoN || dm.docNo,
+              salesQty:  dm.qty,
+              qtyDiff:   null,
+              note:      'Kod stok — padanan by item+tarikh',
+            });
           });
         } else {
           stockNoSales.push({ ...base, note: 'Pesanan stok gudang — tiada jualan pada tarikh sama' });

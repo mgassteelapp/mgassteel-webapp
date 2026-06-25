@@ -239,11 +239,18 @@ function parseCodesFile(wb, XLSX) {
 
 // ── Core reconciliation logic ──────────────────────────────────────────────
 function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCodes) {
-  // Build lookups
+  // Build lookups — separate IV/CS from DO rows
   const salesByDocRef = {};
+  const doByItemDesc  = {}; // key: itemCode||sizeKey → DO rows for fallback
   salesRows.forEach(r => {
     if (!salesByDocRef[r.docNoN]) salesByDocRef[r.docNoN] = [];
     salesByDocRef[r.docNoN].push({ ...r, _matched: false });
+    // Index DO rows by itemCode for fallback matching
+    if (r.docNoN.startsWith('DO-')) {
+      const key = r.itemCode;
+      if (!doByItemDesc[key]) doByItemDesc[key] = [];
+      doByItemDesc[key].push({ ...r, _matched: false });
+    }
   });
 
   const doCustomerMap = {};
@@ -316,26 +323,66 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
       return;
     }
 
-    // ── DO- ref ──────────────────────────────────────────────────────────
+    // ── DO- ref — match directly to DO rows in sales ────────────────────
     if (rtype === 'DO') {
-      const info = doLookup(po.docRef1N, po.itemCode, po.desc2);
-      exceptions.push({ ...base,
-        status: 'INVALID REF (DO-)',
-        customer:  info.customer || '', agent: info.agent || '',
-        dateSales: info.date    || '',
-        salesQty:  '', qtyDiff: null,
-      });
+      const doLines = (salesByDocRef[po.docRef1N] || []).filter(ln =>
+        ln.itemCode === po.itemCode && desc2Match(po.desc2, ln.desc2) && !ln._matched
+      );
+      if (doLines.length > 0) {
+        const doMatch = doLines[0];
+        doMatch._matched = true;
+        const diff = Math.round((po.qty - doMatch.qty) * 10000) / 10000;
+        const status = diff === 0 ? 'MATCHED ✓' : 'QTY MISMATCH';
+        const target = status === 'MATCHED ✓' ? matchedRows : exceptions;
+        target.push({ ...base,
+          status,
+          customer:  doMatch.customer, agent: doMatch.agent,
+          dateSales: doMatch.date,
+          salesDoc:  po.docRef1N + ' (DO)',
+          salesQty:  doMatch.qty,
+          qtyDiff:   diff === 0 ? null : diff,
+          note:      'Padanan via DO',
+        });
+      } else {
+        // DO ref but no matching DO rows in sales
+        exceptions.push({ ...base,
+          status: 'INVALID REF (DO-)',
+          customer: '', agent: '', dateSales: '',
+          salesQty: '', qtyDiff: null,
+        });
+      }
       return;
     }
 
     // ── VALID IV-/CS- ref ─────────────────────────────────────────────────
     const lines = salesByDocRef[po.docRef1N];
     if (!lines) {
-      exceptions.push({ ...base,
-        status: 'MISSING INVOICE',
-        customer: '', agent: '', dateSales: '',
-        salesQty: '', qtyDiff: null,
-      });
+      // IV not found — try DO fallback: find DO rows with matching item+desc2
+      const doLines = (doByItemDesc[po.itemCode] || []).filter(ln =>
+        desc2Match(po.desc2, ln.desc2) && !ln._matched
+      );
+      if (doLines.length > 0) {
+        const doMatch = doLines[0];
+        doMatch._matched = true;
+        const diff = Math.round((po.qty - doMatch.qty) * 10000) / 10000;
+        const status = diff === 0 ? 'MATCHED ✓' : 'QTY MISMATCH';
+        const target = status === 'MATCHED ✓' ? matchedRows : exceptions;
+        target.push({ ...base,
+          status,
+          customer:  doMatch.customer, agent: doMatch.agent,
+          dateSales: doMatch.date,
+          salesDoc:  doMatch.docNoN + ' (DO)',
+          salesQty:  doMatch.qty,
+          qtyDiff:   diff === 0 ? null : diff,
+          note:      'IV tidak dijumpai — padanan via DO',
+        });
+      } else {
+        exceptions.push({ ...base,
+          status: 'MISSING INVOICE',
+          customer: '', agent: '', dateSales: '',
+          salesQty: '', qtyDiff: null,
+        });
+      }
       return;
     }
 

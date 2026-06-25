@@ -104,7 +104,7 @@ const STAFF_PINS = [
   { name:"Syafiq (Sup)",      pin:"4444", role:"staff" },
   { name:"Azhar",             pin:"5555", role:"staff" },
   { name:"Han KY",            pin:"6666", role:"staff" },
-  { name:"Su",                pin:"8888", role:"staff" },
+  { name:"Su",                pin:"8899", role:"staff" },
   { name:"Ken",               pin:"9999", role:"staff" },
 ];
 

@@ -147,22 +147,48 @@ function parsePoFile(wb, XLSX) {
   const ws   = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
   if (rows.length < 2) return [];
-  // Expected: Date | PO_No | Item_Code | Item_Desc | Desc2 | Supplier | Qty | UOM | Unit_Price | Disc | SubTotal | DocRef1
-  return rows.slice(1).map(r => ({
-    date:      fmtDate(r[0]),
-    poNo:      cleanStr(r[1]),
-    itemCode:  cleanStr(r[2]).toUpperCase(),
-    itemDesc:  cleanStr(r[3]),
-    desc2:     cleanStr(r[4]).toUpperCase(),
-    supplier:  cleanStr(r[5]),
-    qty:       safeFloat(r[6]),
-    uom:       cleanStr(r[7]),
-    unitPrice: safeFloat(r[8]),
-    disc:      safeFloat(r[9]),
-    subTotal:  safeFloat(r[10]),
-    docRef1:   cleanStr(r[11]),
-    docRef1N:  normRef(r[11]),
-  })).filter(r => r.itemCode && r.qty > 0);
+  // Auto-detect format by header row
+  // 10-col old: Date|DocNo|ItemCode|Supplier|Qty|UOM|UnitPrice|Disc|SubTotal|DocRef1
+  // 12-col new: Date|DocNo|ItemCode|ItemDesc|Desc2|Supplier|Qty|UOM|UnitPrice|Disc|SubTotal|DocRef1
+  const hdr = rows[0].map(h => String(h || '').trim().toLowerCase());
+  const hasDesc = hdr.some(h => h.includes('desc') || h.includes('description'));
+  return rows.slice(1).map(r => {
+    if (hasDesc) {
+      // 12-col format with description columns
+      return {
+        date:      fmtDate(r[0]),
+        poNo:      cleanStr(r[1]),
+        itemCode:  cleanStr(r[2]).toUpperCase(),
+        itemDesc:  cleanStr(r[3]),
+        desc2:     cleanStr(r[4]).toUpperCase(),
+        supplier:  cleanStr(r[5]),
+        qty:       safeFloat(r[6]),
+        uom:       cleanStr(r[7]),
+        unitPrice: safeFloat(r[8]),
+        disc:      safeFloat(r[9]),
+        subTotal:  safeFloat(r[10]),
+        docRef1:   cleanStr(r[11]),
+        docRef1N:  normRef(r[11]),
+      };
+    } else {
+      // 10-col format without description columns
+      return {
+        date:      fmtDate(r[0]),
+        poNo:      cleanStr(r[1]),
+        itemCode:  cleanStr(r[2]).toUpperCase(),
+        itemDesc:  '',
+        desc2:     '',
+        supplier:  cleanStr(r[3]),
+        qty:       safeFloat(r[4]),
+        uom:       cleanStr(r[5]),
+        unitPrice: safeFloat(r[6]),
+        disc:      safeFloat(r[7]),
+        subTotal:  safeFloat(r[8]),
+        docRef1:   cleanStr(r[9]),
+        docRef1N:  normRef(r[9]),
+      };
+    }
+  }).filter(r => r.itemCode && r.qty > 0);
 }
 
 function parseSalesFile(wb, XLSX) {
@@ -299,9 +325,12 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
       return;
     }
 
-    // Match by item+desc2 (unconsumed)
+    // Match by item+desc2 if desc2 available, else by item code only
+    const useDesc2 = po.desc2 && po.desc2.length > 0;
     const match = lines.find(ln =>
-      ln.itemCode === po.itemCode && ln.desc2 === po.desc2 && !ln._matched
+      ln.itemCode === po.itemCode &&
+      (!useDesc2 || ln.desc2 === po.desc2) &&
+      !ln._matched
     );
 
     if (match) {

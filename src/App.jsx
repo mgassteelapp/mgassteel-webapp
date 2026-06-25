@@ -477,6 +477,9 @@ export default function App() {
     ...(canAccessDaily(session) ? [
       { key:"daily", label:"📋 Semak Harga Harian" },
     ] : []),
+    ...(canAccessReconcile(session) ? [
+      { key:"reconcile", label:"🔍 Semak PO vs IV" },
+    ] : []),
     ...(session.role==="owner" ? [
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
@@ -528,6 +531,7 @@ export default function App() {
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
+        {tab==="reconcile" && canAccessReconcile(session) && <ReconcileTab session={session} />}
       </div>
     </div>
   );

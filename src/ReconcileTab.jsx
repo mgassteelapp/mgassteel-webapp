@@ -271,7 +271,8 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
   };
 
   const exceptions   = [];
-  const matchedRows  = [];
+  const matchedRows  = []; // matched via IV/CS
+  const matchedDoRows = []; // matched via DO
   const stockNoSales = [];
   let rowId = 0;
 
@@ -355,7 +356,7 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
         doMatch._matched = true;
         const diff = Math.round((po.qty - doMatch.qty) * 10000) / 10000;
         const status = diff === 0 ? 'MATCHED ✓' : 'QTY MISMATCH';
-        const target = status === 'MATCHED ✓' ? matchedRows : exceptions;
+        const target = status === 'MATCHED ✓' ? matchedDoRows : exceptions;
         target.push({ ...base,
           status,
           customer:  doMatch.customer, agent: doMatch.agent,
@@ -407,7 +408,8 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
         const diff = Math.round((po.qty - doMatch2.qty) * 10000) / 10000;
         const status = diff === 0 ? 'MATCHED ✓' : 'QTY MISMATCH';
         const target = status === 'MATCHED ✓' ? matchedRows : exceptions;
-        target.push({ ...base,
+        const doTarget = status === 'MATCHED ✓' ? matchedDoRows : exceptions;
+        doTarget.push({ ...base,
           status,
           customer:  doMatch2.customer, agent: doMatch2.agent,
           dateSales: doMatch2.date,
@@ -474,7 +476,7 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
   // Sort exceptions
   exceptions.sort((a, b) => (SORT_ORDER[a.status] ?? 9) - (SORT_ORDER[b.status] ?? 9));
 
-  return { exceptions, matchedRows, stockNoSales, totalMonitored: poMonitored.length };
+  return { exceptions, matchedRows, matchedDoRows, stockNoSales, totalMonitored: poMonitored.length };
 }
 
 // ── Download CSV ───────────────────────────────────────────────────────────
@@ -564,7 +566,7 @@ export default function ReconcileTab({ session }) {
       const highCodes = highWb  ? parseCodesFile(highWb, XLSX)    : new Set();
 
       const res = runReconciliation(poRows, salesRows, doRows, monCodes, highCodes);
-      setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length });
+      setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length, matchedDoRows: res.matchedDoRows });
     } catch (e) {
       setError('Ralat semasa memproses: ' + e.message);
     }
@@ -586,8 +588,9 @@ export default function ReconcileTab({ session }) {
 
   // Filter exceptions
   const exc = results?.exceptions || [];
-  const matchedList = results?.matchedRows || [];
-  const stockList   = results?.stockNoSales || [];
+  const matchedList   = results?.matchedRows || [];
+  const matchedDoList = results?.matchedDoRows || [];
+  const stockList     = results?.stockNoSales || [];
 
   const filteredExc = exc.filter(r => {
     if (filterStatus !== 'ALL' && r.status !== filterStatus) return false;
@@ -701,7 +704,11 @@ export default function ReconcileTab({ session }) {
             ) : null)}
             <span style={{ marginLeft:'auto', background:'#dcfce7', color:'#166534',
                            padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:700 }}>
-              ✓ Sepadan: {matchedList.length}
+              ✓ Sepadan IV: {matchedList.length}
+            </span>
+            <span style={{ background:'#e8f5e9', color:'#2e7d32',
+                           padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:700 }}>
+              ✓ Sepadan DO: {matchedDoList.length}
             </span>
             <span style={{ background:'#e3f2fd', color:'#1565c0',
                            padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:700 }}>
@@ -715,9 +722,10 @@ export default function ReconcileTab({ session }) {
       {results && (
         <div style={{ display:'flex', gap:4, marginBottom:10 }}>
           {[
-            ['exceptions', `⚠️ Pengecualian (${exc.length})`],
-            ['matched',    `✅ Sepadan (${matchedList.length})`],
-            ['stock',      `📦 Stok Gudang (${stockList.length})`],
+            ['exceptions',  `⚠️ Pengecualian (${exc.length})`],
+            ['matched',     `✅ Sepadan IV (${matchedList.length})`],
+            ['matcheddo',   `🚚 Sepadan DO (${matchedDoList.length})`],
+            ['stock',       `📦 Stok Gudang (${stockList.length})`],
           ].map(([key, label]) => (
             <button key={key} onClick={() => setActiveTab(key)}
               style={{ padding:'7px 14px', border:'none', borderRadius:'7px 7px 0 0',
@@ -902,6 +910,70 @@ export default function ReconcileTab({ session }) {
                                  fontStyle:'italic' }}>{r.note||''}</td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── DO Matched tab ── */}
+      {results && activeTab === 'matcheddo' && (
+        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
+                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+          <div style={{ padding:'10px 14px', background:'#e8f5e9', borderBottom:`1px solid ${C.border}`,
+                        fontSize:11, color:'#2e7d32', fontWeight:600 }}>
+            🚚 Padanan melalui Delivery Order — PO yang IV-nya tidak dijumpai tetapi DO sepadan.
+          </div>
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+              <thead>
+                <tr style={{ background:'#2e7d32' }}>
+                  {['Status','Kod Item','Desc 2','Pembekal','Pelanggan','Agen','Tarikh PO',
+                    'Tarikh DO','No PO','No Dok DO','Qty PO','Qty DO','Beza','Nota'].map(h => (
+                    <th key={h} style={{ padding:'8px 9px', color:C.white, textAlign:'left',
+                                         fontWeight:600, whiteSpace:'nowrap', fontSize:10 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {matchedDoList.length === 0 ? (
+                  <tr><td colSpan={14} style={{ padding:32, textAlign:'center', color:C.muted }}>
+                    Tiada padanan DO.
+                  </td></tr>
+                ) : matchedDoList.map((r, i) => {
+                  const ss = STATUS_CFG[r.status] || STATUS_CFG['MATCHED ✓'];
+                  return (
+                    <tr key={r.id} style={{ background: i%2===0 ? C.white : C.gray,
+                                            borderBottom:`1px solid ${C.border}` }}>
+                      <td style={{ padding:'7px 9px' }}>
+                        <span style={{ background:ss.text, color:'#fff', padding:'2px 7px',
+                                       borderRadius:4, fontSize:10, fontWeight:700 }}>{ss.label}</span>
+                      </td>
+                      <td style={{ padding:'7px 9px', fontWeight:700, fontFamily:'monospace',
+                                   fontSize:11, whiteSpace:'nowrap' }}>{r.itemCode}</td>
+                      <td style={{ padding:'7px 9px', fontSize:10, color:C.muted }}>{r.desc2||'—'}</td>
+                      <td style={{ padding:'7px 9px' }}>{r.supplier}</td>
+                      <td style={{ padding:'7px 9px' }}>{r.customer||'—'}</td>
+                      <td style={{ padding:'7px 9px' }}>{r.agent||'—'}</td>
+                      <td style={{ padding:'7px 9px', whiteSpace:'nowrap', fontSize:10 }}>{r.datePO}</td>
+                      <td style={{ padding:'7px 9px', whiteSpace:'nowrap', fontSize:10,
+                                   color:C.muted }}>{r.dateSales||'—'}</td>
+                      <td style={{ padding:'7px 9px', fontFamily:'monospace', fontSize:10 }}>{r.poNo}</td>
+                      <td style={{ padding:'7px 9px', fontFamily:'monospace', fontSize:10 }}>{r.salesDoc}</td>
+                      <td style={{ padding:'7px 9px', textAlign:'right', fontWeight:700,
+                                   fontFamily:'monospace' }}>{r.poQty}</td>
+                      <td style={{ padding:'7px 9px', textAlign:'right', fontFamily:'monospace',
+                                   color:'#2e7d32', fontWeight:700 }}>{r.salesQty||'—'}</td>
+                      <td style={{ padding:'7px 9px', textAlign:'right' }}>
+                        {r.qtyDiff != null && r.qtyDiff !== 0 ? (
+                          <b style={{ color:C.red }}>{r.qtyDiff > 0 ? '+' : ''}{r.qtyDiff}</b>
+                        ) : '—'}
+                      </td>
+                      <td style={{ padding:'7px 9px', fontSize:10, color:'#2e7d32',
+                                   fontStyle:'italic' }}>{r.note||''}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

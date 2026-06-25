@@ -298,29 +298,11 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
 
     // ── BLANK ref ────────────────────────────────────────────────────────
     if (rtype === 'BLANK') {
-      if (isStockCode(po.itemCode)) {
-        // Try to match by item+date in sales — list each transaction separately
-        const dayMatches = salesRows.filter(s =>
-          s.itemCode === po.itemCode && s.date === po.date
-        );
-        if (dayMatches.length) {
-          // Push each sales line as a separate matched row
-          dayMatches.forEach(dm => {
-            matchedRows.push({ ...base,
-              status:    'MATCHED ✓',
-              customer:  dm.customer,
-              agent:     dm.agent,
-              dateSales: dm.date,
-              salesDoc:  dm.docNoN || dm.docNo,
-              salesQty:  dm.qty,
-              qtyDiff:   null,
-              note:      'Kod stok — padanan by item+tarikh',
-            });
-          });
-        } else {
-          stockNoSales.push({ ...base, note: 'Pesanan stok gudang — tiada jualan pada tarikh sama' });
-        }
+      if (po.qty >= 200) {
+        // High qty warehouse stock order — go to Stok Gudang
+        stockNoSales.push({ ...base, note: 'Pesanan stok gudang (qty ≥ 200)' });
       } else {
+        // Low qty blank ref — flag as NO REFERENCE for investigation
         exceptions.push({ ...base,
           status: 'NO REFERENCE',
           customer: '', agent: '', dateSales: '',

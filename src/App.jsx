@@ -443,7 +443,7 @@ export default function App() {
   const [scenarios, setScenarios] = useState([]);
   const [dcResults, setDcResults] = useState([]);
   const [dcRan,     setDcRan]     = useState(false);
-  const [loading,   setLoading]   = useState(true);
+  const [loading,   setLoading]   = useState(false);
 
   // Show login if no session
   if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
@@ -460,19 +460,32 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Load cached data immediately for instant display
+    try {
+      const cp = localStorage.getItem("mgas_prices");
+      const cd = localStorage.getItem("mgas_deals");
+      const cs = localStorage.getItem("mgas_scenarios");
+      if (cp) { const p = JSON.parse(cp); if (p.length > 0) setPrices(p); }
+      if (cd) setDeals(JSON.parse(cd));
+      if (cs) setScenarios(JSON.parse(cs));
+    } catch {}
+
+    // Then refresh from Google Sheets in background
     const run = async () => {
       try {
         const [d,p,s] = await Promise.all([loadDeals(), loadPrices(), loadScenarios()]);
         setDeals(d); setScenarios(s);
         if (p && p.length > 0 && p[0].retailPrice !== undefined) {
           setPrices(p); setGsStatus("ok");
+          localStorage.setItem("mgas_prices", JSON.stringify(p));
         } else {
           setGsStatus("error");
         }
+        localStorage.setItem("mgas_deals", JSON.stringify(d));
+        localStorage.setItem("mgas_scenarios", JSON.stringify(s));
       } catch(e) {
         setGsStatus("error");
       }
-      setLoading(false);
     };
     run();
   }, []);
@@ -481,11 +494,7 @@ export default function App() {
   const persistPrices    = p => { setPrices(p);    savePrices(p); };     // local backup
   const persistScenarios = s => { setScenarios(s); saveScenarios(s); };  // local backup
 
-  if (loading) return (
-    <div style={{ minHeight:"100vh", background:C.navy, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ color:C.white, fontSize:18 }}>Memuatkan...</div>
-    </div>
-  );
+
   const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
     ...((session.role==="owner" || session.role==="senior") ? [

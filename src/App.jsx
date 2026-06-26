@@ -339,11 +339,12 @@ function getRulesAnswer(text, prices=[], scenarios=[]) {
 // LOGIN SCREEN
 // ════════════════════════════════════════════════════════════════════════════
 function LoginScreen({ onLogin }) {
-  const [selected, setSelected] = useState("");
-  const [pin,      setPin]      = useState("");
-  const [err,      setErr]      = useState("");
-  const [attempts, setAttempts] = useState(0);
-  const [locked,   setLocked]   = useState(false);
+  const [selected,    setSelected]    = useState("");
+  const [pin,         setPin]         = useState("");
+  const [err,         setErr]         = useState("");
+  const [attempts,    setAttempts]    = useState(0);
+  const [locked,      setLocked]      = useState(false);
+  const [acknowledged,setAcknowledged]= useState(false);
 
   const tryLogin = async () => {
     if (locked) return;
@@ -399,17 +400,31 @@ function LoginScreen({ onLogin }) {
 
           {err && <div style={{ background:C.redLight, color:C.red, borderRadius:8, padding:"8px 12px", fontSize:12, fontWeight:600, marginBottom:12, textAlign:"center" }}>{err}</div>}
 
-          <button onClick={tryLogin} disabled={locked||!selected||!pin}
-            style={{ width:"100%", padding:"13px", background:locked||!selected||!pin?C.muted:C.navy, color:C.white, border:"none", borderRadius:10, fontWeight:700, fontSize:15, cursor:locked||!selected||!pin?"not-allowed":"pointer" }}>
+          {/* Warning + Acknowledgement */}
+          <div style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"10px 12px", marginBottom:12, fontSize:10, color:"#7f1d1d", lineHeight:1.6 }}>
+            <div style={{ fontWeight:700, fontSize:11, marginBottom:6, color:"#991b1b" }}>⚠️ AMARAN KERAS — SILA BACA SEBELUM LOG MASUK</div>
+            <div>Aplikasi ini adalah hak milik eksklusif <b>M Gas Steel Sdn Bhd (201201027022)</b> dan adalah SULIT. Sebarang penggunaan tanpa kebenaran atau perkongsian maklumat adalah <b>DILARANG SAMA SEKALI</b>.</div>
+            <div style={{ marginTop:4 }}>Pekerja yang melanggar akan <b>DITAMATKAN PERKHIDMATAN SERTA-MERTA</b> dan boleh didakwa di bawah:</div>
+            <div style={{ marginTop:4 }}>① Akta Perlindungan Data Peribadi 2010 (PDPA)</div>
+            <div>② Akta Rahsia Dagangan 2000</div>
+            <div>③ Akta Komunikasi dan Multimedia 1998</div>
+            <div style={{ marginTop:6, display:"flex", alignItems:"flex-start", gap:8 }}>
+              <input type="checkbox" id="ack-checkbox" checked={acknowledged} onChange={e=>setAcknowledged(e.target.checked)}
+                style={{ marginTop:2, cursor:"pointer", width:14, height:14, flexShrink:0 }} />
+              <label htmlFor="ack-checkbox" style={{ cursor:"pointer", fontWeight:700, color:"#991b1b" }}>
+                Saya faham dan bersetuju mematuhi semua syarat di atas sebelum menggunakan aplikasi ini.
+              </label>
+            </div>
+          </div>
+
+          <button onClick={tryLogin} disabled={locked||!selected||!pin||!acknowledged}
+            style={{ width:"100%", padding:"13px", background:locked||!selected||!pin||!acknowledged?C.muted:C.navy, color:C.white, border:"none", borderRadius:10, fontWeight:700, fontSize:15, cursor:locked||!selected||!pin||!acknowledged?"not-allowed":"pointer" }}>
             {locked ? "🔒 Dikunci" : "Masuk →"}
           </button>
         </Card>
 
         <div style={{ textAlign:"center", marginTop:20, color:"#e10707", fontSize:13 }}>
           Jika terlupa PIN, hubungi IT.
-          AMARAN, UNTUK KEGUNAAN PIHAK PEKERJA M GAS STEEL SDN BHD.
-          TIDAK BOLEH BERKONGSI APPLIKASI INI DENGAN PIHAK LUAR.
-          JIKA DIDAPATI SALAH GUNA, PIHAK SYARIKAT BERHAK MENGAMBIL TINDAKAN UNDANG-UNDANG TERHADAP PEKERJA BERKENAAN.
         </div>
       </div>
     </div>

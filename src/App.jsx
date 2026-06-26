@@ -1841,7 +1841,7 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
     <div>
       {/* Upload */}
       <Card style={{ padding:"14px 16px", marginBottom:12 }}>
-        <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:12 }}>📋 Semak Harga Harian</div>
+        <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:12 }}>📋 Check Daily Sales Price</div>
         <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
           <div style={{ flex:1, minWidth:200 }}>
             <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Fail Jualan (.xlsx)</label>

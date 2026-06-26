@@ -479,10 +479,10 @@ export default function App() {
     { key:"scenarios", label:"🧠 Senario AI" },
     { key:"summary",   label:"📊 Ringkasan" },
     ...(canAccessDaily(session) ? [
-      { key:"daily", label:"📋 Semak Harga Harian" },
+      { key:"daily", label:"📋 Check Daily Sales Price" },
     ] : []),
     ...(canAccessReconcile(session) ? [
-      { key:"reconcile", label:"🔍 Semak PO vs IV" },
+      { key:"reconcile", label:"🔍 Check Daily Purchase Order" },
     ] : []),
     ...(session.role==="owner" ? [
       { key:"activity", label:"📊 Aktiviti" },

@@ -572,7 +572,7 @@ export default function ReconcileTab({ session }) {
       const salesRows = parseSalesFile(salesWb, XLSX);
       const doRows    = doWb    ? parseDoFile(doWb, XLSX)         : [];
       const monCodes  = codesWb ? parseCodesFile(codesWb, XLSX) : BUILTIN_MONITORED_CODES;
-      const highCodes = highWb  ? parseCodesFile(highWb, XLSX)    : new Set();
+      const highCodes = new Set(); // High PO file removed from UI
 
       const res = runReconciliation(poRows, salesRows, doRows, monCodes, highCodes);
       setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length, matchedDoRows: res.matchedDoRows });
@@ -649,15 +649,15 @@ export default function ReconcileTab({ session }) {
 
         {/* Row 1: required files */}
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:10 }}>
-          <FileInput label="Fail Sejarah PO (.xlsx)" file={poFile} setFile={setPoFile} required />
-          <FileInput label="Fail Sejarah Jualan (.xlsx)" file={salesFile} setFile={setSalesFile} required />
+          <FileInput label="Senarai PO Harian (.xlsx)" file={poFile} setFile={setPoFile} required />
+          <FileInput label="Senarai Jualan Harian (.xlsx)" file={salesFile} setFile={setSalesFile} required />
         </div>
 
         {/* Row 2: optional files */}
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:12 }}>
           <FileInput label="Fail DO History (.xlsx) — opsional" file={doFile} setFile={setDoFile} />
           <FileInput label="Kod THI/AJIYA/ASTINO (.xlsx) — built-in, upload untuk kemaskini" file={codesFile} setFile={setCodesFile} />
-          <FileInput label="Kod PO Tinggi/Stok (.xlsx) — opsional" file={highFile} setFile={setHighFile} />
+
         </div>
 
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
@@ -773,8 +773,8 @@ export default function ReconcileTab({ session }) {
           </div>
 
           {/* Table */}
-          <div style={{ overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+          <div>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:10, tableLayout:'fixed' }}>
               <thead>
                 <tr style={{ background:C.navy }}>
                   {['Status','Kod Item','Desc 2','Pembekal','Pelanggan','Agen',

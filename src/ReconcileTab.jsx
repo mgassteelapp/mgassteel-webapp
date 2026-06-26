@@ -95,12 +95,13 @@ const STATUS_CFG = {
   'ITEM NOT ON INVOICE': { bg:'#fff3e0', text:'#d35400', label:'ITEM TIADA DLM IV' },
   'STOCK — NO SALES':    { bg:'#e3f2fd', text:'#1565c0', label:'STOK — TIADA JUALAN' },
   'MATCHED ✓':           { bg:'#f0fdf4', text:'#166534', label:'SEPADAN ✓'      },
+  'UNKNOWN REF':         { bg:'#f5f3ff', text:'#5b21b6', label:'REF TIDAK DIKENALI' },
 };
 
 const SORT_ORDER = {
   'NO REFERENCE': 0, 'QTY MISMATCH': 1, 'HIGH PO — VERIFY': 2,
   'INVALID REF (DO-)': 3, 'MISSING INVOICE': 4, 'ITEM NOT ON INVOICE': 5,
-  'STOCK — NO SALES': 6, 'MATCHED ✓': 7,
+  'STOCK — NO SALES': 6, 'MATCHED ✓': 7, 'UNKNOWN REF': 2,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -364,6 +365,16 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
           salesQty: '', qtyDiff: null,
         });
       }
+      return;
+    }
+
+    // ── OTHER ref (not IV/CS/DO/blank) ─────────────────────────────────────
+    if (rtype === 'OTHER') {
+      exceptions.push({ ...base,
+        status: 'UNKNOWN REF',
+        customer: '', agent: '', dateSales: '',
+        salesQty: '', qtyDiff: null,
+      });
       return;
     }
 

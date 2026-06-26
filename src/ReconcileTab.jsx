@@ -640,7 +640,7 @@ export default function ReconcileTab({ session }) {
       <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
                     boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 }}>
         <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:4 }}>
-          🔍 Semak PO vs Invois / Jualan Tunai
+          🔍 Check Daily Purchase Order Against Cash Sales / Invoice / Delivery Order
         </div>
         <div style={{ fontSize:11, color:C.muted, marginBottom:14 }}>
           Muat naik fail dari SQL Accounting untuk semak PO berbanding rekod jualan.
@@ -656,7 +656,7 @@ export default function ReconcileTab({ session }) {
         {/* Row 2: optional files */}
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:12 }}>
           <FileInput label="Fail DO History (.xlsx) — opsional" file={doFile} setFile={setDoFile} />
-          <FileInput label="Kod THI/AJIYA/ASTINO (.xlsx) — built-in, upload untuk kemaskini" file={codesFile} setFile={setCodesFile} />
+          <FileInput label="Kod THI/AJIYA/ASTINO (.xlsx) — built-in, upload untuk kemaskini (opsional)" file={codesFile} setFile={setCodesFile} />
 
         </div>
 

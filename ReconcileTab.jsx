@@ -145,20 +145,30 @@ function refType(v) {
 }
 function isStockCode(code) { return STOCK_PATTERN.test(String(code).trim()); }
 
-// ── Extract size/length from desc2, strip colour keywords ─────────────────
-// e.g. "20 KAKI WARNA MERAH" → "20 KAKI", "16' WARNA DARK RED" → "16'"
-function extractSize(desc2) {
+// ── Normalise desc2: keep colour but fix formatting inconsistencies ──────────
+// e.g. "20 KAKI WARNA MERAH" vs "20 KAKI" → match (PO has colour, sales doesn't)
+//      "16' WARNA DARK RED"  vs "16' WARNA DARK GREY" → no match (different colour)
+//      "13 KAKI RED"         vs "13KAKI - RED"         → match (spacing/dash diff)
+function normaliseDesc2(desc2) {
   if (!desc2) return '';
-  const s = String(desc2).trim().toUpperCase();
-  return s.replace(/\s*(WARNA|MATA|DARK|SKY|LIGHT|COLOUR|COLOR|MERAH|BIRU|HIJAU|HITAM|PUTIH|KUNING|BROWN|GREY|GRAY|RED|BLUE|GREEN|BLACK|WHITE|YELLOW|ALUZINK|ALUZINC|CAHAYA|PLUS)\b.*/i, '').trim();
+  let s = String(desc2).trim().toUpperCase();
+  s = s.replace(/\bWARNA\b\s*/g, '');           // strip Malay "WARNA" prefix
+  s = s.replace(/(\d)(KAKI|FEET|FOOT|METER|METRE|MM|CM)/g, '$1 $2'); // add space before unit
+  s = s.replace(/(\d)\s*M\b(?!M)/g, '$1 M');   // normalise metres
+  s = s.replace(/\s*-\s*/g, ' ');               // remove dash separators
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
 }
 function desc2Match(pd2, sd2) {
   if (!pd2 && !sd2) return true;
   if (!pd2 || !sd2) return pd2 === sd2;
-  // Exact match first
   if (pd2 === sd2) return true;
-  // Size-only match — strip colour keywords from both sides
-  return extractSize(pd2) === extractSize(sd2) && extractSize(pd2) !== '';
+  const pn = normaliseDesc2(pd2);
+  const sn = normaliseDesc2(sd2);
+  if (pn === sn) return true;
+  // If one is a prefix of the other — sales may omit colour but size matches
+  if (pn.startsWith(sn) || sn.startsWith(pn)) return true;
+  return false;
 }
 
 // ── Parse Excel files ──────────────────────────────────────────────────────

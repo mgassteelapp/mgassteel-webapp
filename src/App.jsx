@@ -369,8 +369,9 @@ function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:C.navy, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div style={{ width:"100%", maxWidth:380 }}>
+    <div style={{ minHeight:"100vh", background:C.navy, display:"flex", alignItems:"center", justifyContent:"center", padding:20, position:"relative", overflow:"hidden" }}>
+      <img src="/logo.png" alt="" style={{position:"absolute", opacity:0.06, width:"70%", maxWidth:500, top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none", filter:"invert(1) brightness(2)"}} />
+      <div style={{ width:"100%", maxWidth:380, position:"relative", zIndex:1 }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ color:C.white, fontWeight:800, fontSize:26, letterSpacing:1, marginBottom:4 }}>M GAS STEEL SDN BHD</div>
@@ -510,6 +511,7 @@ export default function App() {
       <div style={{ background:C.navy }}>
         <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 0" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+            <img src="/logo.png" alt="mGas" style={{height:38, filter:"invert(1) brightness(2)", opacity:0.9}} />
             <div style={{ color:C.white, fontWeight:800, fontSize:30, letterSpacing:0.5 }}>M GAS STEEL SDN BHD</div>
             <div style={{ color:"#94a3b8", fontSize:15, letterSpacing:1  }}>SISTEM KEPUTUSAN HARGA</div>
             <div style={{ marginLeft:"auto", display:"flex", gap:6, alignItems:"center" }}>

@@ -93,8 +93,8 @@ const OWNER_PIN  = "1234";
 // Format: { name, pin, role }
 // Change any PIN by editing the number here, then re-upload to GitHub
 const STAFF_PINS = [
-  { name:"Weelee (Owner)",    pin:"1234", role:"owner" },
-  { name:"Miss Looi (Owner)", pin:"1235", role:"owner" },
+  { name:"Weelee (Admin)",    pin:"1234", role:"owner" },
+  { name:"Looi (HQ)", pin:"1235", role:"owner" },
   { name:"Fei (Accounts)",    pin:"1236", role:"senior" },
   { name:"Mira (Purchase)",   pin:"1237", role:"senior" },
   { name:"Syahlin (Acc)",     pin:"1238", role:"senior" },
@@ -200,7 +200,7 @@ const CATEGORIES = ["Pipe","Hollow Section","Angle Bar","Plate","Round Bar","She
 const GRADES     = ["MS","SS304","SS316","GI","Galvanised","Other"];
 const UNITS      = ["length","kg","meter","sheet","pc"];
 const REASONS    = ["Bundle / Kuantiti Tinggi","Rosak - Stainless Steel Kemek","Rosak - Mild Steel Kemek/Berkarat","Penghantaran Salah","Gantian Stok Tiada","Potong Saiz / Kerja Tambah Nilai","Pelanggan Setia","Lain-lain"];
-const STAFF_LIST = ["Izzati","Natasha","Mohd Iqbal","Syafiq","Azhar","Han KY","Puteri","Su","Weelee (Owner)","Miss Looi (Owner)","Fei (Accounts)","Mira (Purchase)"];
+const STAFF_LIST = ["Izzati","Natasha","Mohd Iqbal","Syafiq","Azhar","Han KY","Puteri","Su","Weelee (Admin)","Looi (HQ)","Fei (Accounts)","Mira (Purchase)"];
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };

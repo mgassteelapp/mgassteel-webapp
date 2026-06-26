@@ -448,6 +448,11 @@ export default function App() {
   // Show login if no session
   if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
 
+  // Prevent white flash on mount
+  if (typeof window !== 'undefined' && !document.body.style.background) {
+    document.body.style.background = '#f0f4f8';
+  }
+
   const [gsStatus, setGsStatus] = useState("connecting"); // connecting | ok | error
 
   // Auto-logout watcher: re-checks session rules every 30s

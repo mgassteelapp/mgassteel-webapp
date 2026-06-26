@@ -9,7 +9,7 @@ const GS_URL = "https://script.google.com/macros/s/AKfycbxjLViTqSYjHwWIZbgGMoE0p
 async function gsGet(action) {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
     const res  = await fetch(`${GS_URL}?action=${action}`, { signal: controller.signal });
     clearTimeout(timeout);
     const data = await res.json();

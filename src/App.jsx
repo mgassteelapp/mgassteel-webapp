@@ -516,7 +516,7 @@ export default function App() {
                 padding:"8px 13px", border:"none", cursor:"pointer", borderRadius:"8px 8px 0 0",
                 fontWeight:600, fontSize:12, transition:"all 0.15s",
                 background: tab===t.key?"#f0f4f8":"transparent",
-                color: t.key==="reconcile" ? (tab===t.key?"#b91c1c":"#ef4444") : tab===t.key?C.navy:"#94a3b8",
+                color: t.key==="reconcile" ? "#ef4444" : tab===t.key?C.navy:"#94a3b8",
               }}>{t.label}</button>
             ))}
             <button onClick={async()=>{ await logActivity(session,"Logout",""); clearSession(); setSession_(null); }}

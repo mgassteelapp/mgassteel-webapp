@@ -199,7 +199,7 @@ async function logActivity(staff, action, detail="") {
 const CATEGORIES = ["Pipe","Hollow Section","Angle Bar","Plate","Round Bar","Sheet","Prezinc","Stainless Steel","Other"];
 const GRADES     = ["MS","SS304","SS316","GI","Galvanised","Other"];
 const UNITS      = ["length","kg","meter","sheet","pc"];
-const REASONS    = ["Bundle / Kuantiti Tinggi","Rosak - Stainless Steel Kemek","Rosak - Mild Steel Kemek/Berkarat","Penghantaran Salah","Gantian Stok Tiada","Potong Saiz / Kerja Tambah Nilai","Pelanggan Setia","Lain-lain"];
+const REASONS    = ["Hollow / Black Pipe - Kemek (Forklift)","Hollow / Black Pipe - Kemek (Kepala / Bekas Kayu)","Hollow / Black Pipe - Karat","Besi Belok","Salah Hantar","Angle Kemek","Lain-lain"];
 const STAFF_LIST = ["Izzati","Natasha","Mohd Iqbal","Syafiq","Azhar","Han KY","Puteri","Su","Weelee (Admin)","Looi (HQ)","Fei (Accounts)","Mira (Purchase)"];
 
 // ── Colours ───────────────────────────────────────────────────────────────────

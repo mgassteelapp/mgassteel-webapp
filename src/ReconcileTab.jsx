@@ -96,7 +96,6 @@ const STATUS_CFG = {
   'STOCK — NO SALES':    { bg:'#e3f2fd', text:'#1565c0', label:'STOK — TIADA JUALAN' },
   'MATCHED ✓':           { bg:'#f0fdf4', text:'#166534', label:'SEPADAN ✓'      },
   'UNKNOWN REF':         { bg:'#f5f3ff', text:'#5b21b6', label:'REF TIDAK DIKENALI' },
-  'PRIORITY CHECK':      { bg:'#fff1f2', text:'#be123c', label:'⚠️ SEMAK KEUTAMAAN'  },
 };
 
 const SORT_ORDER = {
@@ -282,7 +281,6 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
   const matchedRows  = []; // matched via IV/CS
   const matchedDoRows = []; // matched via DO
   const stockNoSales = [];
-  const priorityRows  = []; // multiple POs referencing same IV/CS/DO
   let rowId = 0;
 
   // Filter to monitored codes only
@@ -304,14 +302,6 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
       poQty:     po.qty,
       salesDoc:  rtype === 'BLANK' ? '(kosong)' : po.docRef1,
     };
-
-    // ── Priority check — tag rows where ref has 2+ PO numbers ─────────────
-    if (priorityRefs.has(po.docRef1N)) {
-      priorityRows.push({ ...base,
-        status: 'PRIORITY CHECK',
-        note: `${refToPOs[po.docRef1N].size} PO merujuk ${po.docRef1N}`,
-      });
-    }
 
     // ── BLANK ref ────────────────────────────────────────────────────────
     if (rtype === 'BLANK') {
@@ -487,11 +477,11 @@ function runReconciliation(poRows, salesRows, doRows, monitoredCodes, highPoCode
   // Sort exceptions
   exceptions.sort((a, b) => (SORT_ORDER[a.status] ?? 9) - (SORT_ORDER[b.status] ?? 9));
 
-  return { exceptions, matchedRows, matchedDoRows, stockNoSales, priorityRows, totalMonitored: poMonitored.length };
+  return { exceptions, matchedRows, matchedDoRows, stockNoSales, totalMonitored: poMonitored.length };
 }
 
 // ── Download CSV ───────────────────────────────────────────────────────────
-function buildCSV(exceptions, matchedRows, matchedDoRows, stockNoSales, priorityRows, userName, reportDate) {
+function buildCSV(exceptions, matchedRows, matchedDoRows, stockNoSales, userName, reportDate) {
   const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
   const now  = new Date().toLocaleString('en-MY');
   let csv    = `"M Gas Steel Sdn Bhd — Laporan Penyesuaian PO vs IV"\n`;
@@ -523,12 +513,6 @@ function buildCSV(exceptions, matchedRows, matchedDoRows, stockNoSales, priority
     csv += [r.status||'MATCHED ✓', r.itemCode, r.desc2||'', r.supplier, r.customer||'', r.agent||'',
             r.datePO, r.dateSales||'', r.poNo, r.salesDoc,
             r.poQty, r.salesQty||'', r.note||''].map(esc).join(',') + '\n';
-  });
-
-  csv += '\n"=== SEMAK KEUTAMAAN ==="\n';
-  csv += ['"No PO"','"Kod Item"','"Desc2"','"Pembekal"','"Tarikh PO"','"No Dok Rujukan"','"Qty PO"','"Nota"'].join(',') + '\n';
-  priorityRows.forEach(r => {
-    csv += [r.poNo, r.itemCode, r.desc2||'', r.supplier, r.datePO, r.docRef1N, r.poQty, r.note||''].map(esc).join(',') + '\n';
   });
 
   csv += '\n"=== PESANAN STOK GUDANG ==="\n';
@@ -591,7 +575,7 @@ export default function ReconcileTab({ session }) {
       const highCodes = new Set(); // High PO file removed from UI
 
       const res = runReconciliation(poRows, salesRows, doRows, monCodes, highCodes);
-      setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length, matchedDoRows: res.matchedDoRows, priorityRows: res.priorityRows });
+      setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length, matchedDoRows: res.matchedDoRows });
     } catch (e) {
       setError('Ralat semasa memproses: ' + e.message);
     }
@@ -604,7 +588,7 @@ export default function ReconcileTab({ session }) {
     const user  = session?.name || 'Unknown';
     const slug  = user.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
     const stamp = new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').slice(0,12);
-    const csv   = buildCSV(results.exceptions, results.matchedRows, results.matchedDoRows || [], results.stockNoSales, results.priorityRows || [], user, today);
+    const csv   = buildCSV(results.exceptions, results.matchedRows, results.matchedDoRows || [], results.stockNoSales, user, today);
     const a     = document.createElement('a');
     a.href      = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     a.download  = `MGS_Reconcile_${stamp}_${slug}.csv`;
@@ -612,11 +596,10 @@ export default function ReconcileTab({ session }) {
   };
 
   // Filter exceptions
-  const exc           = results?.exceptions   || [];
-  const matchedList   = results?.matchedRows  || [];
+  const exc = results?.exceptions || [];
+  const matchedList   = results?.matchedRows || [];
   const matchedDoList = results?.matchedDoRows || [];
-  const stockList     = results?.stockNoSales  || [];
-  const priorityList  = results?.priorityRows  || [];
+  const stockList     = results?.stockNoSales || [];
 
   const filteredExc = exc.filter(r => {
     if (filterStatus !== 'ALL' && r.status !== filterStatus) return false;
@@ -736,12 +719,6 @@ export default function ReconcileTab({ session }) {
                            padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:700 }}>
               ✓ Sepadan DO: {matchedDoList.length}
             </span>
-            {priorityList.length > 0 && (
-              <span style={{ background:'#fff1f2', color:'#be123c',
-                             padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:700 }}>
-                🔴 Semak Keutamaan: {priorityList.length}
-              </span>
-            )}
             <span style={{ background:'#e3f2fd', color:'#1565c0',
                            padding:'4px 12px', borderRadius:20, fontSize:11, fontWeight:700 }}>
               📦 Stok: {stockList.length}
@@ -758,7 +735,6 @@ export default function ReconcileTab({ session }) {
             ['matched',     `✅ Sepadan IV (${matchedList.length})`],
             ['matcheddo',   `🚚 Sepadan DO (${matchedDoList.length})`],
             ['stock',       `📦 Stok Gudang (${stockList.length})`],
-            ['priority',    `🔴 Semak Keutamaan (${priorityList.length})`],
           ].map(([key, label]) => (
             <button key={key} onClick={() => setActiveTab(key)}
               style={{ padding:'7px 14px', border:'none', borderRadius:'7px 7px 0 0',
@@ -1007,61 +983,6 @@ export default function ReconcileTab({ session }) {
                     </tr>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── Priority Check tab ── */}
-      {results && activeTab === 'priority' && (
-        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
-          <div style={{ padding:'10px 14px', background:'#fff1f2', borderBottom:`1px solid #fecdd3`,
-                        fontSize:11, color:'#be123c', fontWeight:600 }}>
-            🔴 Semak Keutamaan — Invois / CS / DO yang dirujuk oleh 2 atau lebih nombor PO berbeza. Sila sahkan dengan pihak jualan.
-          </div>
-          <div style={{ overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
-              <thead>
-                <tr style={{ background:'#be123c' }}>
-                  {['No PO','Kod Item','Desc 2','Pembekal','Tarikh PO','No Dok Rujukan','Qty PO','Nota'].map(h => (
-                    <th key={h} style={{ padding:'8px 9px', color:C.white, textAlign:'left',
-                                         fontWeight:600, whiteSpace:'nowrap', fontSize:10 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {priorityList.length === 0 ? (
-                  <tr><td colSpan={8} style={{ padding:32, textAlign:'center', color:C.muted }}>
-                    Tiada isu keutamaan dijumpai.
-                  </td></tr>
-                ) : (() => {
-                  // Group by docRef for visual separation
-                  const groups = {};
-                  priorityList.forEach(r => {
-                    if (!groups[r.docRef1N]) groups[r.docRef1N] = [];
-                    groups[r.docRef1N].push(r);
-                  });
-                  return Object.entries(groups).flatMap(([ref, rows], gi) =>
-                    rows.map((r, i) => (
-                      <tr key={r.id} style={{
-                        background: i === 0 && gi > 0 ? '#fff1f2' : i%2===0 ? C.white : C.gray,
-                        borderTop: i === 0 && gi > 0 ? '2px solid #fecdd3' : undefined,
-                        borderBottom:`1px solid ${C.border}`
-                      }}>
-                        <td style={{ padding:'7px 9px', fontFamily:'monospace', fontSize:10, fontWeight:700 }}>{r.poNo}</td>
-                        <td style={{ padding:'7px 9px', fontWeight:700, fontFamily:'monospace', fontSize:11 }}>{r.itemCode}</td>
-                        <td style={{ padding:'7px 9px', fontSize:10, color:C.muted }}>{r.desc2||'—'}</td>
-                        <td style={{ padding:'7px 9px' }}>{r.supplier}</td>
-                        <td style={{ padding:'7px 9px', fontSize:10 }}>{r.datePO}</td>
-                        <td style={{ padding:'7px 9px', fontFamily:'monospace', fontSize:10, color:'#be123c', fontWeight:700 }}>{r.docRef1N}</td>
-                        <td style={{ padding:'7px 9px', textAlign:'right', fontWeight:700 }}>{r.poQty}</td>
-                        <td style={{ padding:'7px 9px', fontSize:10, color:'#be123c', fontStyle:'italic' }}>{r.note}</td>
-                      </tr>
-                    ))
-                  );
-                })()}
               </tbody>
             </table>
           </div>

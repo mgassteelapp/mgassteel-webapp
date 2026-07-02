@@ -445,6 +445,7 @@ export default function App() {
   const [prices,    setPrices]    = useState([]);
   const [scenarios, setScenarios] = useState([]);
   const [dcResults, setDcResults] = useState([]);
+  const [rcResults, setRcResults] = useState(null);
   const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(false);
 
@@ -569,7 +570,11 @@ export default function App() {
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
-        {tab==="reconcile" && canAccessReconcile(session) && <ReconcileTab session={session} />}
+        {canAccessReconcile(session) && (
+              <div style={{ display: tab==="reconcile" ? "block" : "none" }}>
+                <ReconcileTab session={session} results={rcResults} setResults={setRcResults} />
+              </div>
+            )}
       </div>
     </div>
   );

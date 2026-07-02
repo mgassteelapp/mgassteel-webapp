@@ -527,7 +527,7 @@ function buildCSV(exceptions, matchedRows, matchedDoRows, stockNoSales, userName
 // ════════════════════════════════════════════════════════════════════════════
 // COMPONENT
 // ════════════════════════════════════════════════════════════════════════════
-export default function ReconcileTab({ session }) {
+export default function ReconcileTab({ session, results, setResults }) {
   const [poFile,      setPoFile]      = useState(null);
   const [salesFile,   setSalesFile]   = useState(null);
   const [doFile,      setDoFile]      = useState(null);
@@ -536,7 +536,6 @@ export default function ReconcileTab({ session }) {
 
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState('');
-  const [results,     setResults]     = useState(null);
   const [activeTab,   setActiveTab]   = useState('exceptions');
   const [filterStatus,setFilterStatus]= useState('ALL');
   const [search,      setSearch]      = useState('');

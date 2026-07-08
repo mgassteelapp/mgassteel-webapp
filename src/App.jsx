@@ -4,7 +4,7 @@ import ReconcileTab from './ReconcileTab';
 
 
 // ── Google Sheets API ─────────────────────────────────────────────────────────
-const GS_URL = "https://script.google.com/macros/s/AKfycbxjLViTqSYjHwWIZbgGMoE0pPmO1zIQZ-Fa_ZjgtMHnrLu67V5Xl-txXSe72mOuOtjU/exec";
+const GS_URL = "https://script.google.com/macros/s/AKfycbwPmMDlupOcw_Rx5J56-xKd6xC_M69sqZJZnXKDh0a9B5jd9us-MYAPLlM9qQMhN2Ed/exec";
 
 async function gsGet(action) {
   try {

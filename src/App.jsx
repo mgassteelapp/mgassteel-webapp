@@ -448,19 +448,9 @@ export default function App() {
   const [rcResults, setRcResults] = useState(null);
   const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(false);
-
-  // Show login if no session
-  if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
-
-  // Prevent white flash on mount
-  if (typeof window !== 'undefined' && !document.body.style.background) {
-    document.body.style.background = '#f0f4f8';
-  }
-
-  const [gsStatus, setGsStatus] = useState("connecting"); // connecting | ok | error
+  const [gsStatus,  setGsStatus]  = useState("connecting"); // connecting | ok | error
 
   // Auto-logout watcher: re-checks session rules every 30s
-  // (handles 5:30pm daily cutoff + 15-min cap on after-hours logins)
   useEffect(() => {
     const t = setInterval(() => {
       if (!getSession()) setSession_(null);
@@ -498,6 +488,13 @@ export default function App() {
     };
     run();
   }, []);
+
+  // Show login if no session (AFTER all hooks — required by React)
+  if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
+
+  if (typeof window !== 'undefined' && !document.body.style.background) {
+    document.body.style.background = '#f0f4f8';
+  }
 
   const persistDeals     = d => { setDeals(d);     saveDeals(d); };      // local backup
   const persistPrices    = p => { setPrices(p);    savePrices(p); };     // local backup

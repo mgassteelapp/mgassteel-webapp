@@ -503,6 +503,7 @@ export default function App() {
 
   const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
+    { key:"plate", label:"📐 Kira Plat" },
     ...((session.role==="owner" || session.role==="senior") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
@@ -560,6 +561,7 @@ export default function App() {
       </div>
       <div style={{ maxWidth: tab==="daily" || tab==="reconcile" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
+        {tab==="plate" && <PlateCalculator />}
         {tab==="prices"    && (session.role==="owner"||session.role==="senior") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}

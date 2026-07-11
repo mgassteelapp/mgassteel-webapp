@@ -1,6 +1,7 @@
 // MGasSteel App v3.1
 import { useState, useEffect, useRef } from 'react';
 import ReconcileTab from './ReconcileTab';
+import PlateCalculator from './PlateCalculator';
 
 
 // ── Google Sheets API ─────────────────────────────────────────────────────────

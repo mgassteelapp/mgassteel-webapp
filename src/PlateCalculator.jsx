@@ -1,11 +1,384 @@
 import React, { useState, useMemo } from "react";
 
-// ── M Gas Steel — Loose Plate Cutting Calculator ─────────────────
-// Solves: "Is my stock sheet enough for N pieces of size W×L?"
-// Strategy: shelf-first (use up odd offcuts before cutting fresh sheets),
-// rotation allowed, kerf-aware. Guillotine-free simple grid nest for
-// a fast, honest yield estimate + a visual layout.
+// ── M Gas Steel — Service Center ─────────────────────────────────
+// Hub for engineering-service calculators. Sub-tabs:
+//   • Kira Plat            (plate cutting — built)
+//   • Kiraan Plat Lipat    (bending — placeholder)
+//   • Kiraan Kimpalan      (welding — placeholder)
+//   • Kiraan Gulung Plat   (rolling — placeholder)
+//   • Kiraan Paut Paip     (pipe/hollow welding — placeholder)
 
+const SUB_TABS = [
+  { key: "cut",   icon: "📐", label: "Kira Plat" },
+  { key: "bend",  icon: "📏", label: "Plat Lipat" },
+  { key: "weld",  icon: "🔥", label: "Kimpalan" },
+  { key: "roll",  icon: "🌀", label: "Gulung Plat" },
+  { key: "pipe",  icon: "🔗", label: "Paut Paip" },
+];
+
+export default function PlateCalculator() {
+  const [sub, setSub] = useState("cut");
+
+  return (
+    <div style={SC.page}>
+      <style>{`
+        .sc-subbar { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:18px; }
+        .sc-subbtn { padding:9px 15px; border:none; border-radius:8px; cursor:pointer;
+          font-size:13px; font-weight:600; font-family:inherit; transition:all .15s;
+          display:flex; align-items:center; gap:6px; }
+      `}</style>
+
+      <div style={SC.header}>
+        <div style={SC.kicker}>M GAS STEEL · SERVICE CENTER</div>
+        <h1 style={SC.h1}>Pusat Kiraan Servis</h1>
+        <p style={SC.sub}>Pilih jenis kiraan servis kejuruteraan di bawah.</p>
+      </div>
+
+      <div className="sc-subbar">
+        {SUB_TABS.map(t => {
+          const active = sub === t.key;
+          return (
+            <button key={t.key} className="sc-subbtn"
+              onClick={() => setSub(t.key)}
+              style={{
+                background: active ? "#e8780a" : "#1e3a5f",
+                color: active ? "#fff" : "#cbd5e1",
+              }}>
+              <span>{t.icon}</span>{t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {sub === "cut"  && <PlateCutCalculator />}
+      {sub === "bend" && <BendCalculator />}
+      {sub === "weld" && <ComingSoon title="Kiraan Kimpalan"
+        desc="Kira kos kerja kimpalan." />}
+      {sub === "roll" && <ComingSoon title="Kiraan Gulung Plat"
+        desc="Kira kos gulung/roll plat." />}
+      {sub === "pipe" && <ComingSoon title="Kiraan Paut Paip / Hollow"
+        desc="Kira kos paut/kimpal paip atau hollow section." />}
+    </div>
+  );
+}
+
+// Placeholder shown for calculators not yet built.
+function ComingSoon({ title, desc }) {
+  return (
+    <div style={SC.soon}>
+      <div style={SC.soonIcon}>🚧</div>
+      <div style={SC.soonTitle}>{title}</div>
+      <div style={SC.soonDesc}>{desc}</div>
+      <div style={SC.soonBadge}>Akan datang</div>
+    </div>
+  );
+}
+
+const SC = {
+  page: { padding: 0, color: "#1e293b", fontFamily: "'Segoe UI', system-ui, sans-serif" },
+  header: { marginBottom: 14 },
+  kicker: { fontSize: 10, letterSpacing: 2, color: "#e8780a", fontWeight: 700 },
+  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 800, letterSpacing: -0.4, color: "#0f2744" },
+  sub: { color: "#64748b", fontSize: 13, margin: 0 },
+  soon: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14,
+    padding: "48px 24px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  soonIcon: { fontSize: 42, marginBottom: 12 },
+  soonTitle: { fontSize: 18, fontWeight: 800, color: "#0f2744", marginBottom: 6 },
+  soonDesc: { fontSize: 13, color: "#64748b", maxWidth: 380, margin: "0 auto 16px", lineHeight: 1.5 },
+  soonBadge: { display: "inline-block", background: "#fef3e2", color: "#e8780a",
+    border: "1px solid #fcd5a0", borderRadius: 20, padding: "5px 16px", fontSize: 12, fontWeight: 700 },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// KIRAAN PLAT LIPAT (bending) — feasibility + cost
+// ══════════════════════════════════════════════════════════════════
+// Feasibility: user keys in real machine limit points (bend length →
+// max thickness). We interpolate between them to get the max thickness
+// allowed at any length, and hard-cap at the largest thickness point.
+// Cost: RM per bend × thickness factor × length factor × no. of bends.
+// All numbers editable.
+
+// Default limit points (from Wylee's two known limits). Length in mm, thk in mm.
+// User adds/edits these to match the real press brake.
+const DEFAULT_LIMITS = [
+  { lenMm: 203,  maxThk: 4.5 },  // 8 inch
+  { lenMm: 2438, maxThk: 2.3 },  // 8 ft
+];
+
+// Interpolate max allowable thickness for a given bend length using the
+// user's limit points. Linear between points; flat beyond the ends.
+function maxThkForLength(lenMm, limits) {
+  const pts = [...limits]
+    .filter(p => p.lenMm > 0 && p.maxThk > 0)
+    .sort((a, b) => a.lenMm - b.lenMm);
+  if (pts.length === 0) return null;
+  if (lenMm <= pts[0].lenMm) return pts[0].maxThk;          // shorter than shortest → its cap
+  if (lenMm >= pts[pts.length - 1].lenMm) return pts[pts.length - 1].maxThk; // longer → tightest cap
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    if (lenMm >= a.lenMm && lenMm <= b.lenMm) {
+      const f = (lenMm - a.lenMm) / (b.lenMm - a.lenMm);
+      return a.maxThk + f * (b.maxThk - a.maxThk);
+    }
+  }
+  return pts[pts.length - 1].maxThk;
+}
+
+// Longest bendable length for a given thickness (inverse lookup, for the
+// "too thick" suggestion). Returns mm or null.
+function maxLengthForThk(thk, limits) {
+  const pts = [...limits]
+    .filter(p => p.lenMm > 0 && p.maxThk > 0)
+    .sort((a, b) => a.lenMm - b.lenMm); // ascending length → descending thk
+  if (pts.length === 0) return null;
+  if (thk <= pts[pts.length - 1].maxThk) return pts[pts.length - 1].lenMm; // thin → full length
+  if (thk > pts[0].maxThk) return 0; // thicker than absolute cap → impossible
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1]; // a.thk > b.thk
+    if (thk <= a.maxThk && thk >= b.maxThk) {
+      const f = (a.maxThk - thk) / (a.maxThk - b.maxThk);
+      return a.lenMm + f * (b.lenMm - a.lenMm);
+    }
+  }
+  return pts[0].lenMm;
+}
+
+const MM_PER_FT = 304.8;
+
+export function BendCalculator() {
+  const [thk, setThk]       = useState(2.0);   // plate thickness mm
+  const [lenMm, setLenMm]   = useState(2438);  // bend length mm
+  const [bends, setBends]   = useState(2);     // number of bends
+  const [limits, setLimits] = useState(DEFAULT_LIMITS);
+  const [showSet, setShowSet] = useState(false);
+
+  // Editable cost rates (placeholders — Wylee sets real numbers)
+  const [baseRate, setBaseRate] = useState(15);    // RM per bend (base)
+  const [thkFactor, setThkFactor] = useState(8);   // extra RM per mm thickness, per bend
+  const [lenFactor, setLenFactor] = useState(3);   // extra RM per ft length, per bend
+
+  const addLimit = () => setLimits([...limits, { lenMm: 1219, maxThk: 3.0 }]);
+  const updLimit = (i, k, v) =>
+    setLimits(limits.map((p, j) => (j === i ? { ...p, [k]: Number(v) || 0 } : p)));
+  const rmLimit = (i) => setLimits(limits.filter((_, j) => j !== i));
+
+  const feas = useMemo(() => {
+    const capThk = maxThkForLength(lenMm, limits);
+    if (capThk === null) return { ok: false, reason: "no-data", capThk: null };
+    const ok = thk <= capThk + 1e-9;
+    const maxLen = maxLengthForThk(thk, limits);
+    return { ok, capThk, maxLen };
+  }, [thk, lenMm, limits]);
+
+  const cost = useMemo(() => {
+    const lenFt = lenMm / MM_PER_FT;
+    // per-bend cost scales with thickness and length
+    const perBend = baseRate + thkFactor * thk + lenFactor * lenFt;
+    const total = perBend * bends;
+    return { lenFt, perBend, total };
+  }, [thk, lenMm, bends, baseRate, thkFactor, lenFactor]);
+
+  return (
+    <div style={B.page}>
+      <style>{`
+        .bend-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+        @media (min-width:720px){ .bend-grid{ grid-template-columns:minmax(280px,1fr) minmax(300px,1.1fr); } }
+      `}</style>
+
+      <div style={B.head}>
+        <h1 style={B.h1}>Kiraan Plat Lipat</h1>
+        <p style={B.sub}>Semak boleh lipat ke tak (had mesin), dan kira kos ikut bilangan lipatan.</p>
+      </div>
+
+      <div className="bend-grid">
+        {/* INPUT */}
+        <section style={B.panel}>
+          <div style={B.panelTitle}>Butiran lipatan</div>
+          <Field label="Tebal plat (mm)">
+            <input style={B.input} type="number" step="0.1" value={thk}
+              onChange={e => setThk(Number(e.target.value) || 0)} />
+          </Field>
+          <div style={B.rowBetween}>
+            <span style={B.smallLabel}>Panjang lipatan</span>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              <input style={{ ...B.input, width:90 }} type="number" value={lenMm}
+                onChange={e => setLenMm(Number(e.target.value) || 0)} />
+              <span style={B.unit}>mm</span>
+            </div>
+          </div>
+          <div style={B.ftHint}>= {(lenMm / MM_PER_FT).toFixed(1)} ft</div>
+
+          <Field label="Bilangan lipatan (bends)">
+            <input style={B.input} type="number" value={bends}
+              onChange={e => setBends(Number(e.target.value) || 0)} />
+          </Field>
+
+          <div style={B.divider} />
+          <button style={B.toggle} onClick={() => setShowSet(!showSet)}>
+            {showSet ? "▾" : "▸"} Setting had mesin & harga
+          </button>
+
+          {showSet && (
+            <div style={{ marginTop: 12 }}>
+              <div style={B.rowBetween}>
+                <span style={B.smallLabel}>Had mesin (panjang → tebal max)</span>
+                <button style={B.addBtn} onClick={addLimit}>+ Titik</button>
+              </div>
+              <div style={B.limitHint}>Masukkan had sebenar mesin. Lagi banyak titik = lagi tepat.</div>
+              {limits.map((p, i) => (
+                <div key={i} style={B.limitRow}>
+                  <input style={B.miniInput} type="number" value={p.lenMm}
+                    onChange={e => updLimit(i, "lenMm", e.target.value)} />
+                  <span style={B.unit}>mm</span>
+                  <span style={B.arrow}>→</span>
+                  <input style={B.miniInput} type="number" step="0.1" value={p.maxThk}
+                    onChange={e => updLimit(i, "maxThk", e.target.value)} />
+                  <span style={B.unit}>mm max</span>
+                  <button style={B.rmBtn} onClick={() => rmLimit(i)}>×</button>
+                </div>
+              ))}
+
+              <div style={{ ...B.smallLabel, marginTop: 14 }}>Harga (RM)</div>
+              <div style={B.rateRow}>
+                <span style={B.rateLbl}>Asas / lipatan</span>
+                <input style={B.miniInput} type="number" value={baseRate}
+                  onChange={e => setBaseRate(Number(e.target.value) || 0)} />
+              </div>
+              <div style={B.rateRow}>
+                <span style={B.rateLbl}>Tambah / mm tebal</span>
+                <input style={B.miniInput} type="number" value={thkFactor}
+                  onChange={e => setThkFactor(Number(e.target.value) || 0)} />
+              </div>
+              <div style={B.rateRow}>
+                <span style={B.rateLbl}>Tambah / ft panjang</span>
+                <input style={B.miniInput} type="number" value={lenFactor}
+                  onChange={e => setLenFactor(Number(e.target.value) || 0)} />
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* OUTPUT */}
+        <section style={B.panel}>
+          <div style={B.panelTitle}>Keputusan</div>
+
+          {/* Feasibility verdict */}
+          <div style={{
+            ...B.verdict,
+            background: feas.ok ? "#dcfce7" : "#fee2e2",
+            borderColor: feas.ok ? "#86efac" : "#fca5a5",
+          }}>
+            <div style={B.verdictIcon}>{feas.ok ? "✓" : "✕"}</div>
+            <div>
+              <div style={{ ...B.verdictMain, color: feas.ok ? "#166534" : "#991b1b" }}>
+                {feas.ok ? "Boleh lipat" : "Tak boleh — melebihi had mesin"}
+              </div>
+              <div style={B.verdictSub}>
+                {feas.capThk != null
+                  ? `Pada ${(lenMm / MM_PER_FT).toFixed(1)}ft, tebal max = ${feas.capThk.toFixed(2)}mm`
+                  : "Sila set titik had mesin dulu"}
+              </div>
+            </div>
+          </div>
+
+          {!feas.ok && feas.capThk != null && (
+            <div style={B.suggest}>
+              <b>Cadangan:</b>{" "}
+              {feas.maxLen === 0
+                ? `Tebal ${thk}mm melebihi had mutlak mesin (${limits[0]?.maxThk}mm).`
+                : `Untuk ${thk}mm, panjang max ≈ ${(feas.maxLen / MM_PER_FT).toFixed(1)}ft (${Math.round(feas.maxLen)}mm). Atau kurangkan tebal ke ${feas.capThk.toFixed(1)}mm untuk panjang ini.`}
+            </div>
+          )}
+
+          {/* Cost */}
+          <div style={B.calcBox}>
+            <div style={B.calcLine}>
+              <span style={B.calcLbl}>Kos satu lipatan</span>
+              <span style={B.calcVal}>{rm(cost.perBend)}</span>
+            </div>
+            <div style={B.calcFormula}>
+              {baseRate} + ({thkFactor}×{thk}mm) + ({lenFactor}×{cost.lenFt.toFixed(1)}ft)
+            </div>
+            <div style={B.calcLine}>
+              <span style={B.calcLbl}>Bilangan lipatan</span>
+              <span style={B.calcVal}>× {bends}</span>
+            </div>
+          </div>
+
+          <div style={B.grandBox}>
+            <div>
+              <div style={B.grandLbl}>JUMLAH KOS LIPAT</div>
+              <div style={B.grandPer}>{rm(cost.perBend)} × {bends} lipatan</div>
+            </div>
+            <div style={B.grandVal}>{rm(cost.total)}</div>
+          </div>
+
+          <div style={B.foot}>
+            Semakan had guna titik yang anda set (panjang → tebal max). Kos =
+            asas + faktor tebal + faktor panjang, darab bilangan lipatan.
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+const B = {
+  page: { padding: 0, color: "#1e293b", fontFamily: "'Segoe UI', system-ui, sans-serif" },
+  head: { marginBottom: 14 },
+  h1: { fontSize: 20, margin: "0 0 4px", fontWeight: 800, letterSpacing: -0.3, color: "#0f2744" },
+  sub: { color: "#64748b", fontSize: 13, margin: 0 },
+  panel: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  panelTitle: { fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase",
+    color: "#64748b", fontWeight: 700, marginBottom: 10 },
+  smallLabel: { fontSize: 12, color: "#64748b", marginBottom: 5 },
+  input: { width: "100%", boxSizing: "border-box", background: "#fff",
+    border: "1.5px solid #e2e8f0", borderRadius: 8, color: "#1e293b",
+    padding: "9px 11px", fontSize: 15, outline: "none", fontFamily: "inherit" },
+  unit: { fontSize: 12, color: "#94a3b8" },
+  ftHint: { fontSize: 11, color: "#94a3b8", marginTop: 4, marginBottom: 12, textAlign: "right" },
+  divider: { height: 1, background: "#e2e8f0", margin: "14px 0" },
+  rowBetween: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+  toggle: { background: "transparent", border: "none", color: "#e8780a",
+    fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 },
+  addBtn: { background: "#fef3e2", color: "#e8780a", border: "1px solid #fcd5a0",
+    borderRadius: 7, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: 600 },
+  limitHint: { fontSize: 11, color: "#94a3b8", fontStyle: "italic", margin: "4px 0 8px" },
+  limitRow: { display: "flex", alignItems: "center", gap: 5, marginBottom: 7 },
+  miniInput: { width: 70, background: "#fff", border: "1.5px solid #e2e8f0",
+    borderRadius: 6, color: "#1e293b", padding: "6px 8px", fontSize: 13, fontFamily: "inherit" },
+  arrow: { color: "#94a3b8", fontSize: 14 },
+  rmBtn: { marginLeft: "auto", background: "transparent", border: "none",
+    color: "#991b1b", fontSize: 18, cursor: "pointer", lineHeight: 1 },
+  rateRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
+  rateLbl: { fontSize: 12.5, color: "#334155" },
+  verdict: { display: "flex", gap: 12, alignItems: "center", padding: 14,
+    borderRadius: 10, border: "1px solid", marginBottom: 12 },
+  verdictIcon: { fontSize: 24, lineHeight: 1, fontWeight: 800 },
+  verdictMain: { fontSize: 16, fontWeight: 700 },
+  verdictSub: { fontSize: 12.5, color: "#64748b", marginTop: 3 },
+  suggest: { background: "#fef3e2", border: "1px solid #fcd5a0", borderRadius: 9,
+    padding: "10px 12px", fontSize: 12.5, color: "#e8780a", marginBottom: 12, lineHeight: 1.5 },
+  calcBox: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10,
+    padding: 14, marginBottom: 14 },
+  calcLine: { display: "flex", justifyContent: "space-between", alignItems: "baseline",
+    padding: "5px 0", fontSize: 14 },
+  calcLbl: { color: "#64748b" },
+  calcVal: { color: "#1e293b", fontWeight: 700, fontVariantNumeric: "tabular-nums" },
+  calcFormula: { fontSize: 11, color: "#94a3b8", fontFamily: "ui-monospace, monospace", padding: "0 0 6px" },
+  grandBox: { display: "flex", justifyContent: "space-between", alignItems: "center",
+    background: "#0f2744", border: "1px solid #0f2744", borderRadius: 12,
+    padding: "16px 18px", marginBottom: 8 },
+  grandLbl: { fontSize: 11, letterSpacing: 1.5, color: "#94a3b8", fontWeight: 700 },
+  grandPer: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
+  grandVal: { fontSize: 24, fontWeight: 900, color: "#fcd34d",
+    fontVariantNumeric: "tabular-nums", letterSpacing: -0.5 },
+  foot: { marginTop: 4, fontSize: 11.5, color: "#94a3b8", lineHeight: 1.5 },
+};
+
+
+// ── Plate cutting calculator (sub-tab: Kira Plat) ────────────────
 const STOCK_LIBRARY = [
   { id: "s1", w: 1200, l: 2400, label: "1200×2400 (4×8ft)", type: "standard" },
   { id: "s2", w: 1500, l: 3000, label: "1500×3000", type: "standard" },
@@ -110,7 +483,7 @@ function fmtArea(mm2) {
   return (mm2 / 1_000_000).toFixed(2) + " m²";
 }
 
-export default function PlateCalculator() {
+function PlateCutCalculator() {
   const [pw, setPw] = useState(150);
   const [pl, setPl] = useState(200);
   const [qty, setQty] = useState(10);
@@ -301,7 +674,6 @@ export default function PlateCalculator() {
       `}</style>
       <div style={S.wrap}>
         <header style={S.head}>
-          <div style={S.kicker}>M GAS STEEL · BENGKEL</div>
           <h1 style={S.h1}>Kira Potong Plat Lebih</h1>
           <p style={S.sub}>
             Tengok stok cukup ke tak, berapa lebih tinggga, dan cadang saiz

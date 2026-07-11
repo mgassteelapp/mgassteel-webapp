@@ -504,7 +504,7 @@ export default function App() {
 
   const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
-    { key:"plate", label:"📐 Kira Plat" },
+    { key:"plate", label:"🛠️ Service Center" },
     ...((session.role==="owner" || session.role==="senior") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),

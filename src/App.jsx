@@ -543,15 +543,19 @@ export default function App() {
               </span>
             </div>
           </div>
-          <div style={{ display:"flex", gap:2, flexWrap:"wrap", alignItems:"center" }}>
-            {TABS.map(t => (
-              <button key={t.key} onClick={()=>setTab(t.key)} style={{
-                padding:"8px 13px", border:"none", cursor:"pointer", borderRadius:"8px 8px 0 0",
-                fontWeight:600, fontSize:12, transition:"all 0.15s",
-                background: tab===t.key?"#f0f4f8":"transparent",
-                color: (t.key==="reconcile" || t.key==="daily") ? "#ef4444" : tab===t.key?C.navy:"#94a3b8",
-              }}>{t.label}</button>
-            ))}
+          <div style={{ display:"flex", gap:7, flexWrap:"wrap", alignItems:"center" }}>
+            {TABS.map(t => {
+              const isActive = tab===t.key;
+              const isAlert  = t.key==="reconcile" || t.key==="daily";
+              return (
+                <button key={t.key} onClick={()=>setTab(t.key)} style={{
+                  padding:"8px 14px", border:"none", cursor:"pointer", borderRadius:8,
+                  fontWeight:600, fontSize:12, transition:"all 0.15s",
+                  background: isActive ? C.accent : "#1e3a5f",
+                  color: isActive ? "#fff" : isAlert ? "#fca5a5" : "#cbd5e1",
+                }}>{t.label}</button>
+              );
+            })}
             <button onClick={async()=>{ await logActivity(session,"Logout",""); clearSession(); setSession_(null); }}
               style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" }}>
               {session.name.split(" ")[0]} · Keluar

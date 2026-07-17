@@ -143,50 +143,30 @@ function canSeeCostMargin(sess) {
 // Session storage key
 const SESSION_KEY = "mgas_session";
 
-function getSession() {
-  try {
-    const s = localStorage.getItem(SESSION_KEY);
-    if (!s) return null;
-    const parsed = JSON.parse(s);
-    const now = Date.now();
+function sessionExpired(session, lastActivity) {
+  if (!session?.loginTime) return false;
+  const now = Date.now();
+  const isOwner = session.role === "owner";
 
-    // Rule 1: original 8-hour limit
-    if (now - parsed.loginTime > 10 * 60 * 60 * 1000) {
-      localStorage.removeItem(SESSION_KEY);
-      return null;
-    }
+  // 15-min idle timeout
+  if (now - lastActivity > 15 * 60 * 1000) return true;
 
-    // Helper: the 5:30pm boundary for a given timestamp's calendar day
-    const cutoffFor = (ts) => {
-      const d = new Date(ts);
-      d.setHours(17, 30, 0, 0); // 5:30:00.000 pm local time
-      return d.getTime();
-    };
+  // 10-hour hard cap
+  if (now - session.loginTime > 10 * 60 * 60 * 1000) return true;
 
-    const loginCutoff = cutoffFor(parsed.loginTime);
+  const cutoff = new Date(session.loginTime);
+  cutoff.setHours(17, 30, 0, 0);
+  const cutoffMs = cutoff.getTime();
 
-    if (parsed.loginTime < loginCutoff) {
-      // Logged in BEFORE 5:30pm today -> force logout once 5:30pm passes
-      if (now >= loginCutoff) {
-        localStorage.removeItem(SESSION_KEY);
-        return null;
-      }
-    } else {
-      // Logged in AT/AFTER 5:30pm -> cap this session at 10 minutes
-      if (now - parsed.loginTime > 5 * 60 * 1000) {
-        localStorage.removeItem(SESSION_KEY);
-        return null;
-      }
-    }
-
-    return parsed;
-  } catch { return null; }
-}
-
-function setSession(staff) {
-  const session = { ...staff, loginTime: Date.now() };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  return session;
+  if (session.loginTime < cutoffMs) {
+    // logged in before 5:30pm -> out at 5:30pm
+    if (now >= cutoffMs) return true;
+  } else {
+    // after-hours: owner 30min, everyone else 5min
+    const cap = (isOwner ? 30 : 5) * 60 * 1000;
+    if (now - session.loginTime > cap) return true;
+  }
+  return false;
 }
 
 function clearSession() {
@@ -484,7 +464,10 @@ export default function App() {
         .eq('id', sbSession.user.id)
         .single();
       if (profile) {
-        setSession_({ name: profile.name, role: profile.role, email: sbSession.user.email });
+        const stored = localStorage.getItem("mgas_login_time");
+        const loginTime = stored ? Number(stored) : Date.now();
+        if (!stored) localStorage.setItem("mgas_login_time", String(loginTime));
+        setSession_({ name: profile.name, role: profile.role, email: sbSession.user.email, loginTime });
       }
     };
     restore();
@@ -526,9 +509,33 @@ export default function App() {
     };
     run();
   }, [session]);
+const lastActivityRef = useRef(Date.now());
 
+  useEffect(() => {
+    if (!session) return;
+    const bump = () => { lastActivityRef.current = Date.now(); };
+    const evts = ["mousedown","keydown","touchstart","scroll"];
+    evts.forEach(e => window.addEventListener(e, bump, { passive: true }));
+
+    const iv = setInterval(async () => {
+      if (sessionExpired(session, lastActivityRef.current)) {
+        localStorage.removeItem("mgas_login_time");
+        await supabase.auth.signOut();
+        setSession_(null);
+      }
+    }, 30 * 1000);
+
+    return () => {
+      evts.forEach(e => window.removeEventListener(e, bump));
+      clearInterval(iv);
+    };
+  }, [session]);
   // Show login if no session (AFTER all hooks — required by React)
-  if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
+  if (!session) return <LoginScreen onLogin={s => {
+  const loginTime = Date.now();
+  localStorage.setItem("mgas_login_time", String(loginTime));
+  setSession_({ ...s, loginTime });
+}} />;
 
   if (typeof window !== 'undefined' && !document.body.style.background) {
     document.body.style.background = '#f0f4f8';

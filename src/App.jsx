@@ -603,7 +603,7 @@ export default function App() {
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
-        {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
+        {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
         {canAccessReconcile(session) && (
               <div style={{ display: tab==="reconcile" ? "block" : "none" }}>
                 <ReconcileTab session={session} results={rcResults} setResults={setRcResults} />
@@ -1856,7 +1856,28 @@ const STATUS_STYLE = {
   SKIP:     { bg:"#f8fafc", text:"#94a3b8", label:"LANGKAU" },
   HARDWARE: { bg:"#f8fafc", text:"#94a3b8", label:"HARDWARE" },
 };
-function DailyCheckTab({ session, results, setResults, ran, setRan }) {
+function buildProductMapFromPrices(prices) {
+  const map = new Map();
+  prices.forEach(p => {
+    const code = String(p.itemCode || "").trim();
+    if (!code) return;
+    const bands = (p.tiers || []).map(t => ({ minQty: t.qtyMin, price: t.price }))
+      .filter(b => b.minQty > 0 && b.price > 0);
+    if (bands.length === 0) return;
+    map.set(code, {
+      bands,
+      rrp: p.listPrice || 0,
+      desc: p.product || "",
+      cost: p.cost || 0,
+      margin: 0,
+      unitType: p.unitType || "PER_PCS",
+      tabName: p.category || "ALL",
+    });
+  });
+  return map;
+}
+
+function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
   const [benchFile,   setBenchFile]   = useState(null);
   const [salesFile,   setSalesFile]   = useState(null);
   const [loading,     setLoading]     = useState(false);
@@ -1866,16 +1887,16 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
   const [expandedIdx, setExpandedIdx] = useState(null);
 
   const runCheck = async () => {
-    if (!benchFile || !salesFile) { setError("Sila muat naik kedua-dua fail terlebih dahulu."); return; }
+    if (!salesFile) { setError("Sila muat naik fail jualan terlebih dahulu."); return; }
     setLoading(true); setError(""); setResults([]); setRan(false); setExpandedIdx(null);
     try {
       const XLSX = await import("xlsx");
       const readWb = f => f.arrayBuffer().then(buf => XLSX.read(buf, { type:"array" }));
-      const [benchWb, salesWb] = await Promise.all([readWb(benchFile), readWb(salesFile)]);
+      const salesWb = await readWb(salesFile);
 
-      const { productMap } = parseBenchmark(benchWb, XLSX);
-      const sortedCodes    = buildSortedCodes(productMap);
-      const lines          = parseSales(salesWb, XLSX);
+      const productMap  = buildProductMapFromPrices(prices);
+      const sortedCodes = buildSortedCodes(productMap);
+      const lines       = parseSales(salesWb, XLSX);
       const checked        = lines.map(line => checkLine(line, productMap, sortedCodes));
       checked.sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
       setResults(checked);
@@ -1931,17 +1952,11 @@ function DailyCheckTab({ session, results, setResults, ran, setRan }) {
               style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${salesFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
             {salesFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {salesFile.name}</div>}
           </div>
-          <div style={{ flex:1, minWidth:200 }}>
-            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Senarai Induk (.xlsx)</label>
-            <input type="file" accept=".xlsx"
-              onChange={e => { setBenchFile(e.target.files[0]||null); }}
-              style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${benchFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
-            {benchFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {benchFile.name}</div>}
-          </div>
-          <button onClick={runCheck} disabled={loading||!benchFile||!salesFile} style={{
+         
+          <button onClick={runCheck} disabled={loading||!salesFile} style={{
             padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
-            background: loading||!benchFile||!salesFile ? C.muted : C.navy, color:C.white,
-            cursor: loading||!benchFile||!salesFile ? "not-allowed" : "pointer" }}>
+            background: loading||!salesFile ? C.muted : C.navy, color:C.white,
+            cursor: loading||!salesFile ? "not-allowed" : "pointer" }}>
             {loading ? "Sedang Semak..." : "▶ Jalankan Semakan"}
           </button>
         </div>

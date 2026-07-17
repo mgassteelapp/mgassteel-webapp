@@ -1,6 +1,7 @@
 // MGasSteel App v3.1
 import { useState, useEffect, useRef } from 'react';
 import ReconcileTab from './ReconcileTab';
+import { supabase } from './supabase';
 import PlateCalculator from './PlateCalculator';
 
 
@@ -32,28 +33,40 @@ async function gsPost(payload) {
 // ── Load functions (from Google Sheets, fallback to local) ────────────────────
 async function loadPrices() {
   try {
-    const r = await gsGet("getPrices");
-    if (r.success && r.prices.length > 0) return r.prices;
-  } catch {}
-  // fallback to local storage
-  try { const r = await window.storage.get("mgas_prices"); return r ? JSON.parse(r.value) : []; } catch { return []; }
+    const { data, error } = await supabase
+      .from('prices')
+      .select('*');
+    if (error) throw error;
+    return (data || []).map(r => ({
+      id: r.id,
+      category: "ALL",
+      itemCode: r.item_code,
+      product: r.product,
+      unitType: r.unit_type,
+      tiers: r.tiers || [],
+      cost: 0,
+      costFloor: 0,
+      hasPrice: r.has_price,
+      listPrice: r.list_price,
+      retailPrice: r.retail_price,
+      bulkPrice: r.bulk_price,
+      creditPrice: r.credit_price,
+    }));
+  } catch (e) {
+    return [];
+  }
+}async function loadCosts() {
+  try {
+    const { data, error } = await supabase.from('costs').select('item_code, cost');
+    if (error) throw error;
+    const map = {};
+    (data || []).forEach(r => { map[r.item_code] = r.cost; });
+    return map;
+  } catch (e) {
+    return {};
+  }
 }
 
-async function loadDeals() {
-  try {
-    const r = await gsGet("getDeals");
-    if (r.success) return r.deals;
-  } catch {}
-  try { const r = await window.storage.get("mgas_deals"); return r ? JSON.parse(r.value) : []; } catch { return []; }
-}
-
-async function loadScenarios() {
-  try {
-    const r = await gsGet("getScenarios");
-    if (r.success) return r.scenarios;
-  } catch {}
-  try { const r = await window.storage.get("mgas_scenarios"); return r ? JSON.parse(r.value) : []; } catch { return []; }
-}
 
 // ── Save functions (to Google Sheets) ────────────────────────────────────────
 async function saveDealToSheet(deal)         { return await gsPost({ action:"saveDeal",       deal }); }
@@ -96,31 +109,27 @@ const OWNER_PIN  = "1234";
 // ── Staff PINs ────────────────────────────────────────────────────────────────
 // Format: { name, pin, role }
 // Change any PIN by editing the number here, then re-upload to GitHub
-const STAFF_PINS = [
-  { name:"Weelee (Admin)",    pin:"1234", role:"owner" },
-  { name:"Looi (HQ)", pin:"1235", role:"owner" },
-  { name:"Fei (Accounts)",    pin:"1236", role:"senior" },
-  { name:"Mira (Purchase)",   pin:"1237", role:"senior" },
-  { name:"Syahlin (Acc)",     pin:"1238", role:"senior" },
-  { name:"Izzati",            pin:"1111", role:"staff" },
-  { name:"Natasha",           pin:"2222", role:"staff" },
-  { name:"Mohd Iqbal",        pin:"3333", role:"staff" },
-  { name:"Syafiq (Sup)",      pin:"4444", role:"staff" },
-  { name:"Azhar",             pin:"5555", role:"staff" },
-  { name:"Han KY",            pin:"6666", role:"staff" },
-  { name:"Su",                pin:"8899", role:"staff" },
-  { name:"Ken",               pin:"9999", role:"staff" },
+const STAFF_LOGIN = [
+  { name:"Weelee (Admin)",  email:"weelee@mgas.local" },
+  { name:"Looi (HQ)",       email:"looi@mgas.local" },
+  { name:"Fei (Accounts)",  email:"fei@mgas.local" },
+  { name:"Mira (Purchase)", email:"mira@mgas.local" },
+  { name:"Syahlin (Acc)",   email:"syahlin@mgas.local" },
+  { name:"KY Han",          email:"kyhan@mgas.local" },
+  { name:"Syafiq (Sup)",    email:"syafiq@mgas.local" },
+  { name:"Azhar",           email:"azhar@mgas.local" },
+  { name:"Su",              email:"su@mgas.local" },
+  { name:"Mohd Iqbal",      email:"iqbal@mgas.local" },
+  { name:"Natasha",         email:"natasha@mgas.local" },
+  { name:"Izzati",          email:"izzati@mgas.local" },
+  { name:"Ken",             email:"ken@mgas.local" },
 ];
 
 // ── Daily price check access ──────────────────────────────────────────────────
 // Edit these two lists when roles change — names must match STAFF_PINS exactly.
-const DAILY_CHECK_USERS = ["Fei (Accounts)", "Mira (Purchase)", "Syahlin (Acc)"];
-const COST_MARGIN_USERS = ["Fei (Accounts)"];
-
 function canAccessDaily(sess) {
   if (!sess) return false;
-  if (sess.role === "owner") return true;
-  return DAILY_CHECK_USERS.includes(sess.name);
+  return sess.role === "owner" || sess.role === "senior";
 }
 function canAccessReconcile(sess) {
   if (!sess) return false;
@@ -128,8 +137,7 @@ function canAccessReconcile(sess) {
 }
 function canSeeCostMargin(sess) {
   if (!sess) return false;
-  if (sess.role === "owner") return true;
-  return COST_MARGIN_USERS.includes(sess.name);
+  return sess.role === "owner";
 }
 
 // Session storage key
@@ -352,9 +360,16 @@ function LoginScreen({ onLogin }) {
 
   const tryLogin = async () => {
     if (locked) return;
-    const staff = STAFF_PINS.find(s => s.name === selected);
+    if (!acknowledged) { setErr("Sila baca dan memahami terma dan syarat."); return; }
+    const staff = STAFF_LOGIN.find(s => s.name === selected);
     if (!staff) { setErr("Sila pilih nama anda."); return; }
-    if (pin !== staff.pin) {
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: staff.email,
+      password: pin,
+    });
+
+    if (error) {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       setPin("");
@@ -363,13 +378,20 @@ function LoginScreen({ onLogin }) {
         setErr("Terlalu banyak cubaan. Cuba lagi dalam 5 minit.");
         setTimeout(() => { setLocked(false); setAttempts(0); setErr(""); }, 5 * 60 * 1000);
       } else {
-        setErr(`PIN salah. ${3 - newAttempts} cubaan lagi.`);
+        setErr(`Kata laluan salah. ${3 - newAttempts} cubaan lagi.`);
       }
       return;
     }
-    const session = setSession(staff);
-    await logActivity(staff, "Login", "Berjaya log masuk");
-    onLogin(session);
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, role')
+      .eq('id', data.user.id)
+      .single();
+
+    if (!profile) { setErr("Profil tidak dijumpai."); return; }
+
+    onLogin({ name: profile.name, role: profile.role, email: staff.email });
   };
 
   return (
@@ -391,15 +413,15 @@ function LoginScreen({ onLogin }) {
             <select value={selected} onChange={e=>{setSelected(e.target.value);setErr("");setPin("");}}
               style={{ width:"100%", padding:"11px 12px", borderRadius:9, border:`1.5px solid ${C.border}`, fontSize:14, background:C.white, fontFamily:"inherit" }}>
               <option value="">— Pilih nama —</option>
-              {STAFF_PINS.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+              {STAFF_LOGIN.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
             </select>
           </div>
 
-          {/* PIN input */}
+          {/* KATA LALUAN input */}
           <div style={{ marginBottom:16 }}>
-            <label style={{ display:"block", fontSize:11, fontWeight:700, color:C.muted, marginBottom:5, textTransform:"uppercase" }}>PIN</label>
+            <label style={{ display:"block", fontSize:11, fontWeight:700, color:C.muted, marginBottom:5, textTransform:"uppercase" }}>PASSWORD</label>
             <input type="password" value={pin} onChange={e=>{setPin(e.target.value);setErr("");}}
-              onKeyDown={e=>e.key==="Enter"&&tryLogin()} placeholder="Masukkan PIN" maxLength={6} disabled={locked}
+              onKeyDown={e=>e.key==="Enter"&&tryLogin()} placeholder="Password" maxLength={20} disabled={locked}
               style={{ width:"100%", padding:"11px 12px", borderRadius:9, border:`1.5px solid ${err?C.red:C.border}`, fontSize:20, textAlign:"center", letterSpacing:8, fontFamily:"inherit", background:locked?"#f8fafc":C.white }} />
           </div>
 
@@ -407,7 +429,7 @@ function LoginScreen({ onLogin }) {
 
           {/* Warning + Acknowledgement */}
           <div style={{ background:"#fff5f5", border:"1px solid #fecaca", borderRadius:8, padding:"10px 12px", marginBottom:12, fontSize:10, color:"#7f1d1d", lineHeight:1.6 }}>
-            <div style={{ fontWeight:700, fontSize:11, marginBottom:6, color:"#991b1b" }}>⚠️ AMARAN KERAS — SILA BACA SEBELUM LOG MASUK</div>
+            <div style={{ fontWeight:700, fontSize:11, marginBottom:6, color:"#991b1b" }}>⚠️ AMARAN KERAS — SILA BACA DAN MEMAHAMI TERMA DAN SYARAT</div>
             <div>Aplikasi ini adalah hak milik eksklusif <b>M Gas Steel Sdn Bhd (201201027022)</b> dan adalah SULIT. Sebarang penggunaan tanpa kebenaran atau perkongsian maklumat adalah <b>DILARANG SAMA SEKALI</b>.</div>
             <div style={{ marginTop:4 }}>Pekerja yang melanggar akan <b>DITAMATKAN PERKHIDMATAN SERTA-MERTA</b> dan boleh didakwa di bawah:</div>
             <div style={{ marginTop:4 }}>① Akta Perlindungan Data Peribadi 2010 (PDPA)</div>
@@ -440,7 +462,7 @@ function LoginScreen({ onLogin }) {
 // MAIN APP
 // ════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [session,   setSession_]  = useState(() => getSession());
+  const [session, setSession_] = useState(null);
   const [tab,       setTab]       = useState("assistant");
   const [deals,     setDeals]     = useState([]);
   const [prices,    setPrices]    = useState([]);
@@ -451,12 +473,21 @@ export default function App() {
   const [loading,   setLoading]   = useState(false);
   const [gsStatus,  setGsStatus]  = useState("connecting"); // connecting | ok | error
 
-  // Auto-logout watcher: re-checks session rules every 30s
+  // Restore Supabase session on load
   useEffect(() => {
-    const t = setInterval(() => {
-      if (!getSession()) setSession_(null);
-    }, 30 * 1000);
-    return () => clearInterval(t);
+    const restore = async () => {
+      const { data: { session: sbSession } } = await supabase.auth.getSession();
+      if (!sbSession) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, role')
+        .eq('id', sbSession.user.id)
+        .single();
+      if (profile) {
+        setSession_({ name: profile.name, role: profile.role, email: sbSession.user.email });
+      }
+    };
+    restore();
   }, []);
 
   useEffect(() => {
@@ -465,7 +496,6 @@ export default function App() {
       const cp = localStorage.getItem("mgas_prices");
       const cd = localStorage.getItem("mgas_deals");
       const cs = localStorage.getItem("mgas_scenarios");
-      if (cp) { const p = JSON.parse(cp); if (p.length > 0) setPrices(p); }
       if (cd) setDeals(JSON.parse(cd));
       if (cs) setScenarios(JSON.parse(cs));
     } catch {}
@@ -473,22 +503,29 @@ export default function App() {
     // Then refresh from Google Sheets in background
     const run = async () => {
       try {
-        const [d,p,s] = await Promise.all([loadDeals(), loadPrices(), loadScenarios()]);
-        setDeals(d); setScenarios(s);
-        if (p && p.length > 0 && p[0].retailPrice !== undefined) {
-          setPrices(p); setGsStatus("ok");
-          localStorage.setItem("mgas_prices", JSON.stringify(p));
-        } else {
-          setGsStatus("error");
+        const p = await loadPrices();
+      if (p && p.length > 0) {
+        if (session?.role === 'owner') {
+          const costMap = await loadCosts();
+          p.forEach(item => {
+            item.cost = costMap[item.itemCode] || 0;
+            item.costFloor = item.cost;
+          });
         }
-        localStorage.setItem("mgas_deals", JSON.stringify(d));
-        localStorage.setItem("mgas_scenarios", JSON.stringify(s));
+        setPrices(p); setGsStatus("ok");
+      } else {
+        setGsStatus("error");
+      }
+
+      // deals/scenarios load separately, don't block prices
+      loadDeals().then(d => { setDeals(d); localStorage.setItem("mgas_deals", JSON.stringify(d)); }).catch(()=>{});
+      loadScenarios().then(s => { setScenarios(s); localStorage.setItem("mgas_scenarios", JSON.stringify(s)); }).catch(()=>{});
       } catch(e) {
         setGsStatus("error");
       }
     };
     run();
-  }, []);
+  }, [session]);
 
   // Show login if no session (AFTER all hooks — required by React)
   if (!session) return <LoginScreen onLogin={s => setSession_(s)} />;
@@ -534,13 +571,6 @@ export default function App() {
             <div style={{ marginLeft:"auto", display:"flex", gap:6, alignItems:"center" }}>
               <span style={{ background:"rgba(255,255,255,0.1)", color:"#94a3b8", fontSize:11, padding:"3px 10px", borderRadius:20 }}>
                 {scenarios.length} senario • {prices.filter(p=>p.hasPrice||p.price>0).length} harga aktif
-              </span>
-              <span style={{
-                background: gsStatus==="ok" ? "rgba(34,197,94,0.2)" : gsStatus==="error" ? "rgba(239,68,68,0.2)" : "rgba(251,191,36,0.2)",
-                color: gsStatus==="ok" ? "#86efac" : gsStatus==="error" ? "#fca5a5" : "#fcd34d",
-                fontSize:10, padding:"3px 10px", borderRadius:20
-              }}>
-                {gsStatus==="ok" ? "☁ Google Sheets ✓" : gsStatus==="error" ? "⚠️ Tiada sambungan" : gsStatus==="connecting" ? "⏳ Menyambung..." : "💾 Data tempatan"}
               </span>
             </div>
           </div>
@@ -666,7 +696,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
           <div style={{ fontSize:12, color:C.navy, fontWeight:700 }}>Semak Harga — Cari by Kod atau Nama Produk</div>
           <span style={{ fontSize:10, fontWeight:600, color: gsStatus==="ok"?C.green:C.red }}>
-            {gsStatus==="ok"?`${prices.length} produk dari Google Sheets`:"Google Sheets tidak bersambung"}
+            {`${prices.length} produk`}
           </span>
         </div>
         <input value={codeSearch} onChange={e=>setCodeSearch(e.target.value)}
@@ -679,14 +709,14 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
               ? <div style={{ color:C.muted, fontSize:12, padding:"8px 0" }}>Tiada produk dijumpai untuk "{codeSearch}"</div>
               : (
                 <div style={{ border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
-                    {["Kod","Produk","Harga"].map(h=>(
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
+                    {["Kod","Produk","Harga", ...(session?.role==='owner' ? ["Kos"] : [])].map(h=>(
                       <div key={h} style={{ color:C.white, fontSize:10, fontWeight:700, textTransform:"uppercase" }}>{h}</div>
                     ))}
                   </div>
                   {codeResults.slice(0,15).map((p,i)=>(
                     <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); }}
-                      style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, alignItems:"center", cursor:"pointer" }}>
+                      style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
                       <div>
                         <div style={{ fontSize:12, fontWeight:700, color:C.navy }}>{p.product}</div>
@@ -695,6 +725,11 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       <div style={{ fontWeight:800, fontSize:12, color:(p.retailPrice||p.price)>0?C.accent:"#cbd5e1" }}>
                         {(p.retailPrice||p.price)>0?`RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}`:"—"}
                       </div>
+                     {session?.role==='owner' && (
+                      <div style={{ fontWeight:500, fontSize:12, color:C.navy }}>
+                        {p.cost>0 ? `RM ${fmtPrice(p.cost)}` : "—"}
+                      </div>
+                    )}
                     </div>
                   ))}
                   {codeResults.length > 10 && (
@@ -713,14 +748,17 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
           <Card style={{ marginTop:12, border:`2px solid ${C.accent}` }}>
             <div style={{ background:C.navy, padding:"10px 14px", borderRadius:"12px 12px 0 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <div>
-                <div style={{ color:C.white, fontWeight:700, fontSize:13 }}>Kalkulator — {selectedProduct.product}</div>
-                <div style={{ color:"#94a3b8", fontSize:11 }}>{selectedProduct.itemCode} | {selectedProduct.category}</div>
+                <div style={{ color:C.white, fontWeight:700, fontSize:15 }}>
+                  Kalkulator — {selectedProduct.product}
+                  {selectedProduct.listPrice > 0 && <span style={{ marginLeft:28 }}>RRP MYR {fmtPrice(selectedProduct.listPrice)}</span>}
+                </div>
+                <div style={{ color:"#94a3b8", fontSize:12 }}>{selectedProduct.itemCode} | {selectedProduct.category}</div>
               </div>
               <button onClick={()=>setSelectedProduct(null)} style={{ background:"transparent", border:"none", color:"#94a3b8", fontSize:20, cursor:"pointer" }}>×</button>
             </div>
             <div style={{ padding:16 }}>
               <div style={{ marginBottom:12 }}>
-                <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Kuantiti (pcs/length)</label>
+                <label style={{ display:"block", fontSize:12, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Kuantiti (berapa nos?)</label>
                 <input type="number" value={calcQty} onChange={e=>setCalcQty(e.target.value)} placeholder="cth. 30"
                   style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:16, fontWeight:700, fontFamily:"inherit", boxSizing:"border-box" }} />
               </div>

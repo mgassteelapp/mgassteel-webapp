@@ -1,3 +1,4 @@
+import { supabase } from './supabase';
 import React, { useState, useMemo } from "react";
 
 // ── M Gas Steel — Service Center ─────────────────────────────────
@@ -16,7 +17,7 @@ const SUB_TABS = [
   { key: "pipe",  icon: "🔗", label: "Paut Paip" },
 ];
 
-export default function PlateCalculator() {
+export default function PlateCalculator({ session }) {
   const [sub, setSub] = useState("cut");
 
   return (
@@ -51,7 +52,7 @@ export default function PlateCalculator() {
       </div>
 
       {sub === "cut"  && <PlateCutCalculator />}
-      {sub === "bend" && <BendCalculator />}
+      {sub === "bend" && <BendCalculator session={session} />}
       {sub === "weld" && <ComingSoon title="Kiraan Kimpalan"
         desc="Kira kos kerja kimpalan." />}
       {sub === "roll" && <ComingSoon title="Kiraan Gulung Plat"
@@ -145,178 +146,139 @@ function maxLengthForThk(thk, limits) {
 
 const MM_PER_FT = 304.8;
 
-export function BendCalculator() {
-  const [thk, setThk]       = useState(2.0);   // plate thickness mm
-  const [lenMm, setLenMm]   = useState(2438);  // bend length mm
-  const [bends, setBends]   = useState(2);     // number of bends
-  const [limits, setLimits] = useState(DEFAULT_LIMITS);
+const THK_BANDS = ['<1mm', '1.4-1.5mm', '2-2.3mm', '2.8-3.0mm', '4.0-4.5mm', '5-6mm'];
+const LEN_BANDS = ['<1ft', '1-2ft', '2-3ft', '3-4ft', '4-5ft', '5-6ft', '6-8ft'];
+
+export function BendCalculator({ session }) {
+  const [rates, setRates] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [thkBand, setThkBand] = useState(THK_BANDS[2]);
+  const [lenBand, setLenBand] = useState(LEN_BANDS[3]);
+  const [bends, setBends] = useState(2);
   const [showSet, setShowSet] = useState(false);
 
-  // Editable cost rates (placeholders — Wylee sets real numbers)
-  const [baseRate, setBaseRate] = useState(15);    // RM per bend (base)
-  const [thkFactor, setThkFactor] = useState(8);   // extra RM per mm thickness, per bend
-  const [lenFactor, setLenFactor] = useState(3);   // extra RM per ft length, per bend
+  const isOwner = session?.role === 'owner';
 
-  const addLimit = () => setLimits([...limits, { lenMm: 1219, maxThk: 3.0 }]);
-  const updLimit = (i, k, v) =>
-    setLimits(limits.map((p, j) => (j === i ? { ...p, [k]: Number(v) || 0 } : p)));
-  const rmLimit = (i) => setLimits(limits.filter((_, j) => j !== i));
+  React.useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from('bend_rates').select('*');
+      const map = {};
+      (data || []).forEach(r => { map[`${r.thk_band}|${r.len_band}`] = r.rate; });
+      setRates(map);
+      setLoading(false);
+    };
+    load();
+  }, []);
 
-  const feas = useMemo(() => {
-    const capThk = maxThkForLength(lenMm, limits);
-    if (capThk === null) return { ok: false, reason: "no-data", capThk: null };
-    const ok = thk <= capThk + 1e-9;
-    const maxLen = maxLengthForThk(thk, limits);
-    return { ok, capThk, maxLen };
-  }, [thk, lenMm, limits]);
+  const updRate = (t, l, v) => {
+    setRates({ ...rates, [`${t}|${l}`]: Number(v) || 0 });
+  };
 
-  const cost = useMemo(() => {
-    const lenFt = lenMm / MM_PER_FT;
-    // per-bend cost scales with thickness and length
-    const perBend = baseRate + thkFactor * thk + lenFactor * lenFt;
-    const total = perBend * bends;
-    return { lenFt, perBend, total };
-  }, [thk, lenMm, bends, baseRate, thkFactor, lenFactor]);
+  const saveRates = async () => {
+    setSaving(true);
+    const rows = [];
+    THK_BANDS.forEach(t => LEN_BANDS.forEach(l => {
+      rows.push({ thk_band: t, len_band: l, rate: rates[`${t}|${l}`] || 0 });
+    }));
+    await supabase.from('bend_rates').upsert(rows, { onConflict: 'thk_band,len_band' });
+    setSaving(false);
+  };
+
+  const perBend = rates[`${thkBand}|${lenBand}`] || 0;
+  const total = perBend * bends;
+
+  if (loading) return <div style={B.panel}>Memuatkan kadar...</div>;
 
   return (
     <div style={B.page}>
-      <style>{`
-        .bend-grid { display:grid; grid-template-columns:1fr; gap:14px; }
-        @media (min-width:720px){ .bend-grid{ grid-template-columns:minmax(280px,1fr) minmax(300px,1.1fr); } }
-      `}</style>
-
       <div style={B.head}>
         <h1 style={B.h1}>Kiraan Plat Lipat</h1>
-        <p style={B.sub}>Semak boleh lipat ke tak (had mesin), dan kira kos ikut bilangan lipatan.</p>
+        <p style={B.sub}>Pilih tebal & panjang, masukkan bilangan lipatan.</p>
       </div>
 
       <div className="bend-grid">
-        {/* INPUT */}
         <section style={B.panel}>
           <div style={B.panelTitle}>Butiran lipatan</div>
-          <Field label="Tebal plat (mm)">
-            <input style={B.input} type="number" step="0.1" value={thk}
-              onChange={e => setThk(Number(e.target.value) || 0)} />
-          </Field>
-          <div style={B.rowBetween}>
-            <span style={B.smallLabel}>Panjang lipatan</span>
-            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-              <input style={{ ...B.input, width:90 }} type="number" value={lenMm}
-                onChange={e => setLenMm(Number(e.target.value) || 0)} />
-              <span style={B.unit}>mm</span>
-            </div>
-          </div>
-          <div style={B.ftHint}>= {(lenMm / MM_PER_FT).toFixed(1)} ft</div>
 
-          <Field label="Bilangan lipatan (bends)">
+          <Field label="Tebal plat">
+            <select style={B.input} value={thkBand} onChange={e => setThkBand(e.target.value)}>
+              {THK_BANDS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
+
+          <Field label="Panjang lipatan">
+            <select style={B.input} value={lenBand} onChange={e => setLenBand(e.target.value)}>
+              {LEN_BANDS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
+
+          <Field label="Bilangan lipatan">
             <input style={B.input} type="number" value={bends}
               onChange={e => setBends(Number(e.target.value) || 0)} />
           </Field>
 
-          <div style={B.divider} />
-          <button style={B.toggle} onClick={() => setShowSet(!showSet)}>
-            {showSet ? "▾" : "▸"} Setting had mesin & harga
-          </button>
-
-          {showSet && (
-            <div style={{ marginTop: 12 }}>
-              <div style={B.rowBetween}>
-                <span style={B.smallLabel}>Had mesin (panjang → tebal max)</span>
-                <button style={B.addBtn} onClick={addLimit}>+ Titik</button>
-              </div>
-              <div style={B.limitHint}>Masukkan had sebenar mesin. Lagi banyak titik = lagi tepat.</div>
-              {limits.map((p, i) => (
-                <div key={i} style={B.limitRow}>
-                  <input style={B.miniInput} type="number" value={p.lenMm}
-                    onChange={e => updLimit(i, "lenMm", e.target.value)} />
-                  <span style={B.unit}>mm</span>
-                  <span style={B.arrow}>→</span>
-                  <input style={B.miniInput} type="number" step="0.1" value={p.maxThk}
-                    onChange={e => updLimit(i, "maxThk", e.target.value)} />
-                  <span style={B.unit}>mm max</span>
-                  <button style={B.rmBtn} onClick={() => rmLimit(i)}>×</button>
+          {isOwner && (
+            <>
+              <div style={B.divider} />
+              <button style={B.toggle} onClick={() => setShowSet(!showSet)}>
+                {showSet ? "▾" : "▸"} Setting kadar (owner sahaja)
+              </button>
+              {showSet && (
+                <div style={{ marginTop: 12, overflowX: "auto" }}>
+                  <table style={{ borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead>
+                      <tr>
+                        <th style={B.th}></th>
+                        {LEN_BANDS.map(l => <th key={l} style={B.th}>{l}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {THK_BANDS.map(t => (
+                        <tr key={t}>
+                          <td style={B.td}>{t}</td>
+                          {LEN_BANDS.map(l => (
+                            <td key={l} style={{ padding: 2 }}>
+                              <input style={B.cellInput} type="number" step="0.5"
+                                value={rates[`${t}|${l}`] ?? 0}
+                                onChange={e => updRate(t, l, e.target.value)} />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <button style={{ ...B.addBtn, marginTop: 10 }} onClick={saveRates} disabled={saving}>
+                    {saving ? "Menyimpan..." : "Simpan kadar"}
+                  </button>
                 </div>
-              ))}
-
-              <div style={{ ...B.smallLabel, marginTop: 14 }}>Harga (RM)</div>
-              <div style={B.rateRow}>
-                <span style={B.rateLbl}>Asas / lipatan</span>
-                <input style={B.miniInput} type="number" value={baseRate}
-                  onChange={e => setBaseRate(Number(e.target.value) || 0)} />
-              </div>
-              <div style={B.rateRow}>
-                <span style={B.rateLbl}>Tambah / mm tebal</span>
-                <input style={B.miniInput} type="number" value={thkFactor}
-                  onChange={e => setThkFactor(Number(e.target.value) || 0)} />
-              </div>
-              <div style={B.rateRow}>
-                <span style={B.rateLbl}>Tambah / ft panjang</span>
-                <input style={B.miniInput} type="number" value={lenFactor}
-                  onChange={e => setLenFactor(Number(e.target.value) || 0)} />
-              </div>
-            </div>
+              )}
+            </>
           )}
         </section>
 
-        {/* OUTPUT */}
         <section style={B.panel}>
           <div style={B.panelTitle}>Keputusan</div>
-
-          {/* Feasibility verdict */}
-          <div style={{
-            ...B.verdict,
-            background: feas.ok ? "#dcfce7" : "#fee2e2",
-            borderColor: feas.ok ? "#86efac" : "#fca5a5",
-          }}>
-            <div style={B.verdictIcon}>{feas.ok ? "✓" : "✕"}</div>
-            <div>
-              <div style={{ ...B.verdictMain, color: feas.ok ? "#166534" : "#991b1b" }}>
-                {feas.ok ? "Boleh lipat" : "Tak boleh — melebihi had mesin"}
-              </div>
-              <div style={B.verdictSub}>
-                {feas.capThk != null
-                  ? `Pada ${(lenMm / MM_PER_FT).toFixed(1)}ft, tebal max = ${feas.capThk.toFixed(2)}mm`
-                  : "Sila set titik had mesin dulu"}
-              </div>
-            </div>
-          </div>
-
-          {!feas.ok && feas.capThk != null && (
-            <div style={B.suggest}>
-              <b>Cadangan:</b>{" "}
-              {feas.maxLen === 0
-                ? `Tebal ${thk}mm melebihi had mutlak mesin (${limits[0]?.maxThk}mm).`
-                : `Untuk ${thk}mm, panjang max ≈ ${(feas.maxLen / MM_PER_FT).toFixed(1)}ft (${Math.round(feas.maxLen)}mm). Atau kurangkan tebal ke ${feas.capThk.toFixed(1)}mm untuk panjang ini.`}
-            </div>
-          )}
-
-          {/* Cost */}
           <div style={B.calcBox}>
             <div style={B.calcLine}>
-              <span style={B.calcLbl}>Kos satu lipatan</span>
-              <span style={B.calcVal}>{rm(cost.perBend)}</span>
-            </div>
-            <div style={B.calcFormula}>
-              {baseRate} + ({thkFactor}×{thk}mm) + ({lenFactor}×{cost.lenFt.toFixed(1)}ft)
+              <span style={B.calcLbl}>Kadar ({thkBand} × {lenBand})</span>
+              <span style={B.calcVal}>{rm(perBend)}</span>
             </div>
             <div style={B.calcLine}>
               <span style={B.calcLbl}>Bilangan lipatan</span>
               <span style={B.calcVal}>× {bends}</span>
             </div>
           </div>
-
           <div style={B.grandBox}>
             <div>
               <div style={B.grandLbl}>JUMLAH KOS LIPAT</div>
-              <div style={B.grandPer}>{rm(cost.perBend)} × {bends} lipatan</div>
+              <div style={B.grandPer}>{rm(perBend)} × {bends} lipatan</div>
             </div>
-            <div style={B.grandVal}>{rm(cost.total)}</div>
+            <div style={B.grandVal}>{rm(total)}</div>
           </div>
-
-          <div style={B.foot}>
-            Semakan had guna titik yang anda set (panjang → tebal max). Kos =
-            asas + faktor tebal + faktor panjang, darab bilangan lipatan.
-          </div>
+          {perBend === 0 && (
+            <div style={B.suggest}>Kadar belum ditetapkan untuk kombinasi ini.</div>
+          )}
         </section>
       </div>
     </div>
@@ -375,6 +337,11 @@ const B = {
   grandVal: { fontSize: 24, fontWeight: 900, color: "#fcd34d",
     fontVariantNumeric: "tabular-nums", letterSpacing: -0.5 },
   foot: { marginTop: 4, fontSize: 11.5, color: "#94a3b8", lineHeight: 1.5 },
+  th: { color: "#64748b", fontWeight: 600, padding: "4px 3px", textAlign: "center",
+    borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap", fontSize: 10 },
+  td: { color: "#334155", padding: "4px 6px 4px 0", whiteSpace: "nowrap", fontWeight: 600, fontSize: 11 },
+  cellInput: { width: 46, background: "#fff", border: "1.5px solid #e2e8f0",
+    borderRadius: 5, color: "#1e293b", padding: "5px 4px", fontSize: 12, textAlign: "center", fontFamily: "inherit" },
 };
 
 

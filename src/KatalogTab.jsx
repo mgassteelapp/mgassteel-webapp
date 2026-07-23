@@ -28,6 +28,7 @@ const CATEGORIES = [
   {
     key: "chs", icon: "⭕", label: "CHS (Paip Bulat Hollow)",
     data: chsData.items,
+    hasMarketAdjust: true,
     dims: (it) => [
       `OD ${it.outside_diameter_mm}mm`,
       `Tebal ${it.wall_thickness_mm}mm`,
@@ -36,6 +37,7 @@ const CATEGORIES = [
   {
     key: "shs", icon: "⬜", label: "SHS (Hollow Segi Empat Sama)",
     data: shsData.items,
+    hasMarketAdjust: true,
     dims: (it) => [
       `Saiz ${it.size_mm}×${it.size_mm}mm`,
       `Tebal ${it.wall_thickness_mm}mm`,
@@ -44,6 +46,7 @@ const CATEGORIES = [
   {
     key: "rhs", icon: "▭", label: "RHS (Hollow Segi Empat)",
     data: rhsData.items,
+    hasMarketAdjust: true,
     dims: (it) => [
       `Saiz ${it.depth_mm}×${it.width_mm}mm`,
       `Tebal ${it.wall_thickness_mm}mm`,
@@ -80,6 +83,8 @@ export default function KatalogTab({ session }) {
   const [selected, setSelected] = useState(null); // { cat, item }
   const [lengthM, setLengthM] = useState("");
   const [qty, setQty] = useState(1);
+  const [marketOn, setMarketOn] = useState(false);
+  const [marketPct, setMarketPct] = useState(20);
 
   const cat = CATEGORIES.find(c => c.key === catKey);
 
@@ -101,9 +106,12 @@ export default function KatalogTab({ session }) {
   };
 
   const massPerM = selected ? Number(selected.item.mass_per_metre_kg) || 0 : 0;
+  const supportsMarket = selected ? !!selected.cat.hasMarketAdjust : false;
+  const pct = Math.min(90, Math.max(0, parseFloat(marketPct) || 0));
+  const effMassPerM = supportsMarket && marketOn ? massPerM * (1 - pct / 100) : massPerM;
   const len = parseFloat(lengthM) || 0;
   const q = parseFloat(qty) || 0;
-  const weightPerPiece = massPerM * len;
+  const weightPerPiece = effMassPerM * len;
   const totalWeight = weightPerPiece * q;
 
   return (
@@ -192,9 +200,38 @@ export default function KatalogTab({ session }) {
                 <div style={K.selDims}>{selected.cat.dims(selected.item)}</div>
                 {selected.item.notes && <div style={K.selNotes}>ℹ️ {selected.item.notes}</div>}
                 <div style={K.selMassRow}>
-                  <span style={K.selMassLbl}>Berat rujukan</span>
-                  <span style={K.selMassVal}>{massPerM.toFixed(3)} kg/m</span>
+                  <span style={K.selMassLbl}>Berat katalog (rasmi)</span>
+                  <span style={{ ...K.selMassVal, ...(supportsMarket && marketOn ? K.selMassValStrike : {}) }}>
+                    {massPerM.toFixed(3)} kg/m
+                  </span>
                 </div>
+
+                {supportsMarket && (
+                  <div style={K.marketBox}>
+                    <label style={K.marketToggleRow}>
+                      <input type="checkbox" checked={marketOn}
+                        onChange={e => setMarketOn(e.target.checked)} />
+                      <span>Guna berat pasaran (tebal sebenar biasanya lebih nipis)</span>
+                    </label>
+                    {marketOn && (
+                      <>
+                        <div style={K.marketPctRow}>
+                          <span style={K.smallLabel}>Nipis daripada katalog</span>
+                          <div style={K.marketPctInputWrap}>
+                            <input type="number" min="0" max="90" step="1" value={marketPct}
+                              onChange={e => setMarketPct(e.target.value)}
+                              style={K.marketPctInput} />
+                            <span style={K.marketPctSign}>%</span>
+                          </div>
+                        </div>
+                        <div style={K.selMassRow}>
+                          <span style={K.selMassLbl}>Berat pasaran (anggaran)</span>
+                          <span style={K.selMassValMarket}>{effMassPerM.toFixed(3)} kg/m</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Field label="Panjang sebatang (meter)">
@@ -210,10 +247,10 @@ export default function KatalogTab({ session }) {
 
               <div style={K.calcBox}>
                 <div style={K.calcLine}>
-                  <span style={K.calcLbl}>Berat sebatang</span>
+                  <span style={K.calcLbl}>Berat sebatang{supportsMarket && marketOn ? " (pasaran)" : ""}</span>
                   <span style={K.calcVal}>{weightPerPiece.toFixed(2)} kg</span>
                 </div>
-                <div style={K.calcFormula}>{massPerM.toFixed(3)} kg/m × {len || 0}m</div>
+                <div style={K.calcFormula}>{effMassPerM.toFixed(3)} kg/m × {len || 0}m</div>
               </div>
 
               <div style={K.grandBox}>
@@ -234,8 +271,10 @@ export default function KatalogTab({ session }) {
 
       <footer style={K.foot}>
         Data diambil dari spesifikasi teknikal rasmi (PDF). Sila sahkan dengan
-        dokumen sumber untuk kerja kejuruteraan kritikal. Kategori lain akan
-        ditambah kemudian.
+        dokumen sumber untuk kerja kejuruteraan kritikal. "Berat pasaran"
+        untuk CHS/SHS/RHS adalah anggaran sahaja (tebal sebenar di pasaran
+        biasanya lebih nipis daripada katalog) — boleh laras % ikut batch/
+        pembekal semasa. Kategori lain akan ditambah kemudian.
       </footer>
     </div>
   );
@@ -285,6 +324,18 @@ const K = {
     marginTop: 10, paddingTop: 10, borderTop: "1px solid #e2e8f0" },
   selMassLbl: { fontSize: 11.5, color: "#64748b" },
   selMassVal: { fontSize: 15, fontWeight: 800, color: "#0f2744" },
+  selMassValStrike: { color: "#94a3b8", fontWeight: 600, textDecoration: "line-through", fontSize: 13 },
+  selMassValMarket: { fontSize: 15, fontWeight: 800, color: "#e8780a" },
+  marketBox: { marginTop: 4, paddingTop: 10, borderTop: "1px dashed #e2e8f0" },
+  marketToggleRow: { display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12,
+    color: "#334155", cursor: "pointer", lineHeight: 1.5 },
+  marketPctRow: { display: "flex", justifyContent: "space-between", alignItems: "center",
+    marginTop: 10, marginBottom: 2 },
+  marketPctInputWrap: { display: "flex", alignItems: "center", gap: 5 },
+  marketPctInput: { width: 56, background: "#fff", border: "1.5px solid #e2e8f0",
+    borderRadius: 6, color: "#1e293b", padding: "6px 7px", fontSize: 13,
+    textAlign: "center", fontFamily: "inherit" },
+  marketPctSign: { fontSize: 12, color: "#64748b" },
   calcBox: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10,
     padding: 14, marginBottom: 14, marginTop: 6 },
   calcLine: { display: "flex", justifyContent: "space-between", alignItems: "baseline",

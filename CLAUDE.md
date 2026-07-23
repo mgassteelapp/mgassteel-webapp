@@ -566,6 +566,20 @@ field during extraction — spot-check against the source PDFs before relying
 on this for critical structural/engineering work, especially the imperial
 AISC-derived rows in `universal-beam-columns.json`.
 
+**Market-adjusted weight (CHS/SHS/RHS only):** Wylee flagged that real-world
+hollow-section stock commonly runs thinner than the catalogue wall thickness
+— roughly 20% in practice. Added a per-item toggle "Guna berat pasaran"
+(off by default — catalogue/official weight is always what's shown first)
+that applies an editable thinning % (defaults to 20%, staff can type any
+value 0–90 on the fly per batch/supplier) to `mass_per_metre_kg` before the
+length×qty calculation. Only shown for categories with
+`hasMarketAdjust: true` in `KatalogTab.jsx`'s `CATEGORIES` array (currently
+CHS, SHS, RHS) — the approximation (mass scales ~linearly with wall
+thickness at fixed outer dimension) doesn't apply the same way to solid
+sections like I-Beam/Angle/Channel, so the toggle is intentionally absent
+there. When on, the catalogue value is shown struck-through alongside the
+market estimate so staff always see both.
+
 **Files added:** `src/KatalogTab.jsx` (self-contained component, own styles,
 does not import from `App.jsx`), `src/data/katalog/*.json` (6 files).
 **Files changed:** `src/App.jsx` — added import, added `{ key:"katalog", ... }`

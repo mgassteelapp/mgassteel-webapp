@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReconcileTab from './ReconcileTab';
 import { supabase } from './supabase';
 import PlateCalculator from './PlateCalculator';
+import KatalogTab from './KatalogTab';
 
 
 // ── Google Sheets API ─────────────────────────────────────────────────────────
@@ -549,6 +550,7 @@ const lastActivityRef = useRef(Date.now());
   const TABS = [
     { key:"assistant", label:"🤖 Pembantu AI" },
     { key:"plate", label:"🛠️ Service Center" },
+    { key:"katalog", label:"📖 Katalog & Kira Berat" },
     ...((session.role==="owner" || session.role==="senior") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
@@ -601,9 +603,10 @@ const lastActivityRef = useRef(Date.now());
           </div>
         </div>
       </div>
-      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
+      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
         {tab==="plate" && <PlateCalculator session={session} />}
+        {tab==="katalog" && <KatalogTab session={session} />}
         {tab==="prices"    && (session.role==="owner"||session.role==="senior") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}

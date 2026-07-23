@@ -1,0 +1,492 @@
+{
+  "category": "U Channel",
+  "unit_note": "mass in kg/m unless noted",
+  "items": [
+    {
+      "designation": "380x100x10.5",
+      "depth_mm": 380,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 10.5,
+      "flange_thickness_mm": 16,
+      "mass_per_metre_kg": 54.5,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=18mm, r2=9mm"
+    },
+    {
+      "designation": "380x100x13",
+      "depth_mm": 380,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 13,
+      "flange_thickness_mm": 16.5,
+      "mass_per_metre_kg": 62.0,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=18mm, r2=9mm. Source flange thickness printed as 6.5mm but corresponding inch value (.650in) and weight indicate 16.5mm; corrected here."
+    },
+    {
+      "designation": "300x90x9",
+      "depth_mm": 300,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 9,
+      "flange_thickness_mm": 12,
+      "mass_per_metre_kg": 38.1,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=14mm, r2=7mm"
+    },
+    {
+      "designation": "300x90x10",
+      "depth_mm": 300,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 10,
+      "flange_thickness_mm": 15.5,
+      "mass_per_metre_kg": 43.8,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=19mm, r2=9.5mm"
+    },
+    {
+      "designation": "280x100x9",
+      "depth_mm": 280,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 9,
+      "flange_thickness_mm": 13,
+      "mass_per_metre_kg": 38.8,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=14mm, r2=7mm"
+    },
+    {
+      "designation": "280x100x11.5",
+      "depth_mm": 280,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 11.5,
+      "flange_thickness_mm": 16,
+      "mass_per_metre_kg": 48.2,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=18mm, r2=9mm"
+    },
+    {
+      "designation": "250x80x8",
+      "depth_mm": 250,
+      "flange_width_mm": 80,
+      "web_thickness_mm": 8,
+      "flange_thickness_mm": 12.5,
+      "mass_per_metre_kg": 30.2,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=14mm, r2=7mm"
+    },
+    {
+      "designation": "250x90x9",
+      "depth_mm": 250,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 9,
+      "flange_thickness_mm": 13,
+      "mass_per_metre_kg": 34.6,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=14mm, r2=7mm"
+    },
+    {
+      "designation": "250x90x11",
+      "depth_mm": 250,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 11,
+      "flange_thickness_mm": 14.5,
+      "mass_per_metre_kg": 40.2,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=17mm, r2=8.5mm"
+    },
+    {
+      "designation": "230x80x8",
+      "depth_mm": 230,
+      "flange_width_mm": 80,
+      "web_thickness_mm": 8,
+      "flange_thickness_mm": 12,
+      "mass_per_metre_kg": 28.4,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=13mm, r2=6.5mm"
+    },
+    {
+      "designation": "230x90x8.5",
+      "depth_mm": 230,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 8.5,
+      "flange_thickness_mm": 13.5,
+      "mass_per_metre_kg": 33.1,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=15mm, r2=7.5mm"
+    },
+    {
+      "designation": "200x80x7.5",
+      "depth_mm": 200,
+      "flange_width_mm": 80,
+      "web_thickness_mm": 7.5,
+      "flange_thickness_mm": 11,
+      "mass_per_metre_kg": 24.6,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=12mm, r2=6mm"
+    },
+    {
+      "designation": "200x90x8",
+      "depth_mm": 200,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 8,
+      "flange_thickness_mm": 13.5,
+      "mass_per_metre_kg": 30.3,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=14mm, r2=7mm"
+    },
+    {
+      "designation": "180x75x7",
+      "depth_mm": 180,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 7,
+      "flange_thickness_mm": 10.5,
+      "mass_per_metre_kg": 21.4,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=11mm, r2=5.5mm"
+    },
+    {
+      "designation": "180x90x7.5",
+      "depth_mm": 180,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 7.5,
+      "flange_thickness_mm": 12.5,
+      "mass_per_metre_kg": 27.1,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=13mm, r2=6.5mm"
+    },
+    {
+      "designation": "150x75x6.5",
+      "depth_mm": 150,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 6.4,
+      "flange_thickness_mm": 10,
+      "mass_per_metre_kg": 18.6,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=10mm, r2=5mm. Designation nominal web thickness 6.5mm vs listed actual web thickness 6.4mm as printed"
+    },
+    {
+      "designation": "150x75x9",
+      "depth_mm": 150,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 9,
+      "flange_thickness_mm": 12.5,
+      "mass_per_metre_kg": 24.0,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=15mm, r2=7.5mm"
+    },
+    {
+      "designation": "125x65x6",
+      "depth_mm": 125,
+      "flange_width_mm": 65,
+      "web_thickness_mm": 6,
+      "flange_thickness_mm": 8,
+      "mass_per_metre_kg": 13.4,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=8mm, r2=4mm"
+    },
+    {
+      "designation": "100x50x5",
+      "depth_mm": 100,
+      "flange_width_mm": 50,
+      "web_thickness_mm": 5,
+      "flange_thickness_mm": 7.5,
+      "mass_per_metre_kg": 9.36,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=8mm, r2=4mm"
+    },
+    {
+      "designation": "75x40x5",
+      "depth_mm": 75,
+      "flange_width_mm": 40,
+      "web_thickness_mm": 5,
+      "flange_thickness_mm": 7,
+      "mass_per_metre_kg": 6.92,
+      "notes": "Taper Flange Channel (Metric Series); corner radius r1=8mm, r2=4mm"
+    },
+    {
+      "designation": "432x102",
+      "depth_mm": 431.8,
+      "flange_width_mm": 101.6,
+      "web_thickness_mm": 12.2,
+      "flange_thickness_mm": 16.8,
+      "mass_per_metre_kg": 65.54,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=15.2mm, toe radius r2=4.8mm"
+    },
+    {
+      "designation": "381x102",
+      "depth_mm": 381.0,
+      "flange_width_mm": 101.6,
+      "web_thickness_mm": 10.4,
+      "flange_thickness_mm": 16.3,
+      "mass_per_metre_kg": 55.10,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=15.2mm, toe radius r2=4.8mm"
+    },
+    {
+      "designation": "305x102",
+      "depth_mm": 304.8,
+      "flange_width_mm": 101.6,
+      "web_thickness_mm": 10.2,
+      "flange_thickness_mm": 14.8,
+      "mass_per_metre_kg": 46.18,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=15.2mm, toe radius r2=4.8mm"
+    },
+    {
+      "designation": "305x89",
+      "depth_mm": 304.8,
+      "flange_width_mm": 88.9,
+      "web_thickness_mm": 10.2,
+      "flange_thickness_mm": 13.7,
+      "mass_per_metre_kg": 41.69,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=13.7mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "254x89",
+      "depth_mm": 254.0,
+      "flange_width_mm": 88.9,
+      "web_thickness_mm": 9.1,
+      "flange_thickness_mm": 13.6,
+      "mass_per_metre_kg": 35.74,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=13.7mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "254x76",
+      "depth_mm": 254.0,
+      "flange_width_mm": 75.2,
+      "web_thickness_mm": 8.1,
+      "flange_thickness_mm": 10.9,
+      "mass_per_metre_kg": 28.29,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=12.2mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "229x89",
+      "depth_mm": 228.6,
+      "flange_width_mm": 88.9,
+      "web_thickness_mm": 8.6,
+      "flange_thickness_mm": 13.3,
+      "mass_per_metre_kg": 32.76,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=13.7mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "229x76",
+      "depth_mm": 228.6,
+      "flange_width_mm": 76.2,
+      "web_thickness_mm": null,
+      "flange_thickness_mm": null,
+      "mass_per_metre_kg": 26.06,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm). Source table row for web/flange thickness was garbled/misaligned in the original PDF (column count did not match adjacent rows); values omitted rather than guessed. Mass and depth/width figures are reliable (cross-checked against second table on following page)."
+    },
+    {
+      "designation": "203x89",
+      "depth_mm": 203.2,
+      "flange_width_mm": 88.9,
+      "web_thickness_mm": 8.1,
+      "flange_thickness_mm": 12.9,
+      "mass_per_metre_kg": 29.76,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=13.7mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "203x76",
+      "depth_mm": 203.2,
+      "flange_width_mm": 76.2,
+      "web_thickness_mm": 7.1,
+      "flange_thickness_mm": 11.2,
+      "mass_per_metre_kg": 23.82,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=12.2mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "178x89",
+      "depth_mm": 177.8,
+      "flange_width_mm": 88.9,
+      "web_thickness_mm": 7.6,
+      "flange_thickness_mm": 12.3,
+      "mass_per_metre_kg": 26.81,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=13.7mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "178x76",
+      "depth_mm": 177.8,
+      "flange_width_mm": 76.2,
+      "web_thickness_mm": 6.6,
+      "flange_thickness_mm": 10.3,
+      "mass_per_metre_kg": 20.84,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=12.2mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "152x89",
+      "depth_mm": 152.4,
+      "flange_width_mm": 88.9,
+      "web_thickness_mm": 7.1,
+      "flange_thickness_mm": 11.6,
+      "mass_per_metre_kg": 23.84,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=13.7mm, toe radius r2=3.2mm"
+    },
+    {
+      "designation": "152x76",
+      "depth_mm": 152.4,
+      "flange_width_mm": 76.2,
+      "web_thickness_mm": 6.4,
+      "flange_thickness_mm": 9.0,
+      "mass_per_metre_kg": 17.88,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=12.2mm, toe radius r2=2.4mm"
+    },
+    {
+      "designation": "127x64",
+      "depth_mm": 127.0,
+      "flange_width_mm": 63.5,
+      "web_thickness_mm": 6.4,
+      "flange_thickness_mm": 9.2,
+      "mass_per_metre_kg": 14.90,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=10.7mm, toe radius r2=2.4mm"
+    },
+    {
+      "designation": "100x50",
+      "depth_mm": 100.0,
+      "flange_width_mm": 50.0,
+      "web_thickness_mm": 5.0,
+      "flange_thickness_mm": 7.5,
+      "mass_per_metre_kg": 9.36,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=8mm. Same dimensions/mass as Metric Series 100x50x5. Source PDF showed conflicting mass values (7.36 vs 9.36) between two occurrences of this row; 9.36 used as it matches the cross-referenced Metric Series table and second properties table."
+    },
+    {
+      "designation": "75x40",
+      "depth_mm": 75.0,
+      "flange_width_mm": 40.0,
+      "web_thickness_mm": 5.0,
+      "flange_thickness_mm": 7.0,
+      "mass_per_metre_kg": 6.92,
+      "notes": "Taper Flange Channel (Imperial/BS Series, serial size in mm); root radius r1=8mm, toe radius r2=4mm. Same dimensions/mass as Metric Series 75x40x5. Source PDF showed conflicting mass values (6.92 vs 5.92) between two occurrences of this row; 6.92 used as it matches the cross-referenced Metric Series table and first properties table."
+    },
+    {
+      "designation": "100x50",
+      "depth_mm": 100,
+      "flange_width_mm": 50,
+      "web_thickness_mm": 5.0,
+      "flange_thickness_mm": 8.5,
+      "mass_per_metre_kg": 10.2,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=9mm"
+    },
+    {
+      "designation": "125x65",
+      "depth_mm": 125,
+      "flange_width_mm": 65,
+      "web_thickness_mm": 5.5,
+      "flange_thickness_mm": 9.5,
+      "mass_per_metre_kg": 14.8,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "150x75",
+      "depth_mm": 150,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 5.5,
+      "flange_thickness_mm": 10.0,
+      "mass_per_metre_kg": 17.9,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "150x90",
+      "depth_mm": 150,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 6.5,
+      "flange_thickness_mm": 12.0,
+      "mass_per_metre_kg": 23.9,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "180x75",
+      "depth_mm": 180,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 6.0,
+      "flange_thickness_mm": 10.5,
+      "mass_per_metre_kg": 20.3,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "180x90",
+      "depth_mm": 180,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 6.5,
+      "flange_thickness_mm": 12.5,
+      "mass_per_metre_kg": 26.1,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "200x75",
+      "depth_mm": 200,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 6.0,
+      "flange_thickness_mm": 12.5,
+      "mass_per_metre_kg": 23.4,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "200x90",
+      "depth_mm": 200,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 7.0,
+      "flange_thickness_mm": 14.0,
+      "mass_per_metre_kg": 29.7,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "230x75",
+      "depth_mm": 230,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 6.5,
+      "flange_thickness_mm": 12.5,
+      "mass_per_metre_kg": 25.7,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "230x90",
+      "depth_mm": 230,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 7.5,
+      "flange_thickness_mm": 14.0,
+      "mass_per_metre_kg": 32.2,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "250x90",
+      "depth_mm": 250,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 8.0,
+      "flange_thickness_mm": 15.0,
+      "mass_per_metre_kg": 35.5,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "260x75",
+      "depth_mm": 260,
+      "flange_width_mm": 75,
+      "web_thickness_mm": 7.0,
+      "flange_thickness_mm": 12.0,
+      "mass_per_metre_kg": 27.6,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "260x90",
+      "depth_mm": 260,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 8.0,
+      "flange_thickness_mm": 14.0,
+      "mass_per_metre_kg": 34.8,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "300x90",
+      "depth_mm": 300,
+      "flange_width_mm": 90,
+      "web_thickness_mm": 9.0,
+      "flange_thickness_mm": 15.5,
+      "mass_per_metre_kg": 41.4,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "300x100",
+      "depth_mm": 300,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 9.0,
+      "flange_thickness_mm": 16.5,
+      "mass_per_metre_kg": 45.5,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=12mm"
+    },
+    {
+      "designation": "380x100",
+      "depth_mm": 380,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 9.5,
+      "flange_thickness_mm": 17.5,
+      "mass_per_metre_kg": 54.0,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=15mm"
+    },
+    {
+      "designation": "430x100",
+      "depth_mm": 430,
+      "flange_width_mm": 100,
+      "web_thickness_mm": 11.0,
+      "flange_thickness_mm": 19.0,
+      "mass_per_metre_kg": 64.4,
+      "notes": "Parallel Flange Channel (PFC); root radius r1=15mm"
+    }
+  ]
+}

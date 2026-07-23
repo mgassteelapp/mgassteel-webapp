@@ -55,6 +55,10 @@ stay in English.
 8. **Semak Harga Harian** — daily price-check (IN PROGRESS — see Section 6).
    `key: "daily"`, label `📋 Semak Harga Harian`. Accounts allow-list access
    per Section 5.
+9. **Katalog & Kira Berat** — steel section catalogue + weight calculator
+   (IN PROGRESS, built on branch `feature/katalog-weight-calc`, NOT yet merged
+   to main — see Section 9). `key: "katalog"`, label `📖 Katalog & Kira Berat`.
+   Open to all staff (no access restriction).
 
 ---
 
@@ -517,7 +521,61 @@ margin (AA) shown ONLY to Fei, Mira, Owner** (Section 5 visibility).
   Supabase backend + Flutter Android driver app + Next.js admin dashboard. Built
   and deployed separately.
 - Parked future features for THIS app (see FUTURE_FEATURES.md): a Katalog
-  reference tab (Universal Beams & Columns catalogue), a Sales activity / CRM
-  framework (Visit & Activity Log → Prospect register → auto-scorecard), and a
-  salesman check-in feature. Build the price-check tab FIRST; these come later,
-  one at a time.
+  reference tab (Universal Beams & Columns catalogue — STARTED, see Section 9),
+  a Sales activity / CRM framework (Visit & Activity Log → Prospect register →
+  auto-scorecard), and a salesman check-in feature.
+
+---
+
+## 9. Katalog & Kira Berat feature (IN PROGRESS, unmerged)
+
+Built on branch `feature/katalog-weight-calc`, developed in isolation and
+**deliberately NOT pushed/merged to `main`** until Wylee reviews it locally.
+This is the Katalog reference tab from the Section 8 roadmap, brought forward
+early at Wylee's request.
+
+**What it is:** a searchable steel-section catalogue (by category, then by
+designation/size) with a built-in weight calculator — pick a section, enter
+length (m) and quantity (pcs), get total kg. `key: "katalog"`, label
+`📖 Katalog & Kira Berat`. Open to **all staff** (no access restriction) —
+new tab entry added to `TABS` in `src/App.jsx`, unconditionally.
+
+**Categories built (first pass, 6 of the eventual full set):**
+- I-Beam / UB & UC (Universal Beams & Columns) — 419 sizes
+- CHS (Circular Hollow Section, BS EN 10210) — 131 sizes
+- SHS (Square Hollow Section, BS EN 10210) — 217 sizes
+- RHS (Rectangular Hollow Section, BS EN 10210) — 298 sizes
+- Angle Bar, Equal + Unequal — 143 sizes
+- U Channel (Taper Flange + Parallel Flange) — 54 sizes
+
+Not yet built: Hot Rolled Plates, High-Tensile Deformed Bar / Round Bar,
+Galvanised Sheet, Flat Bar, Cold Rolled Sheets, Chequered Plates, AS1163
+pipes, API pipes — PDFs for these were supplied but not yet processed. Add
+them the same way (see below) when Wylee asks.
+
+**Data source & extraction:** each category's data was extracted from
+Wylee's official spec PDFs into plain JSON files under
+`src/data/katalog/*.json` (one file per category, shape:
+`{ category, unit_note, items: [...] }`, each item carrying its printed
+dimensions + `mass_per_metre_kg`). These are bundled at build time via a
+normal Vite JSON import in `src/KatalogTab.jsx` — **no new npm packages**,
+same constraint as Section 6. A few individual values had source-PDF
+ambiguities (faint print, inconsistent digits, misaligned table rows) that
+were corrected or flagged with a best-effort guess in that item's `notes`
+field during extraction — spot-check against the source PDFs before relying
+on this for critical structural/engineering work, especially the imperial
+AISC-derived rows in `universal-beam-columns.json`.
+
+**Files added:** `src/KatalogTab.jsx` (self-contained component, own styles,
+does not import from `App.jsx`), `src/data/katalog/*.json` (6 files).
+**Files changed:** `src/App.jsx` — added import, added `{ key:"katalog", ... }`
+to `TABS` (no access-guard wrapper, unlike `daily`/`reconcile`), added the
+render line, and widened the content max-width for `tab==="katalog"` same as
+`daily`/`reconcile` (the results+calculator side-by-side layout needs it).
+
+**Status:** builds clean (`npm run build`), manually verified via a throwaway
+local preview harness (search, category switching, selection, and the
+length×qty→kg calculation all checked against hand math). **Do NOT push this
+branch to `main` / trigger a Vercel deploy without Wylee's explicit go-ahead**
+— he wants to review it running locally first per his "develop outside, run
+local host till tight, then push" instruction.

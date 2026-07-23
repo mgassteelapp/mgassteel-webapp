@@ -1,0 +1,2390 @@
+{
+  "category": "RHS (Rectangular Hollow Section) - BS EN 10210",
+  "unit_note": "mass in kg/m unless noted",
+  "items": [
+    {
+      "designation": "19 x 38 x 1.6",
+      "depth_mm": 38.0,
+      "width_mm": 19.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 1.33,
+      "notes": ""
+    },
+    {
+      "designation": "20 x 40 x 2.0",
+      "depth_mm": 40.0,
+      "width_mm": 20.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 1.725,
+      "notes": ""
+    },
+    {
+      "designation": "20 x 40 x 2.5",
+      "depth_mm": 40.0,
+      "width_mm": 20.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 2.106,
+      "notes": ""
+    },
+    {
+      "designation": "20 x 40 x 3.0",
+      "depth_mm": 40.0,
+      "width_mm": 20.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 2.468,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 38 x 1.6",
+      "depth_mm": 38.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 1.481,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 50 x 1.6",
+      "depth_mm": 50.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 1.782,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 50 x 2.0",
+      "depth_mm": 50.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 2.196,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 50 x 2.3",
+      "depth_mm": 50.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 2.498,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 50 x 2.5",
+      "depth_mm": 50.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 2.695,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 50 x 3.0",
+      "depth_mm": 50.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 3.174,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 1.6",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.41,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 1.9",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 2.839,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 2.0",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 2.981,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 2.3",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 3.4,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 2.5",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 3.676,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 3.0",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 4.352,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 4.0",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 5.643,
+      "notes": ""
+    },
+    {
+      "designation": "25 x 75 x 4.5",
+      "depth_mm": 75.0,
+      "width_mm": 25.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 6.259,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 50 x 2.0",
+      "depth_mm": 50.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 2.353,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 50 x 2.5",
+      "depth_mm": 50.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 2.891,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 50 x 3.0",
+      "depth_mm": 50.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 3.41,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 50 x 4.0",
+      "depth_mm": 50.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 4.387,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 50 x 5.0",
+      "depth_mm": 50.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 5.284,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 60 x 1.6",
+      "depth_mm": 60.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.159,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 60 x 1.9",
+      "depth_mm": 60.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 2.541,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 60 x 2.3",
+      "depth_mm": 60.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 3.039,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 60 x 3.0",
+      "depth_mm": 60.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 3.881,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 80 x 1.6",
+      "depth_mm": 80.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.661,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 80 x 1.9",
+      "depth_mm": 80.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 3.138,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 80 x 2.3",
+      "depth_mm": 80.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 3.761,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 80 x 3.0",
+      "depth_mm": 80.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 4.823,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 110 x 2.0",
+      "depth_mm": 110.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 4.237,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 110 x 2.5",
+      "depth_mm": 110.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 5.246,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 110 x 3.0",
+      "depth_mm": 110.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 6.236,
+      "notes": ""
+    },
+    {
+      "designation": "30 x 110 x 4.0",
+      "depth_mm": 110.0,
+      "width_mm": 30.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 8.155,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 1.6",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.41,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 1.9",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 2.839,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 2.0",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 2.981,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 2.3",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 3.4,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 2.5",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 3.676,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 3.0",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 4.352,
+      "notes": ""
+    },
+    {
+      "designation": "35 x 65 x 4.0",
+      "depth_mm": 65.0,
+      "width_mm": 35.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 5.643,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 1.6",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.485,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 1.9",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 2.929,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 2.0",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 3.075,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 2.3",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 3.509,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 2.5",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 3.794,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 3.0",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 4.493,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 3.2",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 3.2,
+      "mass_per_metre_kg": 4.767,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 65 x 4.0",
+      "depth_mm": 65.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 5.831,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 1.6",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.737,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 1.9",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 3.227,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 2.0",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 3.389,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 2.3",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 3.87,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 2.5",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 4.186,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 3.0",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 4.964,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 3.2",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 3.2,
+      "mass_per_metre_kg": 5.269,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 4.0",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 6.459,
+      "notes": ""
+    },
+    {
+      "designation": "38 x 75 x 4.5",
+      "depth_mm": 75.0,
+      "width_mm": 38.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 7.177,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 60 x 2.0",
+      "depth_mm": 60.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 2.981,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 60 x 2.5",
+      "depth_mm": 60.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 3.676,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 60 x 3.0",
+      "depth_mm": 60.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 4.352,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 60 x 4.0",
+      "depth_mm": 60.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 5.643,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 60 x 5.0",
+      "depth_mm": 60.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 6.854,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 80 x 1.6",
+      "depth_mm": 80.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 2.912,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 80 x 1.9",
+      "depth_mm": 80.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 3.436,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 80 x 2.3",
+      "depth_mm": 80.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 4.123,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 80 x 3.0",
+      "depth_mm": 80.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 5.294,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 80 x 4.0",
+      "depth_mm": 80.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 6.899,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 100 x 2.5",
+      "depth_mm": 100.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 5.246,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 100 x 3.0",
+      "depth_mm": 100.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 6.236,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 100 x 4.0",
+      "depth_mm": 100.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 8.155,
+      "notes": ""
+    },
+    {
+      "designation": "40 x 100 x 5.0",
+      "depth_mm": 100.0,
+      "width_mm": 40.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 9.994,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 70 x 2.0",
+      "depth_mm": 70.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 3.609,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 70 x 2.5",
+      "depth_mm": 70.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 4.461,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 70 x 3.0",
+      "depth_mm": 70.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 5.294,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 70 x 4.0",
+      "depth_mm": 70.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 6.899,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 70 x 5.0",
+      "depth_mm": 70.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 8.424,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 1.6",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 3.038,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 1.9",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 3.585,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 2.0",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 3.766,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 2.3",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 4.303,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 2.5",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 4.657,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 3.0",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 5.529,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 4.0",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 7.213,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 4.5",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 8.025,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 5.0",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 8.817,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 75 x 6.0",
+      "depth_mm": 75.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 10.341,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 90 x 2.0",
+      "depth_mm": 90.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 4.237,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 90 x 2.5",
+      "depth_mm": 90.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 5.246,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 90 x 3.0",
+      "depth_mm": 90.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 6.236,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 90 x 4.0",
+      "depth_mm": 90.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 8.155,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 90 x 5.0",
+      "depth_mm": 90.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 9.994,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 1.6",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 1.6,
+      "mass_per_metre_kg": 3.666,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 1.9",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 1.9,
+      "mass_per_metre_kg": 4.331,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 2.0",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 4.551,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 2.3",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 5.206,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 2.5",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 5.639,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 3.0",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 6.707,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 4.0",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 8.783,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 4.5",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 9.791,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 5.0",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 10.779,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 6.0",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 12.696,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 100 x 6.3",
+      "depth_mm": 100.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 13.256,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 2.3",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 6.109,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 2.5",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 6.62,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 3.0",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 7.884,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 4.0",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 10.353,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 4.5",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 11.557,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 5.0",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 12.742,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 6.0",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 15.051,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 125 x 6.3",
+      "depth_mm": 125.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 15.729,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 2.3",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 7.011,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 3.0",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 9.062,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 4.0",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 11.923,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 4.5",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 13.324,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 5.0",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 14.704,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 6.0",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 17.406,
+      "notes": ""
+    },
+    {
+      "designation": "50 x 150 x 6.3",
+      "depth_mm": 150.0,
+      "width_mm": 50.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 18.201,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 80 x 2.0",
+      "depth_mm": 80.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 2.0,
+      "mass_per_metre_kg": 4.237,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 80 x 2.5",
+      "depth_mm": 80.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 5.246,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 80 x 3.0",
+      "depth_mm": 80.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 6.236,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 80 x 4.0",
+      "depth_mm": 80.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 8.155,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 80 x 5.0",
+      "depth_mm": 80.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 9.994,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 100 x 2.5",
+      "depth_mm": 100.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 6.031,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 100 x 3.0",
+      "depth_mm": 100.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 7.178,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 100 x 4.0",
+      "depth_mm": 100.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 9.411,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 100 x 5.0",
+      "depth_mm": 100.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 11.564,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 100 x 6.0",
+      "depth_mm": 100.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 13.638,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 100 x 6.3",
+      "depth_mm": 100.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 14.245,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 2.5",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 6.816,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 3.0",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 8.12,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 4.0",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 10.667,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 4.5",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 11.911,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 5.0",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 13.134,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 6.0",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 15.522,
+      "notes": ""
+    },
+    {
+      "designation": "60 x 120 x 6.3",
+      "depth_mm": 120.0,
+      "width_mm": 60.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 16.223,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 2.3",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 6.109,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 3.0",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 7.884,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 3.2",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 3.2,
+      "mass_per_metre_kg": 8.384,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 4.0",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 10.353,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 4.5",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 11.557,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 5.0",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 12.742,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 6.0",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 15.051,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 100 x 6.3",
+      "depth_mm": 100.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 15.729,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 2.3",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 7.011,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 3.0",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 9.062,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 4.0",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 11.923,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 4.5",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 13.324,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 5.0",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 14.704,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 6.0",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 17.406,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 125 x 9.0",
+      "depth_mm": 125.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 25.034,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 2.3",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 2.3,
+      "mass_per_metre_kg": 7.914,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 3.0",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 10.239,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 4.0",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 13.493,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 4.5",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 15.09,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 5.0",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 16.667,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 6.0",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 19.761,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 6.3",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 20.674,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 8.0",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 25.711,
+      "notes": ""
+    },
+    {
+      "designation": "75 x 150 x 9.0",
+      "depth_mm": 150.0,
+      "width_mm": 75.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 28.567,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 100 x 2.5",
+      "depth_mm": 100.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 6.816,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 100 x 3.0",
+      "depth_mm": 100.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 8.12,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 100 x 4.0",
+      "depth_mm": 100.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 10.667,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 100 x 5.0",
+      "depth_mm": 100.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 13.134,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 100 x 6.0",
+      "depth_mm": 100.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 15.522,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 100 x 6.3",
+      "depth_mm": 100.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 16.223,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 2.5",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 2.5,
+      "mass_per_metre_kg": 7.601,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 3.0",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 9.062,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 4.0",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 11.923,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 4.5",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 13.324,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 5.0",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 14.704,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 6.0",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 17.406,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 120 x 6.3",
+      "depth_mm": 120.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 18.201,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 140 x 4.0",
+      "depth_mm": 140.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 13.179,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 140 x 5.0",
+      "depth_mm": 140.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 16.274,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 140 x 6.0",
+      "depth_mm": 140.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 19.29,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 140 x 6.3",
+      "depth_mm": 140.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 20.18,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 140 x 8.0",
+      "depth_mm": 140.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 25.083,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 3.0",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 10.946,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 3.2",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 3.2,
+      "mass_per_metre_kg": 11.65,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 4.0",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 14.435,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 4.5",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 16.15,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 5.0",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 17.844,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 6.0",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 21.174,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 6.3",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 22.158,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 8.0",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 27.595,
+      "notes": ""
+    },
+    {
+      "designation": "80 x 160 x 9.0",
+      "depth_mm": 160.0,
+      "width_mm": 80.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 30.686,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 3.0",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 3.0,
+      "mass_per_metre_kg": 11.417,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 4.0",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 15.063,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 4.5",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 16.856,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 5.0",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 18.629,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 6.0",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 22.116,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 6.3",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 23.147,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 8.0",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 28.851,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 150 x 9.0",
+      "depth_mm": 150.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 32.099,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 4.0",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 16.947,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 5.0",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 20.984,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 6.0",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 24.942,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 6.3",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 26.114,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 8.0",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 32.619,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 10.0",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 39.978,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 12.0",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 47.017,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 180 x 12.5",
+      "depth_mm": 180.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 48.728,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 4.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 18.203,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 4.5",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 20.389,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 5.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 22.554,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 6.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 26.826,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 6.3",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 28.092,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 8.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 35.131,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 9.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 39.164,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 10.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 43.118,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 12.0",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 50.785,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 200 x 12.5",
+      "depth_mm": 200.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 52.653,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 6.0",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 36.246,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 6.3",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 37.983,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 8.0",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 47.691,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 10.0",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 58.818,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 12.0",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 69.625,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 12.5",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 72.278,
+      "notes": ""
+    },
+    {
+      "designation": "100 x 300 x 16.0",
+      "depth_mm": 300.0,
+      "width_mm": 100.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 90.285,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 4.0",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 19.459,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 5.0",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 24.124,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 6.0",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 28.71,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 6.3",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 30.071,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 8.0",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 37.643,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 10.0",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 46.258,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 12.0",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 54.553,
+      "notes": ""
+    },
+    {
+      "designation": "120 x 200 x 12.5",
+      "depth_mm": 200.0,
+      "width_mm": 120.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 56.578,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 4.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 21.343,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 4.5",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 23.921,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 5.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 26.479,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 6.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 31.536,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 6.3",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 33.038,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 8.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 41.411,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 9.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 46.229,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 10.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 50.968,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 12.0",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 60.205,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 200 x 12.5",
+      "depth_mm": 200.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 62.465,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 4.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 4.0,
+      "mass_per_metre_kg": 24.483,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 4.5",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 27.454,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 5.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 30.404,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 6.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 36.246,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 6.3",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 37.983,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 8.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 47.691,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 9.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 53.294,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 10.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 58.818,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 12.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 69.625,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 12.5",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 72.278,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 250 x 16.0",
+      "depth_mm": 250.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 90.285,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 6.0",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 40.956,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 6.3",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 42.929,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 8.0",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 53.971,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 10.0",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 66.668,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 12.0",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 79.045,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 12.5",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 82.09,
+      "notes": ""
+    },
+    {
+      "designation": "150 x 300 x 16.0",
+      "depth_mm": 300.0,
+      "width_mm": 150.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 102.845,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 5.0",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 33.544,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 6.3",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 41.94,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 8.0",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 52.715,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 10.0",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 65.098,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 12.0",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 77.161,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 12.5",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 80.128,
+      "notes": ""
+    },
+    {
+      "designation": "180 x 260 x 16.0",
+      "depth_mm": 260.0,
+      "width_mm": 180.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 100.333,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 4.5",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 34.519,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 5.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 38.254,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 6.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 45.666,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 6.3",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 47.874,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 8.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 60.251,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 9.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 67.424,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 10.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 74.518,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 12.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 88.465,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 12.5",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 91.903,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 300 x 16.0",
+      "depth_mm": 300.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 115.405,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 4.5",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 4.5,
+      "mass_per_metre_kg": 41.584,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 5.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 5.0,
+      "mass_per_metre_kg": 46.104,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 6.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 55.086,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 6.3",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 57.765,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 8.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 72.811,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 9.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 81.554,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 10.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 90.218,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 12.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 107.305,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 12.5",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 111.528,
+      "notes": ""
+    },
+    {
+      "designation": "200 x 400 x 16.0",
+      "depth_mm": 400.0,
+      "width_mm": 200.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 140.525,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 6.0",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 6.0,
+      "mass_per_metre_kg": 55.086,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 6.3",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 57.765,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 8.0",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 72.811,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 10.0",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 90.218,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 12.0",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 107.305,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 12.5",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 111.528,
+      "notes": ""
+    },
+    {
+      "designation": "250 x 350 x 16.0",
+      "depth_mm": 350.0,
+      "width_mm": 250.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 140.525,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 6.3",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 6.3,
+      "mass_per_metre_kg": 67.656,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 8.0",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 8.0,
+      "mass_per_metre_kg": 85.371,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 9.0",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 9.0,
+      "mass_per_metre_kg": 95.684,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 10.0",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 10.0,
+      "mass_per_metre_kg": 105.918,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 12.0",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 12.0,
+      "mass_per_metre_kg": 126.145,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 12.5",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 12.5,
+      "mass_per_metre_kg": 131.153,
+      "notes": ""
+    },
+    {
+      "designation": "300 x 400 x 16.0",
+      "depth_mm": 400.0,
+      "width_mm": 300.0,
+      "wall_thickness_mm": 16.0,
+      "mass_per_metre_kg": 165.645,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "category": "Hot Rolled Steel Plates",
+  "unit_note": "mass in kg/m2 unless noted",
+  "items": [
+    {
+      "thickness_mm": 1.2,
+      "mass_per_sqm_kg": 9.42,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "Source table lists calculated weight per sheet (kg/pc) for each size; 4x8ft sheet = 27.996 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2 (standard steel density), which matches the printed per-sheet weights exactly. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 1.4,
+      "mass_per_sqm_kg": 10.99,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 32.661 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 1.5,
+      "mass_per_sqm_kg": 11.775,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 34.994 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 1.6,
+      "mass_per_sqm_kg": 12.56,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 37.327 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 1.8,
+      "mass_per_sqm_kg": 14.13,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 41.993 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 1.9,
+      "mass_per_sqm_kg": 14.915,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 44.326 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 2.0,
+      "mass_per_sqm_kg": 15.7,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 46.659 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 2.2,
+      "mass_per_sqm_kg": 17.27,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 51.325 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 2.3,
+      "mass_per_sqm_kg": 18.055,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 53.658 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 2.5,
+      "mass_per_sqm_kg": 19.625,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 58.324 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 2.8,
+      "mass_per_sqm_kg": 21.98,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 65.323 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 2.9,
+      "mass_per_sqm_kg": 22.765,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 67.656 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights. Not available in 6x8ft/6x10ft/6x20ft sizes per source table."
+    },
+    {
+      "thickness_mm": 3.0,
+      "mass_per_sqm_kg": 23.55,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 69.989 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 3.2,
+      "mass_per_sqm_kg": 25.12,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 74.655 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 3.8,
+      "mass_per_sqm_kg": 29.83,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 88.652 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 4.0,
+      "mass_per_sqm_kg": 31.4,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 93.318 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 4.3,
+      "mass_per_sqm_kg": 33.755,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 100.317 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 4.5,
+      "mass_per_sqm_kg": 35.325,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 104.983 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 5.0,
+      "mass_per_sqm_kg": 39.25,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 116.648 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 5.8,
+      "mass_per_sqm_kg": 45.53,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 135.312 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 6.0,
+      "mass_per_sqm_kg": 47.1,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 139.978 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 7.5,
+      "mass_per_sqm_kg": 58.875,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 174.972 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 8.0,
+      "mass_per_sqm_kg": 62.8,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 186.637 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 9.0,
+      "mass_per_sqm_kg": 70.65,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 209.966 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 10.0,
+      "mass_per_sqm_kg": 78.5,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 233.296 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 11.0,
+      "mass_per_sqm_kg": 86.35,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 256.625 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 12.0,
+      "mass_per_sqm_kg": 94.2,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 279.955 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 13.0,
+      "mass_per_sqm_kg": 102.05,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 303.285 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 14.0,
+      "mass_per_sqm_kg": 109.9,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 326.614 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 15.0,
+      "mass_per_sqm_kg": 117.75,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 349.944 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    },
+    {
+      "thickness_mm": 16.0,
+      "mass_per_sqm_kg": 125.6,
+      "standard_sheet_sizes": "4x8ft (1219x2438mm), 5x10ft (1524x3048mm), 5x20ft (1524x6096mm), 6x8ft (1829x2438mm), 6x10ft (1829x3048mm), 6x20ft (1829x6096mm)",
+      "grade": "JIS G3131-1996 SPHC / BS EN 10025 S275JR / BS EN 10025 S355JR / JIS G3101 SS330 / JIS G3101 SS400 / ASTM A36",
+      "notes": "4x8ft sheet = 373.273 kg/pc. mass_per_sqm_kg computed as thickness_mm x 7.85 kg/m2, matches printed per-sheet weights across all six size combos."
+    }
+  ]
+}

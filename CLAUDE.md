@@ -541,30 +541,70 @@ length (m) and quantity (pcs), get total kg. `key: "katalog"`, label
 new tab entry added to `TABS` in `src/App.jsx`, unconditionally.
 
 **Categories built (first pass, 6 of the eventual full set):**
+All 12 categories from the supplied PDFs are now built (AS1163 was the one
+exception — see below):
+
+*Linear products* (sold by length; calculator = panjang(m) × kuantiti):
 - I-Beam / UB & UC (Universal Beams & Columns) — 419 sizes
 - CHS (Circular Hollow Section, BS EN 10210) — 131 sizes
 - SHS (Square Hollow Section, BS EN 10210) — 217 sizes
 - RHS (Rectangular Hollow Section, BS EN 10210) — 298 sizes
 - Angle Bar, Equal + Unequal — 143 sizes
 - U Channel (Taper Flange + Parallel Flange) — 54 sizes
+- Round Bar & Deformed Bar (mild steel round + HT deformed/rebar) — 14 sizes
+- Flat Bar — 74 sizes
+- API Pipes (line pipe, NPS × schedule) — 510 sizes
 
-Not yet built: Hot Rolled Plates, High-Tensile Deformed Bar / Round Bar,
-Galvanised Sheet, Flat Bar, Cold Rolled Sheets, Chequered Plates, AS1163
-pipes, API pipes — PDFs for these were supplied but not yet processed. Add
-them the same way (see below) when Wylee asks.
+*Area products* (sold by sheet/thickness; calculator = panjang(mm) ×
+lebar(mm) × kuantiti, both dims staff-entered so any custom sheet size can
+be priced, not just the standard ones):
+- Plat Rata / Hot Rolled Steel Plates — 31 thicknesses
+- Kepingan Gegelung Sejuk / Cold Rolled Sheets — 31 thicknesses
+- Kepingan Zink / Galvanised Sheet — 96 rows (32 thicknesses × 3 zinc-coating
+  classes Z18/Z22-25/Z27)
+- Plat Bunga / Chequered Plates — 13 thicknesses
+
+**NOT built — AS1163:** `AS1163TechnicalSpecification.pdf` turned out to be
+a tolerances + mechanical-properties/chemical-composition spec sheet only —
+it contains no table of individual section sizes, dimensions, or mass per
+metre for CHS/SHS/RHS. There's nothing to extract into the catalogue from
+this file as supplied. If Wylee has (or can get) an actual AS1163 dimensions/
+mass table, it should merge into the existing `chs.json`/`shs.json`/
+`rhs.json` files with a `standard: "AS 1163"` field added per item (and
+`"BS EN 10210"` backfilled onto the existing rows) rather than becoming new
+categories — same shapes, just a different standard/tolerance, and it should
+inherit the existing CQ/BS market-adjust toggle.
 
 **Data source & extraction:** each category's data was extracted from
 Wylee's official spec PDFs into plain JSON files under
-`src/data/katalog/*.json` (one file per category, shape:
-`{ category, unit_note, items: [...] }`, each item carrying its printed
-dimensions + `mass_per_metre_kg`). These are bundled at build time via a
-normal Vite JSON import in `src/KatalogTab.jsx` — **no new npm packages**,
+`src/data/katalog/*.json` (one file per category). Linear categories use
+shape `{ category, unit_note, items: [...] }` with each item carrying
+`mass_per_metre_kg`; area categories use the same shape but with
+`mass_per_sqm_kg` instead, since a single thickness covers any custom
+sheet size rather than one fixed length. These are bundled at build time via
+a normal Vite JSON import in `src/KatalogTab.jsx` — **no new npm packages**,
 same constraint as Section 6. A few individual values had source-PDF
-ambiguities (faint print, inconsistent digits, misaligned table rows) that
-were corrected or flagged with a best-effort guess in that item's `notes`
-field during extraction — spot-check against the source PDFs before relying
-on this for critical structural/engineering work, especially the imperial
-AISC-derived rows in `universal-beam-columns.json`.
+ambiguities (faint print, inconsistent digits, misaligned table rows,
+tables that print per-sheet weight instead of a direct kg/m² column) that
+were corrected, back-calculated, or flagged with a best-effort note during
+extraction — spot-check against the source PDFs before relying on this for
+critical structural/engineering work, especially: the imperial AISC-derived
+rows in `universal-beam-columns.json`; `round-bar.json`'s `mass_per_metre_kg`
+(the source only printed bundle weight + pieces/bundle, so per-metre mass
+was back-calculated assuming a 12m standard bar length — confirmed
+consistent across all rows, but flagged per-item in `notes`); and
+`api-pipes.json`'s large-diameter/dense-table rows (NPS 4"+), where mass was
+computed from the standard steel-pipe mass formula rather than read off the
+scan pixel-by-pixel (cross-checked against the clearly-legible small-size
+rows and matched).
+
+`KatalogTab.jsx`'s `CATEGORIES` array carries a `calcType: "area"` flag for
+the four flat products (default is "linear" when omitted) plus a
+`massOf(item)` / `massUnit` / `desig(item)` accessor per category, so the
+component doesn't need to know each JSON file's exact field names. Search
+is generic too — it stringifies every scalar field on an item (`searchIndex`
+in `KatalogTab.jsx`), so it matches designation, dims, grade, schedule,
+gauge, coating class, notes, etc. without a per-category field list.
 
 **Market-adjusted weight (CHS/SHS/RHS only):** Wylee flagged that real-world
 hollow-section stock commonly runs thinner than the catalogue wall thickness,

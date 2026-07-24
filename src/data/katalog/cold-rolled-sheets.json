@@ -1,0 +1,223 @@
+{
+  "category": "Cold Rolled Sheets",
+  "unit_note": "mass in kg/m2 unless noted",
+  "items": [
+    {
+      "thickness_mm": 0.30,
+      "mass_per_sqm_kg": 2.355,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 6.999 kg/pc, 15.430 lb/pc, 142.9 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2). Other sizes not stipulated in table may be available upon request."
+    },
+    {
+      "thickness_mm": 0.35,
+      "mass_per_sqm_kg": 2.7475,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 8.165 kg/pc, 18.001 lb/pc, 122.5 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.36,
+      "mass_per_sqm_kg": 2.826,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 8.399 kg/pc, 18.516 lb/pc, 119.1 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.40,
+      "mass_per_sqm_kg": 3.14,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 9.332 kg/pc, 20.573 lb/pc, 107.2 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.45,
+      "mass_per_sqm_kg": 3.5325,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 10.498 kg/pc, 23.145 lb/pc, 95.3 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.50,
+      "mass_per_sqm_kg": 3.925,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 11.665 kg/pc, 25.716 lb/pc, 85.7 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.55,
+      "mass_per_sqm_kg": 4.3175,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 12.831 kg/pc, 28.288 lb/pc, 77.9 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.60,
+      "mass_per_sqm_kg": 4.71,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 13.998 kg/pc, 30.859 lb/pc, 71.4 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.65,
+      "mass_per_sqm_kg": 5.1025,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 15.164 kg/pc, 33.431 lb/pc, 65.9 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.70,
+      "mass_per_sqm_kg": 5.495,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 16.331 kg/pc, 36.003 lb/pc, 61.2 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.80,
+      "mass_per_sqm_kg": 6.28,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 18.664 kg/pc, 41.146 lb/pc, 53.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.85,
+      "mass_per_sqm_kg": 6.6725,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 19.830 kg/pc, 43.718 lb/pc, 50.4 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 0.90,
+      "mass_per_sqm_kg": 7.065,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 20.997 kg/pc, 46.289 lb/pc, 47.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.00,
+      "mass_per_sqm_kg": 7.85,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 23.330 kg/pc, 51.432 lb/pc, 42.9 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.10,
+      "mass_per_sqm_kg": 8.635,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 25.663 kg/pc, 56.576 lb/pc, 39.0 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.20,
+      "mass_per_sqm_kg": 9.42,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 27.996 kg/pc, 61.719 lb/pc, 35.7 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.40,
+      "mass_per_sqm_kg": 10.99,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 32.661 kg/pc, 72.005 lb/pc, 30.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.45,
+      "mass_per_sqm_kg": 11.3825,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 33.828 kg/pc, 74.577 lb/pc, 29.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.50,
+      "mass_per_sqm_kg": 11.775,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 34.994 kg/pc, 77.149 lb/pc, 28.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.55,
+      "mass_per_sqm_kg": 12.1675,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 36.161 kg/pc, 79.722 lb/pc, 27.7 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.60,
+      "mass_per_sqm_kg": 12.56,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 37.327 kg/pc, 82.292 lb/pc, 26.8 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.80,
+      "mass_per_sqm_kg": 14.13,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 41.993 kg/pc, 92.578 lb/pc, 23.8 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 1.90,
+      "mass_per_sqm_kg": 14.915,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 44.326 kg/pc, 97.722 lb/pc, 22.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.00,
+      "mass_per_sqm_kg": 15.70,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 46.659 kg/pc, 102.865 lb/pc, 21.4 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.20,
+      "mass_per_sqm_kg": 17.27,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 51.325 kg/pc, 113.151 lb/pc, 19.5 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.30,
+      "mass_per_sqm_kg": 18.055,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 53.658 kg/pc, 118.295 lb/pc, 18.6 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.50,
+      "mass_per_sqm_kg": 19.625,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 58.324 kg/pc, 128.581 lb/pc, 17.1 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.60,
+      "mass_per_sqm_kg": 20.41,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 60.657 kg/pc, 133.724 lb/pc, 16.5 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.80,
+      "mass_per_sqm_kg": 21.98,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 65.323 kg/pc, 144.011 lb/pc, 15.3 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 2.90,
+      "mass_per_sqm_kg": 22.765,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 67.656 kg/pc, 149.154 lb/pc, 14.8 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2)."
+    },
+    {
+      "thickness_mm": 3.00,
+      "mass_per_sqm_kg": 23.55,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm)",
+      "grade": "JIS G 3141 - SPCC",
+      "notes": "Printed table: 69.989 kg/pc, 154.297 lb/pc, 14.3 pcs/mt for 1219mm x 2438mm sheet. mass_per_sqm_kg computed as thickness_mm x 7.85, consistent with printed per-sheet weight / sheet area (2.972 m2). Other sizes not stipulated in table may be available upon request."
+    }
+  ]
+}

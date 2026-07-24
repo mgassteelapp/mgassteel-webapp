@@ -1,22 +1,40 @@
 import { useState, useMemo } from "react";
-import ubucData      from "./data/katalog/universal-beam-columns.json";
-import chsData        from "./data/katalog/chs.json";
-import shsData        from "./data/katalog/shs.json";
-import rhsData         from "./data/katalog/rhs.json";
-import angleData      from "./data/katalog/angle-bar.json";
-import channelData    from "./data/katalog/u-channel.json";
+import ubucData        from "./data/katalog/universal-beam-columns.json";
+import chsData          from "./data/katalog/chs.json";
+import shsData          from "./data/katalog/shs.json";
+import rhsData          from "./data/katalog/rhs.json";
+import angleData        from "./data/katalog/angle-bar.json";
+import channelData      from "./data/katalog/u-channel.json";
+import roundBarData     from "./data/katalog/round-bar.json";
+import flatBarData      from "./data/katalog/flat-bar.json";
+import plateData        from "./data/katalog/hot-rolled-plates.json";
+import coldRolledData   from "./data/katalog/cold-rolled-sheets.json";
+import galvSheetData    from "./data/katalog/galvanised-sheet.json";
+import chequeredData    from "./data/katalog/chequered-plates.json";
+import apiPipeData      from "./data/katalog/api-pipes.json";
 
 // ── M Gas Steel — Katalog & Kira Berat ─────────────────────────────
-// Reference catalogue (dimensions + mass/m) for structural steel
-// sections, with a built-in weight calculator (length × qty → total kg).
-// Data extracted from official spec PDFs supplied by Wylee.
-// Categories included in this first build: I-Beam (UB/UC), CHS, SHS,
-// RHS, Angle Bar (Equal + Unequal), U Channel.
+// Reference catalogue (dimensions + mass) for structural steel products,
+// with a built-in weight calculator. Data extracted from official spec
+// PDFs supplied by Wylee.
+//
+// Two calculator shapes, per category `calcType`:
+//   "linear" (default) — sold by length. massOf() returns kg/m.
+//                          Calculator: panjang (m) × kuantiti (batang).
+//   "area"              — sold by sheet/thickness. massOf() returns kg/m².
+//                          Calculator: panjang (mm) × lebar (mm) × kuantiti (keping).
+//
+// `hasMarketAdjust` (CQ/BS grade toggle) is opt-in per category — only
+// CHS/SHS/RHS have it today, per Wylee: real hollow-section stock commonly
+// runs thinner than the catalogue spec (CQ ~15–20%, BS ~5%).
 
 const CATEGORIES = [
   {
     key: "ubuc", icon: "🏗️", label: "I-Beam (UB/UC)",
     data: ubucData.items,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
     dims: (it) => [
       it.type ? `Jenis ${it.type}` : null,
       it.depth_mm != null ? `Dalam ${it.depth_mm}mm` : null,
@@ -29,6 +47,9 @@ const CATEGORIES = [
     key: "chs", icon: "⭕", label: "CHS (Paip Bulat Hollow)",
     data: chsData.items,
     hasMarketAdjust: true,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
     dims: (it) => [
       `OD ${it.outside_diameter_mm}mm`,
       `Tebal ${it.wall_thickness_mm}mm`,
@@ -38,6 +59,9 @@ const CATEGORIES = [
     key: "shs", icon: "⬜", label: "SHS (Hollow Segi Empat Sama)",
     data: shsData.items,
     hasMarketAdjust: true,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
     dims: (it) => [
       `Saiz ${it.size_mm}×${it.size_mm}mm`,
       `Tebal ${it.wall_thickness_mm}mm`,
@@ -47,6 +71,9 @@ const CATEGORIES = [
     key: "rhs", icon: "▭", label: "RHS (Hollow Segi Empat)",
     data: rhsData.items,
     hasMarketAdjust: true,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
     dims: (it) => [
       `Saiz ${it.depth_mm}×${it.width_mm}mm`,
       `Tebal ${it.wall_thickness_mm}mm`,
@@ -55,6 +82,9 @@ const CATEGORIES = [
   {
     key: "angle", icon: "📐", label: "Angle Bar (L)",
     data: angleData.items,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
     dims: (it) => [
       it.angle_type ? it.angle_type : null,
       `${it.leg1_mm}×${it.leg2_mm}mm`,
@@ -64,6 +94,9 @@ const CATEGORIES = [
   {
     key: "channel", icon: "⊐", label: "U Channel (C)",
     data: channelData.items,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
     dims: (it) => [
       `Dalam ${it.depth_mm}mm`,
       `Flange ${it.flange_width_mm}mm`,
@@ -71,10 +104,99 @@ const CATEGORIES = [
       it.flange_thickness_mm != null ? `Flange T ${it.flange_thickness_mm}mm` : null,
     ].filter(Boolean).join(" · "),
   },
+  {
+    key: "roundbar", icon: "🔩", label: "Round Bar & Deformed Bar",
+    data: roundBarData.items,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
+    dims: (it) => [
+      it.bar_type || null,
+      `⌀${it.diameter_mm}mm`,
+      it.grade ? `Gred ${it.grade}` : null,
+    ].filter(Boolean).join(" · "),
+  },
+  {
+    key: "flatbar", icon: "▬", label: "Flat Bar",
+    data: flatBarData.items,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
+    dims: (it) => [
+      `Lebar ${it.width_mm}mm`,
+      `Tebal ${it.thickness_mm}mm`,
+    ].join(" · "),
+  },
+  {
+    key: "plate", icon: "🟫", label: "Plat Rata (Hot Rolled)",
+    data: plateData.items,
+    calcType: "area",
+    desig: (it) => `${it.thickness_mm}mm`,
+    massOf: (it) => Number(it.mass_per_sqm_kg) || 0,
+    massUnit: "kg/m²",
+    dims: (it) => [
+      `Tebal ${it.thickness_mm}mm`,
+      it.standard_sheet_sizes ? `Saiz piawai: ${it.standard_sheet_sizes}` : null,
+    ].filter(Boolean).join(" · "),
+  },
+  {
+    key: "coldrolled", icon: "🔲", label: "Kepingan Gegelung Sejuk (Cold Rolled)",
+    data: coldRolledData.items,
+    calcType: "area",
+    desig: (it) => `${it.thickness_mm}mm`,
+    massOf: (it) => Number(it.mass_per_sqm_kg) || 0,
+    massUnit: "kg/m²",
+    dims: (it) => [
+      `Tebal ${it.thickness_mm}mm`,
+      it.standard_sheet_sizes ? `Saiz piawai: ${it.standard_sheet_sizes}` : null,
+    ].filter(Boolean).join(" · "),
+  },
+  {
+    key: "galvsheet", icon: "✨", label: "Kepingan Zink (Galvanised)",
+    data: galvSheetData.items,
+    calcType: "area",
+    desig: (it) => `${it.thickness_mm}mm${it.coating_class ? " · " + it.coating_class : ""}`,
+    massOf: (it) => Number(it.mass_per_sqm_kg) || 0,
+    massUnit: "kg/m²",
+    dims: (it) => [
+      `Tebal ${it.thickness_mm}mm`,
+      it.coating_class ? `Salutan ${it.coating_class}` : null,
+    ].filter(Boolean).join(" · "),
+  },
+  {
+    key: "chequered", icon: "◈", label: "Plat Bunga (Chequered)",
+    data: chequeredData.items,
+    calcType: "area",
+    desig: (it) => `${it.nominal_thickness_mm}mm`,
+    massOf: (it) => Number(it.mass_per_sqm_kg) || 0,
+    massUnit: "kg/m²",
+    dims: (it) => [
+      `Tebal asas ${it.nominal_thickness_mm}mm`,
+      it.standard_sheet_sizes ? `Saiz piawai: ${it.standard_sheet_sizes}` : null,
+    ].filter(Boolean).join(" · "),
+  },
+  {
+    key: "apipipe", icon: "🛢️", label: "Paip API (Line Pipe)",
+    data: apiPipeData.items,
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.mass_per_metre_kg) || 0,
+    massUnit: "kg/m",
+    dims: (it) => [
+      it.outside_diameter_mm != null ? `OD ${it.outside_diameter_mm}mm` : null,
+      `Tebal ${it.wall_thickness_mm}mm`,
+      it.schedule || null,
+    ].filter(Boolean).join(" · "),
+  },
 ];
 
-function norm(v) {
-  return String(v ?? "").toLowerCase();
+// Generic search index — stringify every scalar field on the item so search
+// works across designation, dims, grade, schedule, notes, etc. without a
+// per-category field list.
+function searchIndex(it) {
+  return Object.values(it)
+    .filter(v => typeof v === "string" || typeof v === "number")
+    .join(" ")
+    .toLowerCase();
 }
 
 // Grade/source options for the market-weight adjustment (CHS/SHS/RHS only).
@@ -91,41 +213,54 @@ export default function KatalogTab({ session }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null); // { cat, item }
   const [lengthM, setLengthM] = useState("");
+  const [pieceLenMm, setPieceLenMm] = useState("");
+  const [pieceWidMm, setPieceWidMm] = useState("");
   const [qty, setQty] = useState(1);
   const [grade, setGrade] = useState("katalog"); // "katalog" | "cq" | "bs"
   const [cqPct, setCqPct] = useState(20);
   const [bsPct, setBsPct] = useState(5);
 
   const cat = CATEGORIES.find(c => c.key === catKey);
+  const isArea = cat.calcType === "area";
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return cat.data;
-    return cat.data.filter(it =>
-      norm(it.designation).includes(q) ||
-      norm(it.notes).includes(q) ||
-      norm(it.type).includes(q) ||
-      norm(it.angle_type).includes(q)
-    );
+    return cat.data.filter(it => searchIndex(it).includes(q));
   }, [cat, search]);
 
   const pickItem = (item) => {
     setSelected({ cat, item });
     setLengthM("");
+    setPieceLenMm("");
+    setPieceWidMm("");
     setQty(1);
   };
 
   const clampPct = v => Math.min(90, Math.max(0, parseFloat(v) || 0));
 
-  const massPerM = selected ? Number(selected.item.mass_per_metre_kg) || 0 : 0;
+  const refMass = selected ? selected.cat.massOf(selected.item) : 0;
+  const massUnit = selected ? selected.cat.massUnit : "kg/m";
   const supportsMarket = selected ? !!selected.cat.hasMarketAdjust : false;
   const activeGrade = supportsMarket ? grade : "katalog";
   const activePct = activeGrade === "cq" ? clampPct(cqPct) : activeGrade === "bs" ? clampPct(bsPct) : 0;
-  const effMassPerM = activeGrade === "katalog" ? massPerM : massPerM * (1 - activePct / 100);
-  const len = parseFloat(lengthM) || 0;
+  const effMass = activeGrade === "katalog" ? refMass : refMass * (1 - activePct / 100);
+
   const q = parseFloat(qty) || 0;
-  const weightPerPiece = effMassPerM * len;
+
+  // linear calc
+  const len = parseFloat(lengthM) || 0;
+  const weightPerPieceLinear = effMass * len;
+
+  // area calc
+  const pLenM = (parseFloat(pieceLenMm) || 0) / 1000;
+  const pWidM = (parseFloat(pieceWidMm) || 0) / 1000;
+  const pieceAreaM2 = pLenM * pWidM;
+  const weightPerPieceArea = effMass * pieceAreaM2;
+
+  const weightPerPiece = isArea ? weightPerPieceArea : weightPerPieceLinear;
   const totalWeight = weightPerPiece * q;
+  const readyToCalc = isArea ? (pLenM > 0 && pWidM > 0) : len > 0;
 
   return (
     <div style={K.page}>
@@ -138,6 +273,7 @@ export default function KatalogTab({ session }) {
         @media (min-width: 760px) {
           .kat-grid { grid-template-columns: minmax(280px, 1.2fr) minmax(300px, 1fr); }
         }
+        .kat-lenwid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
       `}</style>
 
       <div style={K.header}>
@@ -145,7 +281,8 @@ export default function KatalogTab({ session }) {
         <h1 style={K.h1}>Katalog & Kira Berat</h1>
         <p style={K.sub}>
           Cari besi ikut kategori & saiz, semak spesifikasi, dan kira berat (kg)
-          ikut panjang &amp; kuantiti.
+          — panjang &amp; kuantiti untuk besi panjang, atau saiz keping untuk
+          plat/kepingan.
         </p>
       </div>
 
@@ -176,16 +313,17 @@ export default function KatalogTab({ session }) {
             )}
             {results.slice(0, 200).map((it, i) => {
               const isSel = selected && selected.item === it;
+              const mass = cat.massOf(it);
               return (
                 <div key={i} onClick={() => pickItem(it)}
                   style={{ ...K.row, background: isSel ? "#fef3e2" : (i % 2 === 0 ? "#fff" : "#f8fafc"),
                     borderColor: isSel ? "#fcd5a0" : "#e2e8f0" }}>
                   <div style={K.rowMain}>
-                    <div style={K.rowDesig}>{it.designation}</div>
+                    <div style={K.rowDesig}>{cat.desig(it)}</div>
                     <div style={K.rowDims}>{cat.dims(it)}</div>
                   </div>
                   <div style={K.rowMass}>
-                    {it.mass_per_metre_kg != null ? `${it.mass_per_metre_kg} kg/m` : "—"}
+                    {mass > 0 ? `${mass} ${cat.massUnit}` : "—"}
                   </div>
                 </div>
               );
@@ -208,14 +346,14 @@ export default function KatalogTab({ session }) {
           ) : (
             <>
               <div style={K.selCard}>
-                <div style={K.selDesig}>{selected.item.designation}</div>
+                <div style={K.selDesig}>{selected.cat.desig(selected.item)}</div>
                 <div style={K.selCat}>{selected.cat.icon} {selected.cat.label}</div>
                 <div style={K.selDims}>{selected.cat.dims(selected.item)}</div>
                 {selected.item.notes && <div style={K.selNotes}>ℹ️ {selected.item.notes}</div>}
                 <div style={K.selMassRow}>
                   <span style={K.selMassLbl}>Berat katalog (rasmi)</span>
                   <span style={{ ...K.selMassVal, ...(activeGrade !== "katalog" ? K.selMassValStrike : {}) }}>
-                    {massPerM.toFixed(3)} kg/m
+                    {refMass.toFixed(3)} {massUnit}
                   </span>
                 </div>
 
@@ -263,42 +401,72 @@ export default function KatalogTab({ session }) {
                     {activeGrade !== "katalog" && (
                       <div style={K.selMassRow}>
                         <span style={K.selMassLbl}>Berat {grade === "cq" ? "CQ" : "BS"} (anggaran)</span>
-                        <span style={K.selMassValMarket}>{effMassPerM.toFixed(3)} kg/m</span>
+                        <span style={K.selMassValMarket}>{effMass.toFixed(3)} {massUnit}</span>
                       </div>
                     )}
                   </div>
                 )}
               </div>
 
-              <Field label="Panjang sebatang (meter)">
-                <input type="number" step="0.01" value={lengthM}
-                  onChange={e => setLengthM(e.target.value)} placeholder="cth. 6"
-                  style={K.input} />
-              </Field>
-              <Field label="Kuantiti (batang)">
-                <input type="number" value={qty}
-                  onChange={e => setQty(e.target.value)}
-                  style={K.input} />
-              </Field>
+              {isArea ? (
+                <>
+                  <div className="kat-lenwid">
+                    <Field label="Panjang (mm)">
+                      <input type="number" step="1" value={pieceLenMm}
+                        onChange={e => setPieceLenMm(e.target.value)} placeholder="cth. 2438"
+                        style={K.input} />
+                    </Field>
+                    <Field label="Lebar (mm)">
+                      <input type="number" step="1" value={pieceWidMm}
+                        onChange={e => setPieceWidMm(e.target.value)} placeholder="cth. 1219"
+                        style={K.input} />
+                    </Field>
+                  </div>
+                  <Field label="Kuantiti (keping)">
+                    <input type="number" value={qty}
+                      onChange={e => setQty(e.target.value)}
+                      style={K.input} />
+                  </Field>
+                </>
+              ) : (
+                <>
+                  <Field label="Panjang sebatang (meter)">
+                    <input type="number" step="0.01" value={lengthM}
+                      onChange={e => setLengthM(e.target.value)} placeholder="cth. 6"
+                      style={K.input} />
+                  </Field>
+                  <Field label="Kuantiti (batang)">
+                    <input type="number" value={qty}
+                      onChange={e => setQty(e.target.value)}
+                      style={K.input} />
+                  </Field>
+                </>
+              )}
 
               <div style={K.calcBox}>
                 <div style={K.calcLine}>
-                  <span style={K.calcLbl}>Berat sebatang{activeGrade !== "katalog" ? ` (${grade === "cq" ? "CQ" : "BS"})` : ""}</span>
+                  <span style={K.calcLbl}>Berat sekeping/sebatang{activeGrade !== "katalog" ? ` (${grade === "cq" ? "CQ" : "BS"})` : ""}</span>
                   <span style={K.calcVal}>{weightPerPiece.toFixed(2)} kg</span>
                 </div>
-                <div style={K.calcFormula}>{effMassPerM.toFixed(3)} kg/m × {len || 0}m</div>
+                <div style={K.calcFormula}>
+                  {isArea
+                    ? `${effMass.toFixed(3)} kg/m² × ${(pLenM || 0).toFixed(3)}m × ${(pWidM || 0).toFixed(3)}m`
+                    : `${effMass.toFixed(3)} kg/m × ${len || 0}m`}
+                </div>
               </div>
 
               <div style={K.grandBox}>
                 <div>
                   <div style={K.grandLbl}>JUMLAH BERAT</div>
-                  <div style={K.grandPer}>{weightPerPiece.toFixed(2)} kg × {q || 0} batang</div>
+                  <div style={K.grandPer}>{weightPerPiece.toFixed(2)} kg × {q || 0} {isArea ? "keping" : "batang"}</div>
                 </div>
                 <div style={K.grandVal}>{totalWeight.toFixed(2)} kg</div>
               </div>
 
-              {(len <= 0) && (
-                <div style={K.hint}>Masukkan panjang untuk dapatkan berat.</div>
+              {!readyToCalc && (
+                <div style={K.hint}>
+                  {isArea ? "Masukkan panjang & lebar untuk dapatkan berat." : "Masukkan panjang untuk dapatkan berat."}
+                </div>
               )}
             </>
           )}
@@ -310,8 +478,9 @@ export default function KatalogTab({ session }) {
         dokumen sumber untuk kerja kejuruteraan kritikal. Untuk CHS/SHS/RHS,
         pilih gred CQ atau BS untuk anggaran berat lebih dekat dengan stok
         sebenar (CQ biasa 15–20% nipis, BS biasa ~5% nipis daripada katalog)
-        — kedua-dua % boleh laras ikut batch/pembekal semasa. Kategori lain
-        akan ditambah kemudian.
+        — kedua-dua % boleh laras ikut batch/pembekal semasa. Untuk plat/
+        kepingan, berat dikira ikut saiz sebenar (panjang × lebar) yang
+        dimasukkan — guna saiz piawai yang tertera atau saiz tempahan khas.
       </footer>
     </div>
   );

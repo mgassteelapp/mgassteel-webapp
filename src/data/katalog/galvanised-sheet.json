@@ -1,0 +1,774 @@
+{
+  "category": "Galvanised Steel Sheet",
+  "unit_note": "mass in kg/m2 unless noted",
+  "items": [
+    {
+      "gauge": "",
+      "thickness_mm": 0.3,
+      "mass_per_sqm_kg": 2.599,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 7.724 kg/pc (129.5 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.3,
+      "mass_per_sqm_kg": 2.66,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 7.905 kg/pc (126.5 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.3,
+      "mass_per_sqm_kg": 2.736,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 8.131 kg/pc (123.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.35,
+      "mass_per_sqm_kg": 2.992,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 8.891 kg/pc (112.5 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.35,
+      "mass_per_sqm_kg": 3.053,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 9.072 kg/pc (110.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.35,
+      "mass_per_sqm_kg": 3.129,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 9.298 kg/pc (107.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.36,
+      "mass_per_sqm_kg": 3.07,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 9.124 kg/pc (109.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.36,
+      "mass_per_sqm_kg": 3.131,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 9.305 kg/pc (107.5 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.36,
+      "mass_per_sqm_kg": 3.207,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 9.531 kg/pc (104.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.4,
+      "mass_per_sqm_kg": 3.384,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 10.057 kg/pc (99.4 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.4,
+      "mass_per_sqm_kg": 3.445,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 10.238 kg/pc (97.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.4,
+      "mass_per_sqm_kg": 3.521,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 10.464 kg/pc (95.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.45,
+      "mass_per_sqm_kg": 3.78,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 11.233 kg/pc (89.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.45,
+      "mass_per_sqm_kg": 3.838,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 11.405 kg/pc (87.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.45,
+      "mass_per_sqm_kg": 3.914,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 11.631 kg/pc (86.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.5,
+      "mass_per_sqm_kg": 4.169,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 12.39 kg/pc (80.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.5,
+      "mass_per_sqm_kg": 4.23,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 12.571 kg/pc (79.5 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.5,
+      "mass_per_sqm_kg": 4.306,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 12.797 kg/pc (78.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.55,
+      "mass_per_sqm_kg": 4.561,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 13.556 kg/pc (73.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.55,
+      "mass_per_sqm_kg": 4.623,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 13.738 kg/pc (72.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.55,
+      "mass_per_sqm_kg": 4.699,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 13.964 kg/pc (71.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.6,
+      "mass_per_sqm_kg": 4.954,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 14.723 kg/pc (67.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.6,
+      "mass_per_sqm_kg": 5.015,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 14.904 kg/pc (67.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.6,
+      "mass_per_sqm_kg": 5.091,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 15.13 kg/pc (66.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.65,
+      "mass_per_sqm_kg": 5.346,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 15.889 kg/pc (62.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.65,
+      "mass_per_sqm_kg": 5.408,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 16.071 kg/pc (62.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.65,
+      "mass_per_sqm_kg": 5.484,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 16.297 kg/pc (61.4 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.7,
+      "mass_per_sqm_kg": 5.739,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 17.056 kg/pc (58.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.7,
+      "mass_per_sqm_kg": 5.8,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 17.237 kg/pc (58.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.7,
+      "mass_per_sqm_kg": 5.876,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 17.463 kg/pc (57.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.75,
+      "mass_per_sqm_kg": 6.131,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 18.222 kg/pc (54.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.75,
+      "mass_per_sqm_kg": 6.193,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 18.404 kg/pc (54.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.75,
+      "mass_per_sqm_kg": 6.268,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 18.629 kg/pc (53.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.8,
+      "mass_per_sqm_kg": 6.524,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 19.389 kg/pc (51.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.8,
+      "mass_per_sqm_kg": 6.585,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 19.57 kg/pc (51.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.8,
+      "mass_per_sqm_kg": 6.661,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 19.796 kg/pc (50.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.85,
+      "mass_per_sqm_kg": 6.916,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 20.555 kg/pc (48.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.85,
+      "mass_per_sqm_kg": 6.978,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 20.737 kg/pc (48.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.85,
+      "mass_per_sqm_kg": 7.053,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 20.962 kg/pc (47.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.9,
+      "mass_per_sqm_kg": 7.309,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 21.722 kg/pc (46.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.9,
+      "mass_per_sqm_kg": 7.37,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 21.903 kg/pc (45.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 0.9,
+      "mass_per_sqm_kg": 7.446,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 22.129 kg/pc (45.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.0,
+      "mass_per_sqm_kg": 8.094,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 24.055 kg/pc (41.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.0,
+      "mass_per_sqm_kg": 8.155,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 24.236 kg/pc (41.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.0,
+      "mass_per_sqm_kg": 8.231,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 24.462 kg/pc (40.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.1,
+      "mass_per_sqm_kg": 8.879,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 26.388 kg/pc (37.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.1,
+      "mass_per_sqm_kg": 8.94,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 26.569 kg/pc (37.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.1,
+      "mass_per_sqm_kg": 9.016,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 26.795 kg/pc (37.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.2,
+      "mass_per_sqm_kg": 9.664,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 28.721 kg/pc (34.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.2,
+      "mass_per_sqm_kg": 9.725,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 28.902 kg/pc (34.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.2,
+      "mass_per_sqm_kg": 9.801,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 29.128 kg/pc (34.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.4,
+      "mass_per_sqm_kg": 11.234,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 33.387 kg/pc (30.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.4,
+      "mass_per_sqm_kg": 11.295,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 33.568 kg/pc (29.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.4,
+      "mass_per_sqm_kg": 11.371,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 33.794 kg/pc (29.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.45,
+      "mass_per_sqm_kg": 11.626,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 34.553 kg/pc (28.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.45,
+      "mass_per_sqm_kg": 11.687,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 34.734 kg/pc (28.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.45,
+      "mass_per_sqm_kg": 11.763,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 34.96 kg/pc (28.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.5,
+      "mass_per_sqm_kg": 12.019,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 35.72 kg/pc (28.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.5,
+      "mass_per_sqm_kg": 12.08,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 35.901 kg/pc (27.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.5,
+      "mass_per_sqm_kg": 12.156,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 36.127 kg/pc (27.7 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.55,
+      "mass_per_sqm_kg": 12.411,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 36.886 kg/pc (27.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.55,
+      "mass_per_sqm_kg": 12.472,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 37.067 kg/pc (27.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.55,
+      "mass_per_sqm_kg": 12.548,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 37.293 kg/pc (26.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.6,
+      "mass_per_sqm_kg": 12.804,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 38.052 kg/pc (26.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.6,
+      "mass_per_sqm_kg": 12.865,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 38.234 kg/pc (26.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.6,
+      "mass_per_sqm_kg": 12.941,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 38.46 kg/pc (26.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.8,
+      "mass_per_sqm_kg": 14.374,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 42.718 kg/pc (23.4 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.8,
+      "mass_per_sqm_kg": 14.435,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 42.9 kg/pc (23.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.8,
+      "mass_per_sqm_kg": 14.511,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 43.126 kg/pc (23.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.9,
+      "mass_per_sqm_kg": 15.159,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 45.051 kg/pc (22.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.9,
+      "mass_per_sqm_kg": 15.22,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 45.233 kg/pc (22.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 1.9,
+      "mass_per_sqm_kg": 15.296,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 45.459 kg/pc (22.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.0,
+      "mass_per_sqm_kg": 15.944,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 47.384 kg/pc (21.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.0,
+      "mass_per_sqm_kg": 16.005,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 47.566 kg/pc (21.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.0,
+      "mass_per_sqm_kg": 16.081,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 47.791 kg/pc (22.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2). DATA QUALITY FLAG: printed lb/pc value (100.361) is inconsistent with the printed kg/pc value (47.791); corrected lb/pc (105.361) used only for internal cross-check, not stored. kg/pc and mass_per_sqm_kg are taken as printed.",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.2,
+      "mass_per_sqm_kg": 17.514,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 52.05 kg/pc (19.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.2,
+      "mass_per_sqm_kg": 17.575,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 52.232 kg/pc (19.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.2,
+      "mass_per_sqm_kg": 17.651,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 52.457 kg/pc (19.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.3,
+      "mass_per_sqm_kg": 18.299,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 54.383 kg/pc (18.4 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.3,
+      "mass_per_sqm_kg": 18.36,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 54.564 kg/pc (18.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.3,
+      "mass_per_sqm_kg": 18.436,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 54.79 kg/pc (18.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.5,
+      "mass_per_sqm_kg": 16.504,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 49.049 kg/pc (16.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2). DATA QUALITY FLAG: source table value for this cell appears to contain a printing/scan error (value is inconsistent with the trend of surrounding thickness rows and with the Z22/Z25 value in the same row, which is internally consistent); likely intended value is ~59.0 kg/pc rather than 49.0 kg/pc. Extracted mass_per_sqm_kg is derived from the printed (possibly erroneous) figure.",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.5,
+      "mass_per_sqm_kg": 19.93,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 59.23 kg/pc (16.9 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.5,
+      "mass_per_sqm_kg": 16.641,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 49.456 kg/pc (16.8 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2). DATA QUALITY FLAG: source table value for this cell appears to contain a printing/scan error (value is inconsistent with the trend of surrounding thickness rows and with the Z22/Z25 value in the same row, which is internally consistent); likely intended value is ~59.0 kg/pc rather than 49.0 kg/pc. Extracted mass_per_sqm_kg is derived from the printed (possibly erroneous) figure.",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.6,
+      "mass_per_sqm_kg": 20.654,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 61.382 kg/pc (16.3 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.6,
+      "mass_per_sqm_kg": 20.715,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 61.563 kg/pc (16.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.6,
+      "mass_per_sqm_kg": 20.791,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 61.789 kg/pc (16.2 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.8,
+      "mass_per_sqm_kg": 22.224,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 66.048 kg/pc (15.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2). Note: printed lb/pc for Z22/Z25 (145.009) is lower than Z18 (145.609) despite higher kg/pc, likely a printing error in the source; kg/pc and mass_per_sqm_kg are taken as printed and unaffected.",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.8,
+      "mass_per_sqm_kg": 22.285,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 66.229 kg/pc (15.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2). Note: printed lb/pc for Z22/Z25 (145.009) is lower than Z18 (145.609) despite higher kg/pc, likely a printing error in the source; kg/pc and mass_per_sqm_kg are taken as printed and unaffected.",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.8,
+      "mass_per_sqm_kg": 22.361,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 66.455 kg/pc (15.0 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2). Note: printed lb/pc for Z22/Z25 (145.009) is lower than Z18 (145.609) despite higher kg/pc, likely a printing error in the source; kg/pc and mass_per_sqm_kg are taken as printed and unaffected.",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.9,
+      "mass_per_sqm_kg": 23.009,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 68.381 kg/pc (14.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.9,
+      "mass_per_sqm_kg": 23.07,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 68.562 kg/pc (14.6 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 2.9,
+      "mass_per_sqm_kg": 23.146,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 68.788 kg/pc (14.5 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 3.0,
+      "mass_per_sqm_kg": 23.794,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z18. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 70.714 kg/pc (14.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z18"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 3.0,
+      "mass_per_sqm_kg": 23.855,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z22/Z25. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 70.895 kg/pc (14.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z22/Z25"
+    },
+    {
+      "gauge": "",
+      "thickness_mm": 3.0,
+      "mass_per_sqm_kg": 23.931,
+      "standard_sheet_sizes": "1219mm x 2438mm (4' x 8')",
+      "notes": "Standard: JIS G3302 SGCC/SGHC. Zinc coating class Z27. Calculated weight per 4'x8' (1219mm x 2438mm) sheet: 71.121 kg/pc (14.1 pcs/metric ton). mass_per_sqm_kg computed as kg/pc \u00f7 sheet area (2.972 m\u00b2).",
+      "coating_class": "Z27"
+    }
+  ]
+}

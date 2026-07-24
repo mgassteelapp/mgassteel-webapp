@@ -1,0 +1,118 @@
+{
+  "category": "Round Bar & Deformed Bar",
+  "unit_note": "mass in kg/m",
+  "items": [
+    {
+      "designation": "T10",
+      "bar_type": "Deformed",
+      "diameter_mm": 10,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 0.617,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 138 pcs, nominal weight 1.022 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "T12",
+      "bar_type": "Deformed",
+      "diameter_mm": 12,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 0.888,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 96 pcs, nominal weight 1.023 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "T16",
+      "bar_type": "Deformed",
+      "diameter_mm": 16,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 1.580,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 54 pcs, nominal weight 1.024 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "T20",
+      "bar_type": "Deformed",
+      "diameter_mm": 20,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 2.471,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 34 pcs, nominal weight 1.008 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "T25",
+      "bar_type": "Deformed",
+      "diameter_mm": 25,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 3.848,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 22 pcs, nominal weight 1.016 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "T32",
+      "bar_type": "Deformed",
+      "diameter_mm": 32,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 6.310,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 14 pcs, nominal weight 1.060 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "T40",
+      "bar_type": "Deformed",
+      "diameter_mm": 40,
+      "grade": "HT (B500B)",
+      "mass_per_metre_kg": 9.861,
+      "notes": "Spec MS146:2014 GRD B500B; bundle: 9 pcs, nominal weight 1.065 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R6",
+      "bar_type": "Round",
+      "diameter_mm": 6,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 0.222,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 375 pcs, nominal weight 0.999 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R8",
+      "bar_type": "Round",
+      "diameter_mm": 8,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 0.395,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 200 pcs, nominal weight 0.948 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R10",
+      "bar_type": "Round",
+      "diameter_mm": 10,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 0.617,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 138 pcs, nominal weight 1.022 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R12",
+      "bar_type": "Round",
+      "diameter_mm": 12,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 0.888,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 96 pcs, nominal weight 1.023 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R16",
+      "bar_type": "Round",
+      "diameter_mm": 16,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 1.579,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 54 pcs, nominal weight 1.023 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R20",
+      "bar_type": "Round",
+      "diameter_mm": 20,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 2.466,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 34 pcs, nominal weight 1.006 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    },
+    {
+      "designation": "R25",
+      "bar_type": "Round",
+      "diameter_mm": 25,
+      "grade": "MS (Grade 250)",
+      "mass_per_metre_kg": 3.852,
+      "notes": "Spec MS146:2006 GRD 250; bundle: 22 pcs, nominal weight 1.017 Mt per bundle (mass/m derived assuming 12m standard bar length)"
+    }
+  ]
+}

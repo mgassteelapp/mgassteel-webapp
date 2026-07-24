@@ -1,0 +1,97 @@
+{
+  "category": "Chequered Plates",
+  "unit_note": "mass in kg/m2 unless noted",
+  "items": [
+    {
+      "nominal_thickness_mm": 3.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 25.26,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 75.069kg/2.971922m2, 117.336kg/4.645152m2, 281.623kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 4.5,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 37.04,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 110.063kg/2.971922m2, 172.033kg/4.645152m2, 412.909kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 6.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 48.81,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 145.058kg/2.971922m2, 226.730kg/4.645152m2, 544.195kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 7.5,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 60.58,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 180.052kg/2.971922m2, 281.426kg/4.645152m2, 675.482kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 8.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 64.51,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 191.717kg/2.971922m2, 299.659kg/4.645152m2, 719.244kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 9.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 72.36,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 215.046kg/2.971922m2, 336.123kg/4.645152m2, 806.768kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 10.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 80.21,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 238.376kg/2.971922m2, 372.587kg/4.645152m2, 894.292kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 11.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 88.06,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 261.705kg/2.971922m2, 409.052kg/4.645152m2, 981.817kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 12.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 95.91,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 285.035kg/2.971922m2, 445.516kg/4.645152m2, 1069.341kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 13.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 103.76,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 308.365kg/2.971922m2, 481.981kg/4.645152m2, 1156.876kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 14.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 111.61,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 331.694kg/2.971922m2, 518.445kg/4.645152m2, 1244.401kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 15.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 119.46,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 355.024kg/2.971922m2, 554.910kg/4.645152m2, 1331.925kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    },
+    {
+      "nominal_thickness_mm": 16.0,
+      "thickness_incl_pattern_mm": null,
+      "mass_per_sqm_kg": 127.31,
+      "standard_sheet_sizes": "4' x 8' (1219mm x 2438mm), 5' x 10' (1524mm x 3048mm), 6' x 20' (1829mm x 6096mm)",
+      "notes": "Standards: BS EN 10025 S275 JR, ASTM A36, JIS G 3101 - SS330, JIS G 3101 - SS400. mass_per_sqm_kg computed from source's calculated weight per piece (kg/pc) divided by sheet area (averaged across the three listed sheet sizes: 378.353kg/2.971922m2, 591.374kg/4.645152m2, 1419.449kg/11.149584m2). Other sizes & lengths not stipulated in the table may be made available upon request."
+    }
+  ]
+}

@@ -1,0 +1,524 @@
+{
+  "category": "Flat Bar",
+  "unit_note": "mass in kg/m",
+  "items": [
+    {
+      "designation": "12 x 3",
+      "width_mm": 12,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 0.283,
+      "notes": "Section area: 0.36 cm2"
+    },
+    {
+      "designation": "16 x 3",
+      "width_mm": 16,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 0.377,
+      "notes": "Section area: 0.48 cm2"
+    },
+    {
+      "designation": "19 x 3",
+      "width_mm": 19,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 0.447,
+      "notes": "Section area: 0.57 cm2"
+    },
+    {
+      "designation": "25 x 3",
+      "width_mm": 25,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 0.589,
+      "notes": "Section area: 0.75 cm2"
+    },
+    {
+      "designation": "32 x 3",
+      "width_mm": 32,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 0.754,
+      "notes": "Section area: 0.96 cm2"
+    },
+    {
+      "designation": "38 x 3",
+      "width_mm": 38,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 0.895,
+      "notes": "Section area: 1.14 cm2"
+    },
+    {
+      "designation": "50 x 3",
+      "width_mm": 50,
+      "thickness_mm": 3,
+      "mass_per_metre_kg": 1.18,
+      "notes": "Section area: 1.5 cm2"
+    },
+    {
+      "designation": "25 x 4.5",
+      "width_mm": 25,
+      "thickness_mm": 4.5,
+      "mass_per_metre_kg": 0.88,
+      "notes": "Section area: 1.125 cm2"
+    },
+    {
+      "designation": "32 x 4.5",
+      "width_mm": 32,
+      "thickness_mm": 4.5,
+      "mass_per_metre_kg": 1.13,
+      "notes": "Section area: 1.44 cm2"
+    },
+    {
+      "designation": "38 x 4.5",
+      "width_mm": 38,
+      "thickness_mm": 4.5,
+      "mass_per_metre_kg": 1.34,
+      "notes": "Section area: 1.71 cm2"
+    },
+    {
+      "designation": "44 x 4.5",
+      "width_mm": 44,
+      "thickness_mm": 4.5,
+      "mass_per_metre_kg": 1.55,
+      "notes": "Section area: 1.98 cm2"
+    },
+    {
+      "designation": "50 x 4.5",
+      "width_mm": 50,
+      "thickness_mm": 4.5,
+      "mass_per_metre_kg": 1.77,
+      "notes": "Section area: 2.25 cm2"
+    },
+    {
+      "designation": "14 x 6",
+      "width_mm": 14,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 0.66,
+      "notes": "Section area: 0.84 cm2 (as printed; out of typical sequence for this thickness series)"
+    },
+    {
+      "designation": "32 x 6",
+      "width_mm": 32,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 1.51,
+      "notes": "Section area: 1.92 cm2"
+    },
+    {
+      "designation": "38 x 6",
+      "width_mm": 38,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 1.79,
+      "notes": "Section area: 2.28 cm2"
+    },
+    {
+      "designation": "44 x 6",
+      "width_mm": 44,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 2.07,
+      "notes": "Section area: 2.64 cm2"
+    },
+    {
+      "designation": "50 x 6",
+      "width_mm": 50,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 2.36,
+      "notes": "Section area: 3.0 cm2"
+    },
+    {
+      "designation": "65 x 6",
+      "width_mm": 65,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 3.06,
+      "notes": "Section area: 3.9 cm2"
+    },
+    {
+      "designation": "75 x 6",
+      "width_mm": 75,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 3.53,
+      "notes": "Section area: 4.5 cm2"
+    },
+    {
+      "designation": "90 x 6",
+      "width_mm": 90,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 4.24,
+      "notes": "Section area: 5.4 cm2"
+    },
+    {
+      "designation": "100 x 6",
+      "width_mm": 100,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 4.71,
+      "notes": "Section area: 6.0 cm2"
+    },
+    {
+      "designation": "125 x 6",
+      "width_mm": 125,
+      "thickness_mm": 6,
+      "mass_per_metre_kg": 5.89,
+      "notes": "Section area: 7.5 cm2"
+    },
+    {
+      "designation": "25 x 8",
+      "width_mm": 25,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 1.57,
+      "notes": "Section area: 2.0 cm2"
+    },
+    {
+      "designation": "32 x 8",
+      "width_mm": 32,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 2.01,
+      "notes": "Section area: 2.56 cm2"
+    },
+    {
+      "designation": "38 x 8",
+      "width_mm": 38,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 2.39,
+      "notes": "Section area: 3.04 cm2"
+    },
+    {
+      "designation": "44 x 8",
+      "width_mm": 44,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 2.76,
+      "notes": "Section area: 3.52 cm2"
+    },
+    {
+      "designation": "50 x 8",
+      "width_mm": 50,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 3.14,
+      "notes": "Section area: 4.0 cm2"
+    },
+    {
+      "designation": "65 x 8",
+      "width_mm": 65,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 4.08,
+      "notes": "Section area: 5.2 cm2"
+    },
+    {
+      "designation": "75 x 8",
+      "width_mm": 75,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 4.71,
+      "notes": "Section area: 6.0 cm2"
+    },
+    {
+      "designation": "90 x 8",
+      "width_mm": 90,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 5.65,
+      "notes": "Section area: 7.2 cm2"
+    },
+    {
+      "designation": "100 x 8",
+      "width_mm": 100,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 6.28,
+      "notes": "Section area: 8.0 cm2"
+    },
+    {
+      "designation": "125 x 8",
+      "width_mm": 125,
+      "thickness_mm": 8,
+      "mass_per_metre_kg": 7.85,
+      "notes": "Section area: 10.0 cm2"
+    },
+    {
+      "designation": "25 x 9",
+      "width_mm": 25,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 1.77,
+      "notes": "Section area: 2.25 cm2"
+    },
+    {
+      "designation": "32 x 9",
+      "width_mm": 32,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 2.26,
+      "notes": "Section area: 2.88 cm2"
+    },
+    {
+      "designation": "38 x 9",
+      "width_mm": 38,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 2.68,
+      "notes": "Section area: 3.42 cm2"
+    },
+    {
+      "designation": "44 x 9",
+      "width_mm": 44,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 3.11,
+      "notes": "Section area: 3.96 cm2"
+    },
+    {
+      "designation": "50 x 9",
+      "width_mm": 50,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 3.53,
+      "notes": "Section area: 4.5 cm2"
+    },
+    {
+      "designation": "65 x 9",
+      "width_mm": 65,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 4.59,
+      "notes": "Section area: 5.85 cm2"
+    },
+    {
+      "designation": "75 x 9",
+      "width_mm": 75,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 5.3,
+      "notes": "Section area: 6.75 cm2"
+    },
+    {
+      "designation": "90 x 9",
+      "width_mm": 90,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 6.36,
+      "notes": "Section area: 8.1 cm2"
+    },
+    {
+      "designation": "100 x 9",
+      "width_mm": 100,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 7.06,
+      "notes": "Section area: 9.0 cm2"
+    },
+    {
+      "designation": "125 x 9",
+      "width_mm": 125,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 8.83,
+      "notes": "Section area: 11.25 cm2"
+    },
+    {
+      "designation": "150 x 9",
+      "width_mm": 150,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 10.6,
+      "notes": "Section area: 13.5 cm2"
+    },
+    {
+      "designation": "180 x 9",
+      "width_mm": 180,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 12.7,
+      "notes": "Section area: 16.2 cm2"
+    },
+    {
+      "designation": "200 x 9",
+      "width_mm": 200,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 14.1,
+      "notes": "Section area: 18.0 cm2"
+    },
+    {
+      "designation": "230 x 9",
+      "width_mm": 230,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 16.2,
+      "notes": "Section area: 20.7 cm2"
+    },
+    {
+      "designation": "250 x 9",
+      "width_mm": 250,
+      "thickness_mm": 9,
+      "mass_per_metre_kg": 17.7,
+      "notes": "Section area: 22.5 cm2"
+    },
+    {
+      "designation": "25 x 12",
+      "width_mm": 25,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 2.36,
+      "notes": "Section area: 3.0 cm2"
+    },
+    {
+      "designation": "32 x 12",
+      "width_mm": 32,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 3.01,
+      "notes": "Section area: 3.84 cm2"
+    },
+    {
+      "designation": "38 x 12",
+      "width_mm": 38,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 3.58,
+      "notes": "Section area: 4.56 cm2"
+    },
+    {
+      "designation": "44 x 12",
+      "width_mm": 44,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 4.14,
+      "notes": "Section area: 5.28 cm2"
+    },
+    {
+      "designation": "50 x 12",
+      "width_mm": 50,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 4.71,
+      "notes": "Section area: 6.0 cm2"
+    },
+    {
+      "designation": "65 x 12",
+      "width_mm": 65,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 6.12,
+      "notes": "Section area: 7.8 cm2"
+    },
+    {
+      "designation": "75 x 12",
+      "width_mm": 75,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 7.06,
+      "notes": "Section area: 9.0 cm2"
+    },
+    {
+      "designation": "90 x 12",
+      "width_mm": 90,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 8.48,
+      "notes": "Section area: 10.8 cm2"
+    },
+    {
+      "designation": "100 x 12",
+      "width_mm": 100,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 9.42,
+      "notes": "Section area: 12.0 cm2"
+    },
+    {
+      "designation": "125 x 12",
+      "width_mm": 125,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 11.8,
+      "notes": "Section area: 15.0 cm2"
+    },
+    {
+      "designation": "150 x 12",
+      "width_mm": 150,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 14.1,
+      "notes": "Section area: 18.0 cm2"
+    },
+    {
+      "designation": "180 x 12",
+      "width_mm": 180,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 17.0,
+      "notes": "Section area: 21.6 cm2"
+    },
+    {
+      "designation": "200 x 12",
+      "width_mm": 200,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 18.8,
+      "notes": "Section area: 24.0 cm2"
+    },
+    {
+      "designation": "230 x 12",
+      "width_mm": 230,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 21.7,
+      "notes": "Section area: 27.6 cm2"
+    },
+    {
+      "designation": "250 x 12",
+      "width_mm": 250,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 23.6,
+      "notes": "Section area: 30.0 cm2"
+    },
+    {
+      "designation": "280 x 12",
+      "width_mm": 280,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 26.4,
+      "notes": "Section area: 33.6 cm2"
+    },
+    {
+      "designation": "300 x 12",
+      "width_mm": 300,
+      "thickness_mm": 12,
+      "mass_per_metre_kg": 28.3,
+      "notes": "Section area: 36.0 cm2"
+    },
+    {
+      "designation": "32 x 16",
+      "width_mm": 32,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 4.02,
+      "notes": "Section area: 5.12 cm2"
+    },
+    {
+      "designation": "38 x 16",
+      "width_mm": 38,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 4.77,
+      "notes": "Section area: 6.08 cm2"
+    },
+    {
+      "designation": "44 x 16",
+      "width_mm": 44,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 5.53,
+      "notes": "Section area: 7.04 cm2"
+    },
+    {
+      "designation": "50 x 16",
+      "width_mm": 50,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 6.28,
+      "notes": "Section area: 8.0 cm2"
+    },
+    {
+      "designation": "65 x 16",
+      "width_mm": 65,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 8.16,
+      "notes": "Section area: 10.4 cm2"
+    },
+    {
+      "designation": "75 x 16",
+      "width_mm": 75,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 9.42,
+      "notes": "Section area: 12.0 cm2"
+    },
+    {
+      "designation": "90 x 16",
+      "width_mm": 90,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 11.3,
+      "notes": "Section area: 14.4 cm2"
+    },
+    {
+      "designation": "100 x 16",
+      "width_mm": 100,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 12.6,
+      "notes": "Section area: 16.0 cm2"
+    },
+    {
+      "designation": "125 x 16",
+      "width_mm": 125,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 15.7,
+      "notes": "Section area: 20.0 cm2"
+    },
+    {
+      "designation": "150 x 16",
+      "width_mm": 150,
+      "thickness_mm": 16,
+      "mass_per_metre_kg": 18.8,
+      "notes": "Section area: 24.0 cm2"
+    }
+  ]
+}

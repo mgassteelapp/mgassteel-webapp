@@ -545,7 +545,8 @@ All 12 categories from the supplied PDFs are now built (AS1163 was the one
 exception — see below):
 
 *Linear products* (sold by length; calculator = panjang(m) × kuantiti):
-- I-Beam / UB & UC (Universal Beams & Columns) — 419 sizes
+- I-Beam / UB & UC (Universal Beams & Columns) — 427 sizes (264 Imperial/AISC
+  W-shape rows + 163 Metric rows — see re-extraction note below)
 - CHS (Circular Hollow Section, BS EN 10210) — 131 sizes
 - SHS (Square Hollow Section, BS EN 10210) — 217 sizes
 - RHS (Rectangular Hollow Section, BS EN 10210) — 298 sizes
@@ -588,15 +589,39 @@ ambiguities (faint print, inconsistent digits, misaligned table rows,
 tables that print per-sheet weight instead of a direct kg/m² column) that
 were corrected, back-calculated, or flagged with a best-effort note during
 extraction — spot-check against the source PDFs before relying on this for
-critical structural/engineering work, especially: the imperial AISC-derived
-rows in `universal-beam-columns.json`; `round-bar.json`'s `mass_per_metre_kg`
-(the source only printed bundle weight + pieces/bundle, so per-metre mass
-was back-calculated assuming a 12m standard bar length — confirmed
-consistent across all rows, but flagged per-item in `notes`); and
+critical structural/engineering work, especially: `round-bar.json`'s
+`mass_per_metre_kg` (the source only printed bundle weight + pieces/bundle,
+so per-metre mass was back-calculated assuming a 12m standard bar length —
+confirmed consistent across all rows, but flagged per-item in `notes`); and
 `api-pipes.json`'s large-diameter/dense-table rows (NPS 4"+), where mass was
 computed from the standard steel-pipe mass formula rather than read off the
 scan pixel-by-pixel (cross-checked against the clearly-legible small-size
 rows and matched).
+
+**`universal-beam-columns.json` was re-extracted once already — read this
+before touching it again.** The first pass badly undercounted rows in the
+dense tables (e.g. it had only 2 rows for the "W8 / 203×133" group when the
+source has 6: 21/20/18/17/15/14 lb/ft) and fabricated a `"type": "UB"/"UC"`
+field the source doesn't actually print anywhere (Wylee caught both issues
+by spot-checking the app against his physical catalogue). It was redone as
+two separate careful passes — Imperial pages 3–12 (AISC W-shapes) and Metric
+pages 15–18 — each cross-checking every row it transcribed against the
+printed lb/ft↔kg/m relationship (kg/m ≈ lb/ft × 1.488) to catch dense-print
+misreads before writing, then merged into one file (427 items: 264 Imperial
++ 163 Metric). The schema changed accordingly: no `type` field anymore;
+Imperial rows carry `section_number` (e.g. `"W8"`), `nominal_size_mm` /
+`nominal_size_in`, `mass_per_metre_kg` AND `mass_per_ft_lb` (both units, the
+source prints both side by side); Metric rows have `section_number: ""`,
+`nominal_size_in: ""`, `mass_per_ft_lb: null` (that table is metric-only, no
+imperial column exists to show). `KatalogTab.jsx`'s `ubuc` category config
+has `secondaryMassOf`/`secondaryMassUnit` accessors specifically so lb/ft
+displays alongside kg/m wherever it exists, instead of being dropped — if a
+future category needs a second unit too, follow that same pattern rather
+than picking one unit and discarding the other. If this file needs
+re-extracting again, re-read the actual page images first (pages 3–12 and
+15–18) rather than trusting the previous JSON as ground truth — this table
+is dense enough that a fresh, careful pass is the only reliable way to
+verify row counts per section group.
 
 `KatalogTab.jsx`'s `CATEGORIES` array carries a `calcType: "area"` flag for
 the four flat products (default is "linear" when omitted) plus a

@@ -35,12 +35,15 @@ const CATEGORIES = [
     desig: (it) => it.designation,
     massOf: (it) => Number(it.mass_per_metre_kg) || 0,
     massUnit: "kg/m",
+    secondaryMassOf: (it) => it.mass_per_ft_lb != null ? Number(it.mass_per_ft_lb) : null,
+    secondaryMassUnit: "lb/ft",
     dims: (it) => [
-      it.type ? `Jenis ${it.type}` : null,
+      it.nominal_size_mm ? `Saiz ${it.nominal_size_mm}mm` : null,
       it.depth_mm != null ? `Dalam ${it.depth_mm}mm` : null,
       it.width_mm != null ? `Lebar ${it.width_mm}mm` : null,
       it.web_thickness_mm != null ? `Web ${it.web_thickness_mm}mm` : null,
       it.flange_thickness_mm != null ? `Flange ${it.flange_thickness_mm}mm` : null,
+      it.mass_per_ft_lb != null ? `${it.mass_per_ft_lb} lb/ft` : null,
     ].filter(Boolean).join(" · "),
   },
   {
@@ -241,6 +244,7 @@ export default function KatalogTab({ session }) {
 
   const refMass = selected ? selected.cat.massOf(selected.item) : 0;
   const massUnit = selected ? selected.cat.massUnit : "kg/m";
+  const secondaryMass = selected && selected.cat.secondaryMassOf ? selected.cat.secondaryMassOf(selected.item) : null;
   const supportsMarket = selected ? !!selected.cat.hasMarketAdjust : false;
   const activeGrade = supportsMarket ? grade : "katalog";
   const activePct = activeGrade === "cq" ? clampPct(cqPct) : activeGrade === "bs" ? clampPct(bsPct) : 0;
@@ -356,6 +360,12 @@ export default function KatalogTab({ session }) {
                     {refMass.toFixed(3)} {massUnit}
                   </span>
                 </div>
+                {secondaryMass != null && (
+                  <div style={{ ...K.selMassRow, marginTop: 0, paddingTop: 0, borderTop: "none" }}>
+                    <span style={K.selMassLbl}>Unit asal (Imperial)</span>
+                    <span style={K.selMassValSecondary}>{secondaryMass} {selected.cat.secondaryMassUnit}</span>
+                  </div>
+                )}
 
                 {supportsMarket && (
                   <div style={K.marketBox}>
@@ -532,6 +542,7 @@ const K = {
   selMassVal: { fontSize: 15, fontWeight: 800, color: "#0f2744" },
   selMassValStrike: { color: "#94a3b8", fontWeight: 600, textDecoration: "line-through", fontSize: 13 },
   selMassValMarket: { fontSize: 15, fontWeight: 800, color: "#e8780a" },
+  selMassValSecondary: { fontSize: 12, fontWeight: 600, color: "#64748b" },
   marketBox: { marginTop: 4, paddingTop: 10, borderTop: "1px dashed #e2e8f0" },
   gradeBar: { display: "flex", gap: 6, marginTop: 5, marginBottom: 4 },
   gradeBtn: { flex: 1, border: "none", borderRadius: 7, padding: "7px 8px",

@@ -77,14 +77,24 @@ function norm(v) {
   return String(v ?? "").toLowerCase();
 }
 
+// Grade/source options for the market-weight adjustment (CHS/SHS/RHS only).
+// Real stock is commonly sold thinner than the printed catalogue spec —
+// CQ (commercial quality) more so than BS (British Standard certified).
+const GRADES = [
+  { key: "katalog", label: "Katalog (Rasmi)" },
+  { key: "cq", label: "CQ" },
+  { key: "bs", label: "BS" },
+];
+
 export default function KatalogTab({ session }) {
   const [catKey, setCatKey] = useState("ubuc");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null); // { cat, item }
   const [lengthM, setLengthM] = useState("");
   const [qty, setQty] = useState(1);
-  const [marketOn, setMarketOn] = useState(false);
-  const [marketPct, setMarketPct] = useState(20);
+  const [grade, setGrade] = useState("katalog"); // "katalog" | "cq" | "bs"
+  const [cqPct, setCqPct] = useState(20);
+  const [bsPct, setBsPct] = useState(5);
 
   const cat = CATEGORIES.find(c => c.key === catKey);
 
@@ -105,10 +115,13 @@ export default function KatalogTab({ session }) {
     setQty(1);
   };
 
+  const clampPct = v => Math.min(90, Math.max(0, parseFloat(v) || 0));
+
   const massPerM = selected ? Number(selected.item.mass_per_metre_kg) || 0 : 0;
   const supportsMarket = selected ? !!selected.cat.hasMarketAdjust : false;
-  const pct = Math.min(90, Math.max(0, parseFloat(marketPct) || 0));
-  const effMassPerM = supportsMarket && marketOn ? massPerM * (1 - pct / 100) : massPerM;
+  const activeGrade = supportsMarket ? grade : "katalog";
+  const activePct = activeGrade === "cq" ? clampPct(cqPct) : activeGrade === "bs" ? clampPct(bsPct) : 0;
+  const effMassPerM = activeGrade === "katalog" ? massPerM : massPerM * (1 - activePct / 100);
   const len = parseFloat(lengthM) || 0;
   const q = parseFloat(qty) || 0;
   const weightPerPiece = effMassPerM * len;
@@ -201,34 +214,57 @@ export default function KatalogTab({ session }) {
                 {selected.item.notes && <div style={K.selNotes}>ℹ️ {selected.item.notes}</div>}
                 <div style={K.selMassRow}>
                   <span style={K.selMassLbl}>Berat katalog (rasmi)</span>
-                  <span style={{ ...K.selMassVal, ...(supportsMarket && marketOn ? K.selMassValStrike : {}) }}>
+                  <span style={{ ...K.selMassVal, ...(activeGrade !== "katalog" ? K.selMassValStrike : {}) }}>
                     {massPerM.toFixed(3)} kg/m
                   </span>
                 </div>
 
                 {supportsMarket && (
                   <div style={K.marketBox}>
-                    <label style={K.marketToggleRow}>
-                      <input type="checkbox" checked={marketOn}
-                        onChange={e => setMarketOn(e.target.checked)} />
-                      <span>Guna berat pasaran (tebal sebenar biasanya lebih nipis)</span>
-                    </label>
-                    {marketOn && (
-                      <>
-                        <div style={K.marketPctRow}>
-                          <span style={K.smallLabel}>Nipis daripada katalog</span>
-                          <div style={K.marketPctInputWrap}>
-                            <input type="number" min="0" max="90" step="1" value={marketPct}
-                              onChange={e => setMarketPct(e.target.value)}
-                              style={K.marketPctInput} />
-                            <span style={K.marketPctSign}>%</span>
-                          </div>
+                    <div style={K.smallLabel}>Gred / sumber besi</div>
+                    <div style={K.gradeBar}>
+                      {GRADES.map(g => {
+                        const active = grade === g.key;
+                        return (
+                          <button key={g.key} type="button" style={{
+                            ...K.gradeBtn,
+                            background: active ? "#e8780a" : "#f1f5f9",
+                            color: active ? "#fff" : "#334155",
+                          }} onClick={() => setGrade(g.key)}>
+                            {g.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {grade === "cq" && (
+                      <div style={K.marketPctRow}>
+                        <span style={K.smallLabel}>CQ — nipis daripada katalog <i>(biasa 15–20%)</i></span>
+                        <div style={K.marketPctInputWrap}>
+                          <input type="number" min="0" max="90" step="1" value={cqPct}
+                            onChange={e => setCqPct(e.target.value)}
+                            style={K.marketPctInput} />
+                          <span style={K.marketPctSign}>%</span>
                         </div>
-                        <div style={K.selMassRow}>
-                          <span style={K.selMassLbl}>Berat pasaran (anggaran)</span>
-                          <span style={K.selMassValMarket}>{effMassPerM.toFixed(3)} kg/m</span>
+                      </div>
+                    )}
+                    {grade === "bs" && (
+                      <div style={K.marketPctRow}>
+                        <span style={K.smallLabel}>BS — nipis daripada katalog <i>(biasa ~5%)</i></span>
+                        <div style={K.marketPctInputWrap}>
+                          <input type="number" min="0" max="90" step="1" value={bsPct}
+                            onChange={e => setBsPct(e.target.value)}
+                            style={K.marketPctInput} />
+                          <span style={K.marketPctSign}>%</span>
                         </div>
-                      </>
+                      </div>
+                    )}
+
+                    {activeGrade !== "katalog" && (
+                      <div style={K.selMassRow}>
+                        <span style={K.selMassLbl}>Berat {grade === "cq" ? "CQ" : "BS"} (anggaran)</span>
+                        <span style={K.selMassValMarket}>{effMassPerM.toFixed(3)} kg/m</span>
+                      </div>
                     )}
                   </div>
                 )}
@@ -247,7 +283,7 @@ export default function KatalogTab({ session }) {
 
               <div style={K.calcBox}>
                 <div style={K.calcLine}>
-                  <span style={K.calcLbl}>Berat sebatang{supportsMarket && marketOn ? " (pasaran)" : ""}</span>
+                  <span style={K.calcLbl}>Berat sebatang{activeGrade !== "katalog" ? ` (${grade === "cq" ? "CQ" : "BS"})` : ""}</span>
                   <span style={K.calcVal}>{weightPerPiece.toFixed(2)} kg</span>
                 </div>
                 <div style={K.calcFormula}>{effMassPerM.toFixed(3)} kg/m × {len || 0}m</div>
@@ -271,10 +307,11 @@ export default function KatalogTab({ session }) {
 
       <footer style={K.foot}>
         Data diambil dari spesifikasi teknikal rasmi (PDF). Sila sahkan dengan
-        dokumen sumber untuk kerja kejuruteraan kritikal. "Berat pasaran"
-        untuk CHS/SHS/RHS adalah anggaran sahaja (tebal sebenar di pasaran
-        biasanya lebih nipis daripada katalog) — boleh laras % ikut batch/
-        pembekal semasa. Kategori lain akan ditambah kemudian.
+        dokumen sumber untuk kerja kejuruteraan kritikal. Untuk CHS/SHS/RHS,
+        pilih gred CQ atau BS untuk anggaran berat lebih dekat dengan stok
+        sebenar (CQ biasa 15–20% nipis, BS biasa ~5% nipis daripada katalog)
+        — kedua-dua % boleh laras ikut batch/pembekal semasa. Kategori lain
+        akan ditambah kemudian.
       </footer>
     </div>
   );
@@ -327,10 +364,11 @@ const K = {
   selMassValStrike: { color: "#94a3b8", fontWeight: 600, textDecoration: "line-through", fontSize: 13 },
   selMassValMarket: { fontSize: 15, fontWeight: 800, color: "#e8780a" },
   marketBox: { marginTop: 4, paddingTop: 10, borderTop: "1px dashed #e2e8f0" },
-  marketToggleRow: { display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12,
-    color: "#334155", cursor: "pointer", lineHeight: 1.5 },
+  gradeBar: { display: "flex", gap: 6, marginTop: 5, marginBottom: 4 },
+  gradeBtn: { flex: 1, border: "none", borderRadius: 7, padding: "7px 8px",
+    fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "all .15s" },
   marketPctRow: { display: "flex", justifyContent: "space-between", alignItems: "center",
-    marginTop: 10, marginBottom: 2 },
+    marginTop: 10, marginBottom: 2, gap: 10 },
   marketPctInputWrap: { display: "flex", alignItems: "center", gap: 5 },
   marketPctInput: { width: 56, background: "#fff", border: "1.5px solid #e2e8f0",
     borderRadius: 6, color: "#1e293b", padding: "6px 7px", fontSize: 13,

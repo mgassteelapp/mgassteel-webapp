@@ -32,13 +32,20 @@ const CATEGORIES = [
   {
     key: "ubuc", icon: "🏗️", label: "I-Beam (UB/UC)",
     data: ubucData.items,
-    desig: (it) => it.designation,
+    // Description always spells out BOTH units explicitly, e.g.
+    // "203 x 133 x 21lb/ft x 31.3kg/m" — per Wylee, the catalogue prints
+    // both lb/ft and kg/m for every Imperial-page row (pages 3-11) and
+    // both must be clearly shown together, not just one with the other
+    // tucked away elsewhere.
+    desig: (it) => it.mass_per_ft_lb != null
+      ? `${it.nominal_size_mm} x ${it.mass_per_ft_lb}lb/ft x ${it.mass_per_metre_kg}kg/m`
+      : `${it.nominal_size_mm} x ${it.mass_per_metre_kg}kg/m`,
     massOf: (it) => Number(it.mass_per_metre_kg) || 0,
     massUnit: "kg/m",
     secondaryMassOf: (it) => it.mass_per_ft_lb != null ? Number(it.mass_per_ft_lb) : null,
     secondaryMassUnit: "lb/ft",
     dims: (it) => [
-      it.nominal_size_mm ? `Saiz ${it.nominal_size_mm}mm` : null,
+      it.section_number ? `Seksyen ${it.section_number}` : null,
       it.depth_mm != null ? `Dalam ${it.depth_mm}mm` : null,
       it.width_mm != null ? `Lebar ${it.width_mm}mm` : null,
       it.web_thickness_mm != null ? `Web ${it.web_thickness_mm}mm` : null,

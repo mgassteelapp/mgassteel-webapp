@@ -4,6 +4,7 @@ import ReconcileTab from './ReconcileTab';
 import { supabase } from './supabase';
 import PlateCalculator from './PlateCalculator';
 import KatalogTab from './KatalogTab';
+import PurchasingTab from './PurchasingTab';
 
 
 // ── Google Sheets API ─────────────────────────────────────────────────────────
@@ -564,6 +565,7 @@ const lastActivityRef = useRef(Date.now());
       { key:"reconcile", label:"🔍 Check Daily Purchase Order" },
     ] : []),
     ...(session.role==="owner" ? [
+      { key:"purchasing", label:"Cadangan PO" },
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
     ] : []),
@@ -603,7 +605,7 @@ const lastActivityRef = useRef(Date.now());
           </div>
         </div>
       </div>
-      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
+      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
         {tab==="plate" && <PlateCalculator session={session} />}
         {tab==="katalog" && <KatalogTab session={session} />}
@@ -613,6 +615,7 @@ const lastActivityRef = useRef(Date.now());
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
+        {tab==="purchasing" && session.role==="owner" && <PurchasingTab prices={prices} session={session} />}
         {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
         {canAccessReconcile(session) && (
               <div style={{ display: tab==="reconcile" ? "block" : "none" }}>

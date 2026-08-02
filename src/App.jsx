@@ -131,11 +131,17 @@ const STAFF_LOGIN = [
 // Edit these two lists when roles change — names must match STAFF_PINS exactly.
 function canAccessDaily(sess) {
   if (!sess) return false;
-  return sess.role === "owner" || sess.role === "senior";
+  return sess.role === "owner" || sess.role === "senior" || sess.role === "manager";
 }
 function canAccessReconcile(sess) {
   if (!sess) return false;
-  return sess.role === 'owner' || sess.role === 'senior';
+  return sess.role === 'owner' || sess.role === 'senior' || sess.role === 'manager';
+}
+// Cadangan PO — owner + manager only. Managers (Fei, Mira) get it; seniors
+// (KY Han, Syafiq, Syahlin) do not, which is why this is not a senior check.
+function canAccessPurchasing(sess) {
+  if (!sess) return false;
+  return sess.role === "owner" || sess.role === "manager";
 }
 function canSeeCostMargin(sess) {
   if (!sess) return false;
@@ -197,7 +203,7 @@ const REASONS    = ["Hollow / Black Pipe - Kemek (Forklift)","Hollow / Black Pip
 const STAFF_LIST = ["Izzati","Natasha","Mohd Iqbal","Syafiq","Azhar","Han KY","Puteri","Su","Weelee (Admin)","Looi (HQ)","Fei (Accounts)","Mira (Purchase)"];
 
 // ── Colours ───────────────────────────────────────────────────────────────────
-const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
+const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", blue:"#1e40af", blueLight:"#dbeafe", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
 
 // ── Rounding helpers ─────────────────────────────────────────────────────────
 const TWO_DP_TABS = ["THI", "AJIYA", "ASTINO 26"];
@@ -215,7 +221,7 @@ function normCode(v) {
 // ── UI helpers ────────────────────────────────────────────────────────────────
 const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)", ...style }}>{children}</div>;
 const Badge = ({ children, color="gray" }) => {
-  const m = { green:{bg:C.greenLight,text:C.green}, red:{bg:C.redLight,text:C.red}, yellow:{bg:C.yellowLight,text:C.yellow}, orange:{bg:C.accentLight,text:C.accent}, gray:{bg:"#f1f5f9",text:C.muted} };
+  const m = { green:{bg:C.greenLight,text:C.green}, red:{bg:C.redLight,text:C.red}, yellow:{bg:C.yellowLight,text:C.yellow}, blue:{bg:C.blueLight,text:C.blue}, orange:{bg:C.accentLight,text:C.accent}, gray:{bg:"#f1f5f9",text:C.muted} };
   const s = m[color]||m.gray;
   return <span style={{ background:s.bg, color:s.text, padding:"2px 10px", borderRadius:20, fontSize:12, fontWeight:700 }}>{children}</span>;
 };
@@ -552,7 +558,7 @@ const lastActivityRef = useRef(Date.now());
     { key:"assistant", label:"🤖 Pembantu AI" },
     { key:"plate", label:"🛠️ Service Center" },
     { key:"katalog", label:"📖 Katalog & Kira Berat" },
-    ...((session.role==="owner" || session.role==="senior") ? [
+    ...((session.role==="owner" || session.role==="senior" || session.role==="manager") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
     { key:"log",       label:"📋 Rekod Tawaran" },
@@ -564,8 +570,10 @@ const lastActivityRef = useRef(Date.now());
     ...(canAccessReconcile(session) ? [
       { key:"reconcile", label:"🔍 Check Daily Purchase Order" },
     ] : []),
-    ...(session.role==="owner" ? [
+    ...(canAccessPurchasing(session) ? [
       { key:"purchasing", label:"Cadangan PO" },
+    ] : []),
+    ...(session.role==="owner" ? [
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
     ] : []),
@@ -609,13 +617,13 @@ const lastActivityRef = useRef(Date.now());
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
         {tab==="plate" && <PlateCalculator session={session} />}
         {tab==="katalog" && <KatalogTab session={session} />}
-        {tab==="prices"    && (session.role==="owner"||session.role==="senior") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
+        {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
-        {tab==="purchasing" && session.role==="owner" && <PurchasingTab prices={prices} session={session} />}
+        {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
         {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
         {canAccessReconcile(session) && (
               <div style={{ display: tab==="reconcile" ? "block" : "none" }}>
@@ -1481,6 +1489,7 @@ function UsersTab({ session }) {
                       style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, background:C.white, boxSizing:"border-box" }}>
                       <option value="staff">Staff</option>
                       <option value="senior">Senior</option>
+                      <option value="manager">Manager</option>
                       <option value="owner">Owner</option>
                     </select>
                   : <input type="text" inputMode={key==="pin"?"numeric":"text"} value={form[key]||""} onChange={e => setF(key, e.target.value)}
@@ -1514,7 +1523,7 @@ function UsersTab({ session }) {
                 <tr key={u.name} style={{ background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, opacity:u.active==="no"?0.5:1 }}>
                   <td style={{ padding:"10px 14px", fontWeight:600 }}>{u.name}</td>
                   <td style={{ padding:"10px 14px" }}>
-                    <Badge color={u.role==="owner"?"green":u.role==="senior"?"yellow":"gray"}>{u.role}</Badge>
+                    <Badge color={u.role==="owner"?"green":u.role==="manager"?"blue":u.role==="senior"?"yellow":"gray"}>{u.role}</Badge>
                   </td>
                   <td style={{ padding:"10px 14px" }}>
                     <span style={{ fontFamily:"monospace", letterSpacing:3, fontSize:14 }}>
@@ -1601,7 +1610,7 @@ function ActivityTab() {
                         <td style={{ padding:"7px 10px", whiteSpace:"nowrap", color:C.muted, fontSize:11 }}>{l.time}</td>
                         <td style={{ padding:"7px 10px", fontWeight:700, color:C.navy }}>{l.name}</td>
                         <td style={{ padding:"7px 10px" }}>
-                          <Badge color={l.role==="owner"?"green":l.role==="senior"?"yellow":"gray"}>{l.role}</Badge>
+                          <Badge color={l.role==="owner"?"green":l.role==="manager"?"blue":l.role==="senior"?"yellow":"gray"}>{l.role}</Badge>
                         </td>
                         <td style={{ padding:"7px 10px", fontWeight:600 }}>{l.action}</td>
                         <td style={{ padding:"7px 10px", color:C.muted, fontSize:11 }}>{l.detail}</td>

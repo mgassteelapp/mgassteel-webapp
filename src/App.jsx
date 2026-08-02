@@ -606,7 +606,7 @@ const lastActivityRef = useRef(Date.now());
                 }}>{t.label}</button>
               );
             })}
-            <button onClick={async()=>{ await logActivity(session,"Logout",""); clearSession(); setSession_(null); }}
+            <button onClick={async()=>{ await logActivity(session,"Logout",""); localStorage.removeItem("mgas_login_time"); await supabase.auth.signOut(); clearSession(); setSession_(null); }}
               style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" }}>
               {session.name.split(" ")[0]} · Keluar
             </button>

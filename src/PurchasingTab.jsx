@@ -9,12 +9,20 @@
 //
 // Read-only. Never writes to accounting.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabaseCrm } from './supabase';
+
+// USD/MYR live rate. Note this is api.frankfurter.dev/v1 — the older
+// api.frankfurter.app URL 301s here WITHOUT CORS headers on the redirect,
+// which browsers block, so the fetch must target the canonical host directly.
+const FX_ENDPOINT = 'https://api.frankfurter.dev/v1/latest?from=USD&to=MYR';
 
 const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
 
-const MARKET_DEFAULTS = { hrc: 580, hrcPrev: 575, usdMyr: 4.42, usdMyrPrev: 4.38, nickel: 'flat' };
+// usdMyr/usdMyrPrev are only a cold-start fallback for when the live fetch
+// fails before any rate has ever been stored; they are seeded equal so the
+// trend reads flat rather than inventing a direction from a stale number.
+const MARKET_DEFAULTS = { hrc: 580, hrcPrev: 575, usdMyr: 4.09, usdMyrPrev: 4.09, nickel: 'flat' };
 
 // Blank / NaN / null / non-numeric → fallback. Note Number('') === 0, so blank
 // strings are rejected explicitly before the Number() conversion.
@@ -36,6 +44,9 @@ function sanitizeMarket(raw) {
     usdMyrPrev: safeNum(m.usdMyrPrev, MARKET_DEFAULTS.usdMyrPrev),
     nickel:     m.nickel || MARKET_DEFAULTS.nickel,
     asOf:       (typeof m.asOf === 'string' && m.asOf) ? m.asOf : new Date().toISOString().slice(0,10),
+    // date the USD/MYR rate was last fetched — caches the fetch to once a day.
+    // Must be listed here or it would be stripped on every save.
+    fxAsOf:     (typeof m.fxAsOf === 'string' && m.fxAsOf) ? m.fxAsOf : '',
   };
 }
 
@@ -81,6 +92,37 @@ export default function PurchasingTab({ prices = [], session }) {
   const [offer, setOffer] = useState('');
   const [market, setMarket] = useMarket();
   const [showMarketEdit, setShowMarketEdit] = useState(false);
+  const [fxFailed, setFxFailed] = useState(false);
+
+  // Latest market value, so the fetch below can merge into whatever the user
+  // may have edited while it was in flight instead of writing a stale object.
+  const marketRef = useRef(market);
+  marketRef.current = market;
+
+  // Auto-fetch USD/MYR once per day. HRC stays weekly-manual (no free feed).
+  // On any failure we keep the last stored rate and flag it — never a guess.
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (marketRef.current.fxAsOf === today) return;   // already fetched today
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(FX_ENDPOINT);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const rate = Number(json?.rates?.MYR);
+        if (!Number.isFinite(rate) || rate <= 0) throw new Error('unexpected payload');
+        if (cancelled) return;
+        const cur = marketRef.current;
+        // keep the outgoing rate as "previous" so the up/down trend still works
+        setMarket({ ...cur, usdMyrPrev: cur.usdMyr, usdMyr: rate, fxAsOf: today });
+        setFxFailed(false);
+      } catch {
+        if (!cancelled) setFxFailed(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // search over the prices array already loaded by the app
   const results = useMemo(() => {
@@ -240,6 +282,11 @@ export default function PurchasingTab({ prices = [], session }) {
                     <div>HRC <b style={{ color: market.hrc>market.hrcPrev?C.red:market.hrc<market.hrcPrev?C.green:C.yellow }}>{market.hrc>market.hrcPrev?'▲':market.hrc<market.hrcPrev?'▼':'▬'} RM{market.hrc}/MT</b></div>
                     <div>USD/MYR <b style={{ color: market.usdMyr>market.usdMyrPrev?C.red:C.green }}>{market.usdMyr.toFixed(2)}</b></div>
                   </div>
+                  {fxFailed && (
+                    <div style={{ marginTop:2, fontSize:11, color:C.muted }}>
+                      Kadar USD/MYR tak tersedia — guna nilai terakhir
+                    </div>
+                  )}
                   <div style={{ marginTop:8, fontWeight:800, fontSize:14, color: mk.tone==='up'?C.red:mk.tone==='down'?C.green:C.yellow }}>{mk.label}</div>
                   <div style={{ marginTop:4, fontSize:11, color: calc.stale ? C.red : C.muted }}>
                     {calc.stale ? '⚠ Kemaskini HRC — dah lebih 7 hari' : `Dikemaskini ${market.asOf}`}

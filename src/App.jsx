@@ -2038,12 +2038,12 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
           <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>📋 Check Daily Sales Price</div>
           <span style={{ background:"#dcfce7", color:"#166534", padding:"2px 10px",
                          borderRadius:20, fontSize:10, fontWeight:700 }}>
-            ⚡ AUTO DARI CRM
+            ⚡ LIVE SYNC · SQL ACCOUNTING
           </span>
         </div>
         <div style={{ fontSize:11, color:C.muted, marginBottom:12 }}>
-          Baris jualan (IV &amp; CS, ikut item) diambil terus dari CRM — sync dari SQL Accounting
-          setiap 15 minit. Tiada muat naik fail diperlukan.
+          Baris jualan (IV &amp; CS, ikut item) diambil terus dari pangkalan data —
+          live sync dari SQL Accounting setiap 15 minit. Tiada muat naik fail diperlukan.
         </div>
         <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
           <select value={autoDays} onChange={e => setAutoDays(Number(e.target.value))}
@@ -2057,7 +2057,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
             padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
             background: loading ? C.muted : C.navy, color:C.white,
             cursor: loading ? "not-allowed" : "pointer" }}>
-            {loading ? "Sedang Semak..." : "▶ Semak dari CRM"}
+            {loading ? "Sedang Semak..." : "▶ Jalankan Semakan (Live Sync)"}
           </button>
           {autoInfo && (
             <span style={{ fontSize:11, color:C.muted }}>

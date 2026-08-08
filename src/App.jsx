@@ -457,6 +457,7 @@ export default function App() {
   const [scenarios, setScenarios] = useState([]);
   const [dcResults, setDcResults] = useState([]);
   const [rcResults, setRcResults] = useState(null);
+  const [rcAlert,   setRcAlert]   = useState(null); // {count, runAt} — auto-reconcile discrepancy alert
   const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(false);
   const [gsStatus,  setGsStatus]  = useState("connecting"); // connecting | ok | error
@@ -538,6 +539,35 @@ const lastActivityRef = useRef(Date.now());
       clearInterval(iv);
     };
   }, [session]);
+
+  // ── Auto-reconcile alert: poll latest 15-min CRM check for discrepancies ──
+  useEffect(() => {
+    if (!session || !canAccessReconcile(session)) { setRcAlert(null); return; }
+    let stop = false;
+    const check = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'latest' } });
+        if (stop || !data || data.error) return;
+        const seen = localStorage.getItem('mgas_reconcile_seen') || '';
+        if ((data.exceptions_count || 0) > 0 && data.run_at && data.run_at !== seen) {
+          setRcAlert({ count: data.exceptions_count, runAt: data.run_at });
+        } else {
+          setRcAlert(null);
+        }
+      } catch { /* offline / function unreachable — stay silent */ }
+    };
+    check();
+    const iv = setInterval(check, 5 * 60 * 1000);
+    return () => { stop = true; clearInterval(iv); };
+  }, [session]);
+
+  // Opening the reconcile tab marks the current alert as seen
+  useEffect(() => {
+    if (tab === 'reconcile' && rcAlert) {
+      localStorage.setItem('mgas_reconcile_seen', rcAlert.runAt);
+      setRcAlert(null);
+    }
+  }, [tab, rcAlert]);
   // Show login if no session (AFTER all hooks — required by React)
   if (!session) return <LoginScreen onLogin={s => {
   const loginTime = Date.now();
@@ -603,7 +633,12 @@ const lastActivityRef = useRef(Date.now());
                   fontWeight:600, fontSize:12, transition:"all 0.15s",
                   background: isActive ? C.accent : "#1e3a5f",
                   color: isActive ? "#fff" : isAlert ? "#fca5a5" : "#cbd5e1",
-                }}>{t.label}</button>
+                }}>{t.label}{t.key === "reconcile" && rcAlert ? (
+                  <span style={{ marginLeft:6, background:"#dc2626", color:"#fff",
+                                 borderRadius:10, padding:"1px 7px", fontSize:10, fontWeight:800 }}>
+                    {rcAlert.count}
+                  </span>
+                ) : null}</button>
               );
             })}
             <button onClick={async()=>{ await logActivity(session,"Logout",""); localStorage.removeItem("mgas_login_time"); await supabase.auth.signOut(); clearSession(); setSession_(null); }}
@@ -614,6 +649,14 @@ const lastActivityRef = useRef(Date.now());
         </div>
       </div>
       <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
+        {rcAlert && tab !== "reconcile" && (
+          <div onClick={() => setTab("reconcile")}
+            style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", color:"#991b1b",
+                     borderRadius:10, padding:"10px 16px", marginBottom:14, fontSize:13,
+                     fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:8 }}>
+            ⚠️ Semakan PO auto (CRM) menemui {rcAlert.count} pengecualian — klik untuk lihat laporan.
+          </div>
+        )}
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
         {tab==="plate" && <PlateCalculator session={session} />}
         {tab==="katalog" && <KatalogTab session={session} />}
@@ -1907,6 +1950,32 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
   const [filter,      setFilter]      = useState("ALL");
   const [search,      setSearch]      = useState("");
   const [expandedIdx, setExpandedIdx] = useState(null);
+  const [autoDays,    setAutoDays]    = useState(1);
+  const [autoInfo,    setAutoInfo]    = useState(null); // {count, start, hasDesc2}
+
+  // ── Auto mode: pull today's sales lines straight from the CRM (synced from
+  //    SQL Accounting every 15 min) and run the SAME check pipeline. ──
+  const runCheckAuto = async () => {
+    setLoading(true); setError(""); setResults([]); setRan(false); setExpandedIdx(null); setAutoInfo(null);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke('reconcile-proxy', {
+        body: { action: 'salesLines', days: autoDays },
+      });
+      if (fnErr) throw fnErr;
+      if (data?.error) throw new Error(data.error);
+      const lines = data?.lines || [];
+      const productMap  = buildProductMapFromPrices(prices);
+      const sortedCodes = buildSortedCodes(productMap);
+      const checked = lines.map(line => checkLine(line, productMap, sortedCodes));
+      checked.sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
+      setResults(checked);
+      setRan(true);
+      setAutoInfo({ count: lines.length, start: data?.start || '', hasDesc2: !!data?.hasDesc2 });
+    } catch (e) {
+      setError("Semakan auto tidak tersedia: " + String(e?.message || e));
+    }
+    setLoading(false);
+  };
 
   const runCheck = async () => {
     if (!salesFile) { setError("Sila muat naik fail jualan terlebih dahulu."); return; }
@@ -1963,9 +2032,55 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
 
   return (
     <div>
-      {/* Upload */}
+      {/* Auto mode — sales lines straight from CRM, no upload */}
       <Card style={{ padding:"14px 16px", marginBottom:12 }}>
-        <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:12 }}>📋 Check Daily Sales Price</div>
+        <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", marginBottom:4 }}>
+          <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>📋 Check Daily Sales Price</div>
+          <span style={{ background:"#dcfce7", color:"#166534", padding:"2px 10px",
+                         borderRadius:20, fontSize:10, fontWeight:700 }}>
+            ⚡ AUTO DARI CRM
+          </span>
+        </div>
+        <div style={{ fontSize:11, color:C.muted, marginBottom:12 }}>
+          Baris jualan (IV &amp; CS, ikut item) diambil terus dari CRM — sync dari SQL Accounting
+          setiap 15 minit. Tiada muat naik fail diperlukan.
+        </div>
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+          <select value={autoDays} onChange={e => setAutoDays(Number(e.target.value))}
+            style={{ padding:"9px 10px", borderRadius:8, border:`1.5px solid ${C.border}`,
+                     fontSize:12, fontWeight:600, background:C.white }}>
+            <option value={1}>Jualan Hari Ini</option>
+            <option value={3}>Jualan 3 Hari</option>
+            <option value={7}>Jualan 7 Hari</option>
+          </select>
+          <button onClick={runCheckAuto} disabled={loading} style={{
+            padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
+            background: loading ? C.muted : C.navy, color:C.white,
+            cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? "Sedang Semak..." : "▶ Semak dari CRM"}
+          </button>
+          {autoInfo && (
+            <span style={{ fontSize:11, color:C.muted }}>
+              {autoInfo.count} baris jualan dari CRM (mulai {autoInfo.start})
+            </span>
+          )}
+        </div>
+        {autoInfo && !autoInfo.hasDesc2 && (
+          <div style={{ marginTop:8, fontSize:10, color:C.muted, fontStyle:"italic" }}>
+            Nota: Description 2 belum disync dari SQL Accounting — item berharga ikut panjang
+            (per kaki/meter) akan ditanda SEMAK buat masa ini.
+          </div>
+        )}
+        {error && <div style={{ marginTop:10, color:C.red, fontSize:12, fontWeight:600 }}>{error}</div>}
+      </Card>
+
+      {/* Manual fallback: upload */}
+      <details style={{ marginBottom:12 }}>
+        <summary style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:C.muted,
+                          padding:"6px 4px", userSelect:"none" }}>
+          📁 Manual — muat naik fail Excel (fallback lama)
+        </summary>
+      <Card style={{ padding:"14px 16px", marginBottom:12 }}>
         <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
           <div style={{ flex:1, minWidth:200 }}>
             <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>Fail Jualan (.xlsx)</label>
@@ -1974,7 +2089,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
               style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${salesFile?C.green:C.border}`, fontSize:12, background:C.white, boxSizing:"border-box" }} />
             {salesFile && <div style={{ fontSize:10, color:C.green, marginTop:2 }}>✓ {salesFile.name}</div>}
           </div>
-         
+
           <button onClick={runCheck} disabled={loading||!salesFile} style={{
             padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
             background: loading||!salesFile ? C.muted : C.navy, color:C.white,
@@ -1982,8 +2097,8 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
             {loading ? "Sedang Semak..." : "▶ Jalankan Semakan"}
           </button>
         </div>
-        {error && <div style={{ marginTop:10, color:C.red, fontSize:12, fontWeight:600 }}>{error}</div>}
       </Card>
+      </details>
 
       {/* Summary chips */}
       {ran && (

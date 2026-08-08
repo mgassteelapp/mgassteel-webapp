@@ -662,3 +662,61 @@ length×qty→kg calculation all checked against hand math). **Do NOT push this
 branch to `main` / trigger a Vercel deploy without Wylee's explicit go-ahead**
 — he wants to review it running locally first per his "develop outside, run
 local host till tight, then push" instruction.
+
+## 10. Auto-Reconcile from CRM (feature/auto-reconcile branch)
+
+The "Check Daily Purchase Order" tab (ReconcileTab.jsx) no longer requires
+manual Excel uploads. Data now flows automatically:
+
+**Pipeline:** SQL Accounting (Firebird, on Wylee's PC) → synced every 15 min
+to the **mgas-crm** Supabase project (`plyfibrprnccbbewznxf`, built in a
+separate chat session) → `run-reconcile` edge function on mgas-crm re-runs the
+reconciliation every 15 min (pg_cron `reconcile-every-15min` + pg_net) →
+results stored in `reconcile_runs` table (mgas-crm, RLS service-role-only) →
+webapp reads via `reconcile-proxy` edge function on mgas-pricecheck
+(`hskatymjicizppmovrse`).
+
+**Auth chain:** browser sends the user's pricecheck JWT to `reconcile-proxy`
+(verify_jwt=false because CORS preflight; JWT validated manually via
+auth.getUser). Proxy checks profiles.role ∈ {owner, senior, manager} — same
+as canAccessReconcile(). Proxy forwards to the CRM function with a shared
+secret stored in `reconcile_config` tables (both projects, RLS no-policies =
+service-role only). NEVER put the shared secret in frontend code.
+
+**Matching logic:** `run-reconcile/index.ts` is a 1:1 port of
+runReconciliation() + helpers from ReconcileTab.jsx (same monitored-codes
+list, normRef, desc2Match, 5-condition fallbacks, one-to-one consumption,
+statuses, sort order). If the webapp logic changes, the edge function MUST be
+updated in lockstep (deploy via Supabase MCP `deploy_edge_function`, project
+mgas-crm, slug `run-reconcile`). One guarded deviation: if NO sales/DO line
+has desc2 (Firebird sync doesn't carry DESCRIPTION2 yet), matching degrades
+gracefully to itemcode+qty (meta.desc2_mode = "itemcode-only ...").
+
+**Data dependency:** purchase_orders / purchase_order_items tables exist in
+mgas-crm (with header `ref1` = the IV-/CS-/DO- reference staff type on the PO
+— the pivot of the whole check) but are EMPTY until the CRM-side sync adds
+PH_PO + PH_PODTL (handoff doc given to Wylee for the CRM chat session). Until
+then runs report 0 monitored POs with meta.note explaining why.
+
+**Frontend (this branch):** ReconcileTab gained an "⚡ Semakan Auto dari CRM"
+card (fetch latest run on mount, PO-window selector 1/3/7/30 days, "Semak
+Sekarang" triggers a fresh run via proxy) mapping run rows to the existing
+results shape via runToResults() — the report/table/CSV rendering is 100%
+unchanged. Manual upload lives on in a collapsed <details> as fallback.
+App.jsx polls the proxy every 5 min for owner/senior/manager, shows a red
+count badge on the tab + a clickable banner when a new run has exceptions
+(localStorage `mgas_reconcile_seen` marks runs as read). In-app alerts only —
+no WhatsApp/email (Wylee's explicit choice "to start").
+
+### 10b. Check Daily Sales Price — auto from CRM (same branch)
+
+DailyCheckTab also no longer needs the Excel upload. A `sales-lines` edge
+function on mgas-crm (same shared-secret auth) returns daily IV+CS lines
+(docNo, date, customer name, rawCode, desc2, qty, unitPrice, agent) in the
+exact shape parseSales() produced; the webapp fetches them through the same
+`reconcile-proxy` (action: "salesLines", days: 1/3/7) and runs the EXISTING
+client-side pipeline (buildProductMapFromPrices → checkLine) untouched — the
+price-check logic was NOT ported server-side, only the data source changed.
+Manual upload remains as a collapsed fallback. Until DESCRIPTION2 is added to
+the Firebird sync, per-foot/per-metre items land in SEMAK (length unknown);
+the UI shows a note (response field hasDesc2).

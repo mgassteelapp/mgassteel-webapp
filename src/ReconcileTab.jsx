@@ -21,7 +21,31 @@
 // {tab==="reconcile" && canAccessReconcile(session) &&
 //   <ReconcileTab session={session} />}
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { supabase } from './supabase';
+
+// ── Map an automated run (reconcile_runs row from the CRM) to the exact
+//    results shape the manual flow produces — the render code is shared. ──
+function runToResults(run) {
+  if (!run) return null;
+  return {
+    exceptions:     run.exceptions  || [],
+    matchedRows:    run.matched     || [],
+    matchedDoRows:  run.matched_do  || [],
+    stockNoSales:   run.stock       || [],
+    totalMonitored: run.total_monitored || 0,
+    salesRows:      run.sales_rows  || 0,
+    poRows:         run.po_rows     || 0,
+    doRows:         run.do_rows     || 0,
+  };
+}
+function fmtRunTime(ts) {
+  if (!ts) return '—';
+  try {
+    return new Date(ts).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur',
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  } catch { return String(ts).slice(0, 16).replace('T', ' '); }
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────
 const STOCK_PATTERN = /^(C7565|C7568|C7570|C7575|C7510|MB30K|MB35K)/i;
@@ -537,6 +561,41 @@ export default function ReconcileTab({ session, results, setResults }) {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState('');
   const [activeTab,   setActiveTab]   = useState('exceptions');
+
+  // ── Auto mode: data comes from the CRM (synced from SQL Accounting every
+  //    15 min); a cron re-runs the check every 15 min. Manual upload stays
+  //    available below as a fallback. ──
+  const [autoRun,     setAutoRun]     = useState(null);   // latest reconcile_runs row
+  const [autoLoading, setAutoLoading] = useState(false);
+  const [autoError,   setAutoError]   = useState('');
+  const [poDays,      setPoDays]      = useState(1);
+
+  const fetchAuto = useCallback(async (action, days) => {
+    setAutoLoading(true); setAutoError('');
+    try {
+      const body = action === 'run'
+        ? { action: 'run', poDays: days ?? poDays }
+        : { action: 'latest' };
+      const { data, error: fnErr } = await supabase.functions.invoke('reconcile-proxy', { body });
+      if (fnErr) throw fnErr;
+      if (data && data.error) throw new Error(data.error);
+      if (data && data.run_at) {
+        setAutoRun(data);
+        setResults(runToResults(data));
+        setExpandedId(null);
+        try { localStorage.setItem('mgas_reconcile_seen', data.run_at); } catch {}
+      } else {
+        setAutoRun(null);
+      }
+    } catch (e) {
+      setAutoError('Semakan auto tidak tersedia: ' + String(e?.message || e));
+    }
+    setAutoLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poDays, setResults]);
+
+  // Load the latest automated run when the tab opens
+  useEffect(() => { fetchAuto('latest'); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
   const [filterStatus,setFilterStatus]= useState('ALL');
   const [search,      setSearch]      = useState('');
   const [expandedId,  setExpandedId]  = useState(null);
@@ -635,7 +694,86 @@ export default function ReconcileTab({ session, results, setResults }) {
   return (
     <div style={{ fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
 
-      {/* ── File upload card ── */}
+      {/* ── Auto mode card — data straight from CRM, refreshed every 15 min ── */}
+      <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
+                    boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:6 }}>
+          <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
+            ⚡ Semakan Auto dari CRM
+          </div>
+          <span style={{ background:'#dcfce7', color:'#166534', padding:'2px 10px',
+                         borderRadius:20, fontSize:10, fontWeight:700 }}>
+            AUTO · SETIAP 15 MINIT
+          </span>
+        </div>
+        <div style={{ fontSize:11, color:C.muted, marginBottom:12 }}>
+          Data PO &amp; jualan diambil terus dari CRM (sync dari SQL Accounting setiap 15 minit) —
+          tiada muat naik fail diperlukan. Kaedah semakan sama seperti sebelum ini.
+        </div>
+
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+          <select value={poDays} onChange={e => setPoDays(Number(e.target.value))}
+            style={{ padding:'9px 10px', borderRadius:8, border:`1.5px solid ${C.border}`,
+                     fontSize:12, fontWeight:600, background:C.white }}>
+            <option value={1}>PO Hari Ini</option>
+            <option value={3}>PO 3 Hari</option>
+            <option value={7}>PO 7 Hari</option>
+            <option value={30}>PO 30 Hari</option>
+          </select>
+          <button onClick={() => fetchAuto('run')} disabled={autoLoading}
+            style={{ padding:'10px 24px', border:'none', borderRadius:9, fontWeight:700,
+                     fontSize:13, cursor: autoLoading ? 'not-allowed' : 'pointer',
+                     background: autoLoading ? C.muted : C.navy, color:C.white }}>
+            {autoLoading ? '⏳ Sedang Semak...' : '▶ Semak Sekarang'}
+          </button>
+          <button onClick={() => fetchAuto('latest')} disabled={autoLoading}
+            style={{ padding:'10px 16px', border:`1.5px solid ${C.border}`, borderRadius:9,
+                     fontWeight:700, fontSize:12, cursor: autoLoading ? 'not-allowed' : 'pointer',
+                     background:C.white, color:C.navy }}>
+            🔄 Muat Semula
+          </button>
+          {autoRun && (
+            <span style={{ fontSize:11, color:C.muted }}>
+              Semakan terakhir: <b>{fmtRunTime(autoRun.run_at)}</b>
+              {autoRun.trigger_source === 'cron' ? ' (auto)' : ''} &nbsp;|&nbsp;
+              PO: {autoRun.po_rows} baris &nbsp;|&nbsp;
+              Jualan/DO: {autoRun.sales_rows} &nbsp;|&nbsp;
+              <b style={{ color: autoRun.exceptions_count > 0 ? '#c0392b' : '#166534' }}>
+                Pengecualian: {autoRun.exceptions_count}
+              </b>
+            </span>
+          )}
+          {!autoRun && !autoLoading && !autoError && (
+            <span style={{ fontSize:11, color:C.muted }}>Tiada semakan auto lagi.</span>
+          )}
+        </div>
+
+        {autoRun?.meta?.note && (
+          <div style={{ marginTop:10, background:'#fff8e1', color:'#e65100',
+                        borderRadius:8, padding:'8px 12px', fontSize:12, fontWeight:600 }}>
+            ⚠️ {autoRun.meta.note}
+          </div>
+        )}
+        {autoRun?.meta?.desc2_mode && autoRun.meta.desc2_mode !== 'full' && (
+          <div style={{ marginTop:8, fontSize:10, color:C.muted, fontStyle:'italic' }}>
+            Nota: Description 2 belum disync dari SQL Accounting — padanan buat masa ini
+            berdasarkan kod item &amp; kuantiti sahaja.
+          </div>
+        )}
+        {autoError && (
+          <div style={{ marginTop:10, background:C.redLight, color:C.red,
+                        borderRadius:8, padding:'8px 12px', fontSize:12, fontWeight:600 }}>
+            {autoError}
+          </div>
+        )}
+      </div>
+
+      {/* ── Manual fallback: file upload card ── */}
+      <details style={{ marginBottom:12 }}>
+        <summary style={{ cursor:'pointer', fontSize:12, fontWeight:700, color:C.muted,
+                          padding:'8px 4px', userSelect:'none' }}>
+          📁 Manual — muat naik fail Excel (fallback lama)
+        </summary>
       <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
                     boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 }}>
         <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:4 }}>
@@ -691,6 +829,7 @@ export default function ReconcileTab({ session, results, setResults }) {
           </div>
         )}
       </div>
+      </details>
 
       {/* ── Summary chips ── */}
       {results && (

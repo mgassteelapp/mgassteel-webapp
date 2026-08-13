@@ -746,3 +746,14 @@ doc_no|item_code|qty and marks each result row. Tanya column shows LULUS ✓ /
 unmarked flagged rows get 🔔 Tanya + ✓ Lulus buttons. Approved lines are
 excluded from all normal filters/counts and live under the 🟢 Lulus filter
 chip. Approvals are permanent audit rows (unique on doc+item+qty+price).
+
+### 12. Access policy (replaces old idle timeout)
+
+The 15-min idle timeout, 10-hour cap and 5:30pm cutoff are ABOLISHED. New
+policy: role 'staff' may use the app 7:30am–7:00pm Malaysia time, no access
+Fridays (withinStaffWindow() / sessionExpired() in App.jsx; blocked at login
+AND force-logged-out within 30s if the window closes; ACCESS_MSG alert).
+Owner/manager/senior are fully exempt — no forced logout at all. This is
+client-side enforcement only (staff could technically hit the API off-hours
+with saved credentials); acceptable per Wylee — revisit with auth hooks if it
+ever needs to be watertight.

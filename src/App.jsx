@@ -151,30 +151,22 @@ function canSeeCostMargin(sess) {
 // Session storage key
 const SESSION_KEY = "mgas_session";
 
-function sessionExpired(session, lastActivity) {
-  if (!session?.loginTime) return false;
-  const now = Date.now();
-  const isOwner = session.role === "owner";
-
-  // 15-min idle timeout
-  if (now - lastActivity > 15 * 60 * 1000) return true;
-
-  // 10-hour hard cap
-  if (now - session.loginTime > 10 * 60 * 60 * 1000) return true;
-
-  const cutoff = new Date(session.loginTime);
-  cutoff.setHours(17, 30, 0, 0);
-  const cutoffMs = cutoff.getTime();
-
-  if (session.loginTime < cutoffMs) {
-    // logged in before 5:30pm -> out at 5:30pm
-    if (now >= cutoffMs) return true;
-  } else {
-    // after-hours: owner 30min, everyone else 5min
-    const cap = (isOwner ? 30 : 5) * 60 * 1000;
-    if (now - session.loginTime > cap) return true;
-  }
-  return false;
+// ── Staff access window ──────────────────────────────────────────────────────
+// Staff (role 'staff') may only use the app 7:30am–7:00pm Malaysia time, and
+// have NO access on Fridays. Owners, managers and seniors are exempt.
+// The old 15-minute idle timeout / 5:30pm cutoff are abolished — no forced
+// logout inside the window, no idle tracking.
+const ACCESS_MSG = "Akses aplikasi untuk staf dibenarkan 7:30 pagi hingga 7:00 malam sahaja (tiada akses hari Jumaat).";
+function withinStaffWindow(nowMs = Date.now()) {
+  const kl = new Date(nowMs + 8 * 3600 * 1000); // Malaysia time (UTC+8)
+  if (kl.getUTCDay() === 5) return false;       // Friday — no access
+  const mins = kl.getUTCHours() * 60 + kl.getUTCMinutes();
+  return mins >= 7 * 60 + 30 && mins < 19 * 60; // 07:30 – 19:00
+}
+function sessionExpired(session) {
+  if (!session) return false;
+  if (session.role !== "staff") return false;
+  return !withinStaffWindow();
 }
 
 function clearSession() {
@@ -518,26 +510,19 @@ export default function App() {
     };
     run();
   }, [session]);
-const lastActivityRef = useRef(Date.now());
-
   useEffect(() => {
     if (!session) return;
-    const bump = () => { lastActivityRef.current = Date.now(); };
-    const evts = ["mousedown","keydown","touchstart","scroll"];
-    evts.forEach(e => window.addEventListener(e, bump, { passive: true }));
-
-    const iv = setInterval(async () => {
-      if (sessionExpired(session, lastActivityRef.current)) {
+    const check = async () => {
+      if (sessionExpired(session)) {
         localStorage.removeItem("mgas_login_time");
         await supabase.auth.signOut();
         setSession_(null);
+        alert(ACCESS_MSG);
       }
-    }, 30 * 1000);
-
-    return () => {
-      evts.forEach(e => window.removeEventListener(e, bump));
-      clearInterval(iv);
     };
+    check(); // immediate — covers session restore outside the window
+    const iv = setInterval(check, 30 * 1000);
+    return () => clearInterval(iv);
   }, [session]);
 
   // ── Auto-reconcile alert: poll latest 15-min CRM check for discrepancies ──
@@ -569,7 +554,13 @@ const lastActivityRef = useRef(Date.now());
     }
   }, [tab, rcAlert]);
   // Show login if no session (AFTER all hooks — required by React)
-  if (!session) return <LoginScreen onLogin={s => {
+  if (!session) return <LoginScreen onLogin={async s => {
+  // Staff cannot log in outside the access window (7:30am–7pm, no Friday)
+  if (s.role === "staff" && !withinStaffWindow()) {
+    await supabase.auth.signOut();
+    alert(ACCESS_MSG);
+    return;
+  }
   const loginTime = Date.now();
   localStorage.setItem("mgas_login_time", String(loginTime));
   setSession_({ ...s, loginTime });

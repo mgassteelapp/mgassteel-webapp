@@ -1982,6 +1982,13 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
     setApprovals(aMap);
   };
 
+  // Re-fetch marks when the tab is reopened — results survive tab switches
+  // (they live in App state) but this component remounts with empty maps.
+  useEffect(() => {
+    if (results && results.length) annotateLines(results);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Approve a flagged line: it stops appearing in future checks ──
   const approveLine = async (r) => {
     if (!window.confirm(`Luluskan harga ini?\n${r.docNo} · ${r.rawCode} · Qty ${r.qty} · RM ${r.unitPrice.toFixed(2)}\n\nBaris ini tidak akan dipaparkan lagi dalam semakan akan datang.`)) return;

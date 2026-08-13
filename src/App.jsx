@@ -106,7 +106,6 @@ const SAMPLE_PRICES = [
 ];
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const OWNER_PIN  = "1234";
 
 // ── Staff PINs ────────────────────────────────────────────────────────────────
 // Format: { name, pin, role }
@@ -225,38 +224,6 @@ const Alert = ({ children, color="green" }) => {
 function monthKey(d) { const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`; }
 function monthLabel(k) { const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleString("en-MY",{month:"long",year:"numeric"}); }
 
-// ── PIN button ────────────────────────────────────────────────────────────────
-function PinButton({ label="🔒 Kemaskini", onUnlock, style={} }) {
-  const [show, setShow] = useState(false);
-  const [pin, setPin]   = useState("");
-  const [err, setErr]   = useState(false);
-  const tryPin = () => {
-    if (pin===OWNER_PIN) { onUnlock(); setShow(false); setPin(""); }
-    else { setErr(true); setPin(""); setTimeout(()=>setErr(false),2000); }
-  };
-  return (
-    <>
-      <button onClick={()=>setShow(true)} style={{ padding:"9px 14px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:700, fontSize:13, cursor:"pointer", ...style }}>{label}</button>
-      {show && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:999 }}>
-          <Card style={{ padding:28, minWidth:260, textAlign:"center" }}>
-            <div style={{ fontSize:28, marginBottom:6 }}>🔒</div>
-            <div style={{ fontWeight:700, fontSize:15, color:C.navy, marginBottom:4 }}>Masukkan PIN</div>
-            <div style={{ fontSize:12, color:C.muted, marginBottom:16 }}>Hanya Weelee boleh akses</div>
-            <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&tryPin()}
-              placeholder="PIN" maxLength={6} autoFocus
-              style={{ width:"100%", padding:"11px", borderRadius:8, border:`2px solid ${err?"#ef4444":C.border}`, fontSize:22, textAlign:"center", letterSpacing:8, boxSizing:"border-box", marginBottom:6 }} />
-            {err && <div style={{ color:"#ef4444", fontSize:12, marginBottom:8 }}>PIN salah. Cuba lagi.</div>}
-            <div style={{ display:"flex", gap:8, marginTop:8 }}>
-              <button onClick={tryPin} style={{ flex:1, padding:"11px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:700, cursor:"pointer" }}>Masuk</button>
-              <button onClick={()=>{setShow(false);setPin("");}} style={{ flex:1, padding:"11px", background:"#e2e8f0", color:C.muted, border:"none", borderRadius:8, fontWeight:600, cursor:"pointer" }}>Batal</button>
-            </div>
-          </Card>
-        </div>
-      )}
-    </>
-  );
-}
 
 // ── Rules engine ──────────────────────────────────────────────────────────────
 function getRulesAnswer(text, prices=[], scenarios=[]) {
@@ -1217,8 +1184,10 @@ function LogTab({ deals, setDeals, prices=[], session }) {
 // ════════════════════════════════════════════════════════════════════════════
 // TAB 4 — SENARIO AI (Boss only)
 // ════════════════════════════════════════════════════════════════════════════
-function ScenariosTab({ scenarios, setScenarios }) {
-  const [unlocked, setUnlocked] = useState(false);
+function ScenariosTab({ scenarios, setScenarios, session }) {
+  // Unlocked by role — the old hardcoded PIN is gone (it was visible in the
+  // shipped JS bundle, which defeats the purpose of a PIN).
+  const unlocked = session?.role === "owner";
   const [form,     setForm]     = useState({ situation:"", keywords:"", answer:"" });
   const [saved,    setSaved]    = useState(false);
   const [editing,  setEditing]  = useState(null);
@@ -1260,9 +1229,8 @@ function ScenariosTab({ scenarios, setScenarios }) {
       {!unlocked ? (
         <Card style={{ padding:40, textAlign:"center" }}>
           <div style={{ fontSize:32, marginBottom:10 }}>🔒</div>
-          <div style={{ fontWeight:700, fontSize:15, color:C.navy, marginBottom:6 }}>Tab ini hanya untuk Weelee</div>
-          <div style={{ fontSize:12, color:C.muted, marginBottom:20 }}>Masukkan PIN untuk tambah atau kemaskini senario AI</div>
-          <PinButton label="🔓 Buka dengan PIN" onUnlock={()=>setUnlocked(true)} />
+          <div style={{ fontWeight:700, fontSize:15, color:C.navy, marginBottom:6 }}>Tab ini hanya untuk owner</div>
+          <div style={{ fontSize:12, color:C.muted, marginBottom:20 }}>Log masuk sebagai owner untuk tambah atau kemaskini senario AI.</div>
           {scenarios.length>0 && (
             <div style={{ marginTop:20, fontSize:13, color:C.muted }}>{scenarios.length} senario telah disimpan dan digunakan oleh AI.</div>
           )}

@@ -603,6 +603,9 @@ const lastActivityRef = useRef(Date.now());
     ...(canAccessPurchasing(session) ? [
       { key:"purchasing", label:"Cadangan PO" },
     ] : []),
+    ...(canAccessReconcile(session) ? [
+      { key:"queries", label:"❓ Pertanyaan Harga" },
+    ] : []),
     ...(session.role==="owner" ? [
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
@@ -611,6 +614,7 @@ const lastActivityRef = useRef(Date.now());
 
   return (
     <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Segoe UI',system-ui,sans-serif", color:C.text }}>
+      <AgentQueryPopup session={session} />
       <div style={{ background:C.navy }}>
         <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 0" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
@@ -667,6 +671,7 @@ const lastActivityRef = useRef(Date.now());
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
+        {tab==="queries" && canAccessReconcile(session) && <QueriesTab session={session} />}
         {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
         {canAccessReconcile(session) && (
               <div style={{ display: tab==="reconcile" ? "block" : "none" }}>
@@ -1952,6 +1957,33 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
   const [expandedIdx, setExpandedIdx] = useState(null);
   const [autoDays,    setAutoDays]    = useState(1);
   const [autoInfo,    setAutoInfo]    = useState(null); // {count, start, hasDesc2}
+  const [askedKeys,   setAskedKeys]   = useState(new Set());
+
+  // ── Raise a live price query to the responsible agent ──
+  const askAgent = async (r) => {
+    const q = window.prompt(
+      `Soalan untuk ${r.agent} (${r.docNo} · ${r.rawCode}):`,
+      `Harga jualan RM ${r.unitPrice.toFixed(2)} berbeza dari senarai harga` +
+      (r.expectedPrice != null ? ` (jangkaan RM ${r.expectedPrice.toFixed(2)})` : ``) +
+      `. Sila beri sebab segera.`
+    );
+    if (!q || !q.trim()) return;
+    const { error: qErr } = await supabase.from('price_queries').insert({
+      source: 'daily',
+      doc_no: r.docNo || null,
+      item_code: r.rawCode || null,
+      desc2: r.desc2 || null,
+      qty: r.qty,
+      actual_price: r.unitPrice,
+      expected_price: r.expectedPrice,
+      status_flag: (STATUS_STYLE[r.status] || {}).label || r.status,
+      agent_code: String(r.agent || '').toUpperCase(),
+      question: q.trim(),
+      asked_by: session?.name || '',
+    });
+    if (qErr) { alert('Gagal hantar pertanyaan: ' + qErr.message); return; }
+    setAskedKeys(prev => new Set(prev).add(`${r.docNo}|${r.rawCode}|${r.qty}`));
+  };
 
   // ── Auto mode: pull today's sales lines straight from the CRM (synced from
   //    SQL Accounting every 15 min) and run the SAME check pipeline. ──
@@ -2156,7 +2188,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
               <thead>
                 <tr style={{ background:C.navy }}>
                   {["No. Dok","Tarikh","Pelanggan","Kod Produk","Desc2","Qty",
-                    "Harga Sebenar","Jangkaan","Status","% Beza","Agen","Ruj. Hantar"].map(h => (
+                    "Harga Sebenar","Jangkaan","Status","% Beza","Agen","Ruj. Hantar","Tanya"].map(h => (
                     <th key={h} style={{ padding:"8px 10px", color:C.white, textAlign:"left",
                       fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
                   ))}
@@ -2194,8 +2226,22 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
                               ? `${(((r.unitPrice - r.expectedPrice) / r.expectedPrice) * 100).toFixed(1)}%`
                               : "—"}
                           </td>
-                         <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.agent||"—"}</td> 
+                         <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.agent||"—"}</td>
                          <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.docRef||"—"}</td>
+                      <td style={{ padding:"7px 10px" }} onClick={e => e.stopPropagation()}>
+                        {["DISCOUNT","BELOW","REVIEW","CONFLICT"].includes(r.status) && r.agent ? (
+                          askedKeys.has(`${r.docNo}|${r.rawCode}|${r.qty}`) ? (
+                            <span style={{ fontSize:10, color:"#16a34a", fontWeight:700, whiteSpace:"nowrap" }}>✓ Ditanya</span>
+                          ) : (
+                            <button onClick={() => askAgent(r)}
+                              style={{ background:"#dc2626", color:"#fff", border:"none", borderRadius:6,
+                                       padding:"4px 10px", fontSize:10, fontWeight:700, cursor:"pointer",
+                                       whiteSpace:"nowrap" }}>
+                              🔔 Tanya
+                            </button>
+                          )
+                        ) : null}
+                      </td>
                     </tr>
                   );
                   if (!isExpanded) return [mainRow];
@@ -2236,3 +2282,224 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
 }
 
     
+
+// ════════════════════════════════════════════════════════════════════════════
+// LIVE PRICE QUERIES — instant popup for agents + review tab for managers
+// ════════════════════════════════════════════════════════════════════════════
+function pqBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880; g.gain.value = 0.15;
+    o.start(); o.stop(ctx.currentTime + 0.45);
+  } catch { /* audio blocked — popup still shows */ }
+}
+
+// Global popup: subscribes to realtime inserts on price_queries. If a new
+// query is addressed to the logged-in user's agent code, it pops up
+// immediately and demands a reason before it can be dismissed.
+function AgentQueryPopup({ session }) {
+  const [myCodes, setMyCodes] = useState(null);
+  const [queue,   setQueue]   = useState([]);
+  const [reply,   setReply]   = useState("");
+  const [saving,  setSaving]  = useState(false);
+
+  // Which agent codes belong to me? + catch up on any open queries
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from('agent_map')
+          .select('agent_code').eq('profile_name', session.name);
+        if (!alive) return;
+        const codes = (data || []).map(r => r.agent_code);
+        setMyCodes(codes);
+        if (codes.length) {
+          const { data: open } = await supabase.from('price_queries')
+            .select('*').in('agent_code', codes).eq('state', 'open')
+            .order('created_at');
+          if (alive && open?.length) { setQueue(open); pqBeep(); }
+        }
+      } catch { /* table may not exist yet in older deploys */ }
+    })();
+    return () => { alive = false; };
+  }, [session.name]);
+
+  // Live subscription — fires the moment a manager presses Tanya
+  useEffect(() => {
+    if (!myCodes || myCodes.length === 0) return;
+    const ch = supabase.channel('pq-live')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'price_queries' },
+        (payload) => {
+          const row = payload.new;
+          if (row && myCodes.includes(row.agent_code) && row.state === 'open') {
+            setQueue(q => q.some(x => x.id === row.id) ? q : [...q, row]);
+            pqBeep();
+          }
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [myCodes]);
+
+  const cur = queue[0];
+  if (!cur) return null;
+
+  const submit = async () => {
+    if (!reply.trim() || saving) return;
+    setSaving(true);
+    const { error } = await supabase.from('price_queries').update({
+      response: reply.trim(),
+      responded_by: session.name,
+      responded_at: new Date().toISOString(),
+      state: 'answered',
+    }).eq('id', cur.id);
+    setSaving(false);
+    if (error) { alert('Gagal hantar jawapan: ' + error.message); return; }
+    setQueue(q => q.slice(1));
+    setReply("");
+  };
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.72)', zIndex:9999,
+                  display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div style={{ background:'#fff', borderRadius:16, maxWidth:520, width:'100%',
+                    boxShadow:'0 24px 64px rgba(0,0,0,0.4)', overflow:'hidden' }}>
+        <div style={{ background:'#dc2626', color:'#fff', padding:'14px 20px',
+                      fontWeight:800, fontSize:15, display:'flex', alignItems:'center', gap:10 }}>
+          🔔 PERTANYAAN HARGA — JAWAPAN DIPERLUKAN SEGERA
+          {queue.length > 1 && (
+            <span style={{ marginLeft:'auto', background:'rgba(255,255,255,0.25)', borderRadius:12,
+                           padding:'2px 10px', fontSize:12 }}>{queue.length} pertanyaan</span>
+          )}
+        </div>
+        <div style={{ padding:'18px 20px' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:'6px 14px',
+                        fontSize:13, marginBottom:14 }}>
+            <b>No. Dok</b><span style={{ fontFamily:'monospace' }}>{cur.doc_no || '—'}</span>
+            <b>Kod Item</b><span style={{ fontFamily:'monospace' }}>{cur.item_code || '—'}{cur.desc2 ? ` · ${cur.desc2}` : ''}</span>
+            <b>Qty</b><span>{cur.qty ?? '—'}</span>
+            <b>Harga Jual</b><span style={{ fontWeight:800, color:'#dc2626' }}>
+              RM {Number(cur.actual_price || 0).toFixed(2)}
+              {cur.expected_price != null &&
+                <span style={{ color:'#64748b', fontWeight:400 }}> (jangkaan RM {Number(cur.expected_price).toFixed(2)})</span>}
+            </span>
+            <b>Status</b><span>{cur.status_flag || '—'}</span>
+            <b>Daripada</b><span>{cur.asked_by || '—'}</span>
+          </div>
+          <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10,
+                        padding:'10px 14px', fontSize:13, marginBottom:14 }}>
+            {cur.question}
+          </div>
+          <textarea value={reply} onChange={e => setReply(e.target.value)}
+            placeholder="Taip sebab anda di sini... (wajib)"
+            rows={3} autoFocus
+            style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:10,
+                     border:'1.5px solid #cbd5e1', fontSize:13, fontFamily:'inherit', resize:'vertical' }} />
+          <button onClick={submit} disabled={!reply.trim() || saving}
+            style={{ marginTop:12, width:'100%', padding:'12px', border:'none', borderRadius:10,
+                     fontWeight:800, fontSize:14, cursor: (!reply.trim()||saving) ? 'not-allowed' : 'pointer',
+                     background: (!reply.trim()||saving) ? '#94a3b8' : '#0f2744', color:'#fff' }}>
+            {saving ? 'Menghantar...' : '✔ Hantar Jawapan'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Review tab for owner/senior/manager: all queries + live answers
+function QueriesTab({ session }) {
+  const [rows, setRows] = useState([]);
+  const [stateFilter, setStateFilter] = useState('active'); // active | all
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    let q = supabase.from('price_queries').select('*').order('created_at', { ascending: false }).limit(300);
+    if (stateFilter === 'active') q = q.in('state', ['open', 'answered']);
+    const { data } = await q;
+    setRows(data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); /* eslint-disable-line */ }, [stateFilter]);
+
+  useEffect(() => {
+    const ch = supabase.channel('pq-review')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'price_queries' }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [stateFilter]);
+
+  const closeQuery = async (id) => {
+    await supabase.from('price_queries').update({ state: 'closed' }).eq('id', id);
+  };
+
+  const ST = {
+    open:     { bg:'#fee2e2', text:'#991b1b', label:'MENUNGGU' },
+    answered: { bg:'#fef9c3', text:'#854d0e', label:'DIJAWAB' },
+    closed:   { bg:'#dcfce7', text:'#166534', label:'SELESAI' },
+  };
+  const fmtT = ts => ts ? new Date(ts).toLocaleString('en-MY', { timeZone:'Asia/Kuala_Lumpur',
+    day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+
+  return (
+    <div>
+      <Card style={{ padding:'12px 16px', marginBottom:12, display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+        <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>❓ Pertanyaan Harga kepada Agen</div>
+        <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
+          {[['active','Aktif'],['all','Semua']].map(([k, l]) => (
+            <button key={k} onClick={() => setStateFilter(k)} style={{
+              padding:'6px 14px', border:'none', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600,
+              background: stateFilter===k ? C.navy : '#f1f5f9', color: stateFilter===k ? C.white : C.muted }}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </Card>
+      {loading ? (
+        <Card style={{ padding:32, textAlign:'center', color:C.muted }}>Memuatkan...</Card>
+      ) : rows.length === 0 ? (
+        <Card style={{ padding:32, textAlign:'center', color:C.muted }}>Tiada pertanyaan.</Card>
+      ) : rows.map(r => {
+        const st = ST[r.state] || ST.open;
+        return (
+          <Card key={r.id} style={{ padding:'12px 16px', marginBottom:10 }}>
+            <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', marginBottom:6 }}>
+              <span style={{ background:st.bg, color:st.text, padding:'2px 10px', borderRadius:12,
+                             fontSize:11, fontWeight:800 }}>{st.label}</span>
+              <b style={{ fontSize:13 }}>{r.agent_code}</b>
+              <span style={{ fontFamily:'monospace', fontSize:12 }}>{r.doc_no} · {r.item_code}</span>
+              {r.status_flag && <span style={{ fontSize:11, color:C.muted }}>{r.status_flag}</span>}
+              <span style={{ marginLeft:'auto', fontSize:11, color:C.muted }}>{fmtT(r.created_at)}</span>
+            </div>
+            <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>
+              Qty {r.qty ?? '—'} · Jual RM {Number(r.actual_price || 0).toFixed(2)}
+              {r.expected_price != null && <> · Jangkaan RM {Number(r.expected_price).toFixed(2)}</>}
+              {' '}· Ditanya oleh {r.asked_by || '—'}
+            </div>
+            <div style={{ fontSize:13, marginBottom:6 }}>❓ {r.question}</div>
+            {r.response ? (
+              <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:8,
+                            padding:'8px 12px', fontSize:13 }}>
+                💬 <b>{r.responded_by}</b> ({fmtT(r.responded_at)}): {r.response}
+              </div>
+            ) : (
+              <div style={{ fontSize:12, color:'#dc2626', fontStyle:'italic' }}>Belum dijawab.</div>
+            )}
+            {r.state === 'answered' && (
+              <button onClick={() => closeQuery(r.id)}
+                style={{ marginTop:8, padding:'6px 14px', border:'none', borderRadius:8, fontWeight:700,
+                         fontSize:12, cursor:'pointer', background:'#166534', color:'#fff' }}>
+                ✓ Tandakan Selesai
+              </button>
+            )}
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+

@@ -720,3 +720,19 @@ price-check logic was NOT ported server-side, only the data source changed.
 Manual upload remains as a collapsed fallback. Until DESCRIPTION2 is added to
 the Firebird sync, per-foot/per-metre items land in SEMAK (length unknown);
 the UI shows a note (response field hasDesc2).
+
+## 11. Pertanyaan Harga — live agent queries (with §10 auto mode)
+
+When the daily price check flags a line (DISKAUN/ATAS HARGA/SEMAK/KONFLIK), a
+manager clicks 🔔 Tanya on the row → inserts into `price_queries`
+(mgas-pricecheck). Every logged-in session runs <AgentQueryPopup> which
+subscribes to Supabase Realtime on that table; the agent whose code matches
+(via `agent_map`: invoice Agen code → profiles.name, e.g. TASHA→Natasha,
+PP1SU→Su; CWL/PP2PUTERI/MISSNISA unmapped) gets an immediate blocking popup
+with sound and MUST type a reason (state open→answered). Managers review in
+the ❓ Pertanyaan Harga tab (live-updating, Tandakan Selesai → closed).
+RLS: staff see/answer only their own queries (pc_role()/pc_name() security
+definer helpers); owner/senior/manager see all and insert. Realtime enabled
+via supabase_realtime publication. Popup also catches up on open queries at
+login. If code changes here, keep the STATUS list in the Tanya button
+condition in sync with STATUS_STYLE keys.

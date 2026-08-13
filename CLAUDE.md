@@ -736,3 +736,13 @@ definer helpers); owner/senior/manager see all and insert. Realtime enabled
 via supabase_realtime publication. Popup also catches up on open queries at
 login. If code changes here, keep the STATUS list in the Tanya button
 condition in sync with STATUS_STYLE keys.
+
+### 11b. Persistent line marks: Ditanya states + Lulus approvals
+
+Every daily-check run calls annotateLines(): fetches price_queries and
+price_line_approvals (new table, mgas-pricecheck, manager+ RLS) matched by
+doc_no|item_code|qty and marks each result row. Tanya column shows LULUS ✓ /
+⏳ MENUNGGU / 💬 DIJAWAB / ✓ SELESAI persistently across runs and devices;
+unmarked flagged rows get 🔔 Tanya + ✓ Lulus buttons. Approved lines are
+excluded from all normal filters/counts and live under the 🟢 Lulus filter
+chip. Approvals are permanent audit rows (unique on doc+item+qty+price).

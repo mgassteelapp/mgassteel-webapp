@@ -1957,7 +1957,45 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
   const [expandedIdx, setExpandedIdx] = useState(null);
   const [autoDays,    setAutoDays]    = useState(1);
   const [autoInfo,    setAutoInfo]    = useState(null); // {count, start, hasDesc2}
-  const [askedKeys,   setAskedKeys]   = useState(new Set());
+  // Persistent line marks, looked up live on every check:
+  //   queryMarks: line → query state (open/answered/closed) from price_queries
+  //   approvals:  line → approved_by from price_line_approvals
+  const [queryMarks,  setQueryMarks]  = useState(new Map());
+  const [approvals,   setApprovals]   = useState(new Map());
+  const lineKey = (r) => `${r.docNo}|${r.rawCode}|${r.qty}`;
+
+  const annotateLines = async (checked) => {
+    const docNos = [...new Set(checked.map(r => r.docNo).filter(Boolean))];
+    const qMap = new Map(), aMap = new Map();
+    try {
+      for (let i = 0; i < docNos.length; i += 200) {
+        const chunk = docNos.slice(i, i + 200);
+        const [{ data: qs }, { data: as }] = await Promise.all([
+          supabase.from('price_queries').select('doc_no,item_code,qty,state').in('doc_no', chunk),
+          supabase.from('price_line_approvals').select('doc_no,item_code,qty,approved_by').in('doc_no', chunk),
+        ]);
+        (qs || []).forEach(q => qMap.set(`${q.doc_no}|${q.item_code}|${q.qty}`, q.state));
+        (as || []).forEach(a => aMap.set(`${a.doc_no}|${a.item_code}|${a.qty}`, a.approved_by));
+      }
+    } catch { /* tables may not exist on older deploys */ }
+    setQueryMarks(qMap);
+    setApprovals(aMap);
+  };
+
+  // ── Approve a flagged line: it stops appearing in future checks ──
+  const approveLine = async (r) => {
+    if (!window.confirm(`Luluskan harga ini?\n${r.docNo} · ${r.rawCode} · Qty ${r.qty} · RM ${r.unitPrice.toFixed(2)}\n\nBaris ini tidak akan dipaparkan lagi dalam semakan akan datang.`)) return;
+    const { error: aErr } = await supabase.from('price_line_approvals').insert({
+      doc_no: r.docNo || '', item_code: r.rawCode || '', desc2: r.desc2 || null,
+      qty: r.qty, actual_price: r.unitPrice, expected_price: r.expectedPrice,
+      status_flag: (STATUS_STYLE[r.status] || {}).label || r.status,
+      approved_by: session?.name || '',
+    });
+    if (aErr && !String(aErr.message).includes('duplicate')) {
+      alert('Gagal lulus: ' + aErr.message); return;
+    }
+    setApprovals(prev => new Map(prev).set(lineKey(r), session?.name || ''));
+  };
 
   // ── Raise a live price query to the responsible agent ──
   const askAgent = async (r) => {
@@ -1982,7 +2020,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
       asked_by: session?.name || '',
     });
     if (qErr) { alert('Gagal hantar pertanyaan: ' + qErr.message); return; }
-    setAskedKeys(prev => new Set(prev).add(`${r.docNo}|${r.rawCode}|${r.qty}`));
+    setQueryMarks(prev => new Map(prev).set(lineKey(r), 'open'));
   };
 
   // ── Auto mode: pull today's sales lines straight from the CRM (synced from
@@ -2003,6 +2041,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
       setResults(checked);
       setRan(true);
       setAutoInfo({ count: lines.length, start: data?.start || '', hasDesc2: !!data?.hasDesc2 });
+      annotateLines(checked);
     } catch (e) {
       setError("Semakan auto tidak tersedia: " + String(e?.message || e));
     }
@@ -2024,16 +2063,20 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
       checked.sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
       setResults(checked);
       setRan(true);
+      annotateLines(checked);
     } catch(e) {
       setError("Ralat semasa memproses fail: " + e.message);
     }
     setLoading(false);
   };
 
-  const counts = results.reduce((acc, r) => { acc[r.status] = (acc[r.status]||0)+1; return acc; }, {});
+  // Approved lines are excluded from normal views (they live under the LULUS filter)
+  const activeResults   = results.filter(r => !approvals.has(lineKey(r)));
+  const approvedResults = results.filter(r =>  approvals.has(lineKey(r)));
+  const counts = activeResults.reduce((acc, r) => { acc[r.status] = (acc[r.status]||0)+1; return acc; }, {});
   const FILTER_STATUSES = { DISCOUNT:["DISCOUNT"], REVIEW:["REVIEW"], MISSING:["MISSING","NO_PRICE"], CONFLICT:["CONFLICT"] };
-  const filtered = results.filter(r => {
-    if (filter !== "ALL" && !FILTER_STATUSES[filter]?.includes(r.status)) return false;
+  const filtered = (filter === "LULUS" ? approvedResults : activeResults).filter(r => {
+    if (filter !== "ALL" && filter !== "LULUS" && !FILTER_STATUSES[filter]?.includes(r.status)) return false;
     if (search) {
       const s = search.toLowerCase();
       return r.rawCode.toLowerCase().includes(s) ||
@@ -2154,7 +2197,8 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
       {ran && (
         <Card style={{ padding:"10px 14px", marginBottom:12, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
           {[["ALL","Semua"],["DISCOUNT","🔴 Diskaun"],["REVIEW","🟡 Semak"],
-            ["MISSING","⚪ Hilang"],["CONFLICT","⚠️ Konflik"]].map(([key, label]) => (
+            ["MISSING","⚪ Hilang"],["CONFLICT","⚠️ Konflik"],
+            ["LULUS",`🟢 Lulus (${approvedResults.length})`]].map(([key, label]) => (
             <button key={key} onClick={() => setFilter(key)} style={{
               padding:"6px 13px", border:"none", borderRadius:20, cursor:"pointer", fontSize:12, fontWeight:600,
               background: filter===key ? C.navy : "#f1f5f9",
@@ -2229,18 +2273,47 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
                          <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.agent||"—"}</td>
                          <td style={{ padding:"7px 10px", fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{r.docRef||"—"}</td>
                       <td style={{ padding:"7px 10px" }} onClick={e => e.stopPropagation()}>
-                        {["DISCOUNT","BELOW","REVIEW","CONFLICT"].includes(r.status) && r.agent ? (
-                          askedKeys.has(`${r.docNo}|${r.rawCode}|${r.qty}`) ? (
-                            <span style={{ fontSize:10, color:"#16a34a", fontWeight:700, whiteSpace:"nowrap" }}>✓ Ditanya</span>
-                          ) : (
-                            <button onClick={() => askAgent(r)}
-                              style={{ background:"#dc2626", color:"#fff", border:"none", borderRadius:6,
-                                       padding:"4px 10px", fontSize:10, fontWeight:700, cursor:"pointer",
-                                       whiteSpace:"nowrap" }}>
-                              🔔 Tanya
-                            </button>
-                          )
-                        ) : null}
+                        {(() => {
+                          const k = lineKey(r);
+                          if (approvals.has(k)) return (
+                            <span title={`Diluluskan oleh ${approvals.get(k)}`}
+                              style={{ background:"#dcfce7", color:"#166534", padding:"2px 8px",
+                                       borderRadius:10, fontSize:10, fontWeight:800, whiteSpace:"nowrap" }}>
+                              LULUS ✓
+                            </span>
+                          );
+                          const qs = queryMarks.get(k);
+                          if (qs) {
+                            const cfgq = qs === "open"     ? { bg:"#fee2e2", tx:"#991b1b", l:"⏳ MENUNGGU" }
+                                       : qs === "answered" ? { bg:"#fef9c3", tx:"#854d0e", l:"💬 DIJAWAB" }
+                                       :                     { bg:"#e2e8f0", tx:"#334155", l:"✓ SELESAI" };
+                            return (
+                              <span style={{ background:cfgq.bg, color:cfgq.tx, padding:"2px 8px",
+                                             borderRadius:10, fontSize:10, fontWeight:800, whiteSpace:"nowrap" }}>
+                                {cfgq.l}
+                              </span>
+                            );
+                          }
+                          if (["DISCOUNT","BELOW","REVIEW","CONFLICT"].includes(r.status)) return (
+                            <div style={{ display:"flex", gap:4 }}>
+                              {r.agent ? (
+                                <button onClick={() => askAgent(r)}
+                                  style={{ background:"#dc2626", color:"#fff", border:"none", borderRadius:6,
+                                           padding:"4px 9px", fontSize:10, fontWeight:700, cursor:"pointer",
+                                           whiteSpace:"nowrap" }}>
+                                  🔔 Tanya
+                                </button>
+                              ) : null}
+                              <button onClick={() => approveLine(r)}
+                                style={{ background:"#16a34a", color:"#fff", border:"none", borderRadius:6,
+                                         padding:"4px 9px", fontSize:10, fontWeight:700, cursor:"pointer",
+                                         whiteSpace:"nowrap" }}>
+                                ✓ Lulus
+                              </button>
+                            </div>
+                          );
+                          return null;
+                        })()}
                       </td>
                     </tr>
                   );

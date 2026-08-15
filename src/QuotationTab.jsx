@@ -240,14 +240,21 @@ export default function QuotationTab({ session, prices }) {
     return () => clearTimeout(t);
   }, [custName, custCode]);
 
-  const load = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('quotations')
+  const [loadError, setLoadError] = useState(false);
+  const load = async (attempt = 0) => {
+    setLoading(true); setLoadError(false);
+    const { data, error: lErr } = await supabase.from('quotations')
       .select('*').order('created_at', { ascending: false }).limit(200);
+    if (lErr) {
+      // transient failures (e.g. token refresh mid-flight) — retry twice
+      // before admitting failure; never silently show an empty list
+      if (attempt < 2) { setTimeout(() => load(attempt + 1), 900); return; }
+      setLoadError(true); setLoading(false); return;
+    }
     setRows(data || []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-line */ }, []);
 
   const addLine = () => {
     const q = Number(qty);
@@ -507,10 +514,25 @@ export default function QuotationTab({ session, prices }) {
             <option value="success">Berjaya</option>
             <option value="fail">Gagal</option>
           </select>
+          <button onClick={() => load()}
+            style={{ ...inp, fontWeight:700, fontSize:12, cursor:'pointer', background:C.white }}>
+            🔄
+          </button>
         </div>
 
         {loading ? (
           <div style={{ padding:24, textAlign:'center', color:C.muted }}>Memuatkan...</div>
+        ) : loadError ? (
+          <div style={{ padding:24, textAlign:'center' }}>
+            <div style={{ color:C.red, fontWeight:700, fontSize:13, marginBottom:10 }}>
+              Gagal memuatkan senarai — sebut harga anda selamat tersimpan.
+            </div>
+            <button onClick={() => load()}
+              style={{ padding:'9px 20px', border:'none', borderRadius:8, fontWeight:700,
+                       fontSize:13, background:C.navy, color:C.white, cursor:'pointer' }}>
+              🔄 Cuba Lagi
+            </button>
+          </div>
         ) : filteredRows.length === 0 ? (
           <div style={{ padding:24, textAlign:'center', color:C.muted }}>Tiada sebut harga.</div>
         ) : (

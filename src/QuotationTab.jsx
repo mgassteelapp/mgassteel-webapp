@@ -148,13 +148,18 @@ function quoteForRender(row) {
 }
 
 function downloadPNG(row) {
+  // Blob object-URL, not a data: URL — Safari opens data: URLs in a new tab
+  // instead of downloading; blob URLs download correctly on all browsers.
   const dataUrl = renderQuotePNG(quoteForRender(row));
+  const blob = dataUrlToBlob(dataUrl);
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = dataUrl;
+  a.href = url;
   a.download = `${row.quote_no}.png`;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 // True only where file-sharing genuinely works (mobile browsers)

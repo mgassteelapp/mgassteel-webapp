@@ -757,3 +757,16 @@ Owner/manager/senior are fully exempt — no forced logout at all. This is
 client-side enforcement only (staff could technically hit the API off-hours
 with saved credentials); acceptable per Wylee — revisit with auth hooks if it
 ever needs to be watertight.
+
+## 13. Sebut Harga (Quotation) tab
+
+QuotationTab.jsx (self-contained, all logged-in staff). Staff pick items from
+prices (tierPrice(): highest qualifying qtyMin band, editable — listPrice
+recorded alongside so discounts are visible), free-text lines allowed, save →
+quotations table (mgas-pricecheck) with quote_no from next_quote_no() RPC
+(monthly counter, Q2608-001). PNG export via renderQuotePNG() — pure canvas,
+no deps, ~100KB — shared with navigator.share (mobile) or download fallback.
+Monitoring: staff see/update own quotes (RLS via pc_name()/pc_role()),
+owner/senior/manager see all + Agen column + win-rate chip; status
+pending→success/fail via buttons, managers can reopen. If quote fields
+change, update both the table shape (items jsonb) and renderQuotePNG.

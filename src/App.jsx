@@ -4,6 +4,7 @@ import ReconcileTab from './ReconcileTab';
 import { supabase } from './supabase';
 import PlateCalculator from './PlateCalculator';
 import KatalogTab from './KatalogTab';
+import QuotationTab from './QuotationTab';
 import PurchasingTab from './PurchasingTab';
 
 
@@ -546,6 +547,7 @@ export default function App() {
     { key:"assistant", label:"🤖 Pembantu AI" },
     { key:"plate", label:"🛠️ Service Center" },
     { key:"katalog", label:"📖 Katalog & Kira Berat" },
+    { key:"quote", label:"📝 Sebut Harga" },
     ...((session.role==="owner" || session.role==="senior" || session.role==="manager") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
@@ -622,6 +624,7 @@ export default function App() {
         {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
         {tab==="plate" && <PlateCalculator session={session} />}
         {tab==="katalog" && <KatalogTab session={session} />}
+        {tab==="quote" && <QuotationTab session={session} prices={prices} />}
         {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}

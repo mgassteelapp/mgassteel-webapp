@@ -147,15 +147,33 @@ function quoteForRender(row) {
   return { ...row, dateStr: f(d), validStr: f(v), items: row.items || [] };
 }
 
+function downloadPNG(row) {
+  const dataUrl = renderQuotePNG(quoteForRender(row));
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `${row.quote_no}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// True only where file-sharing genuinely works (mobile browsers)
+function canShareFiles() {
+  try {
+    const f = new File(['x'], 'x.png', { type: 'image/png' });
+    return !!(navigator.canShare && navigator.canShare({ files: [f] }));
+  } catch { return false; }
+}
+
 async function sharePNG(row) {
   const dataUrl = renderQuotePNG(quoteForRender(row));
   const blob = dataUrlToBlob(dataUrl);
   const file = new File([blob], `${row.quote_no}.png`, { type: 'image/png' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: row.quote_no }); return; } catch { /* cancelled */ }
-  } else {
-    const a = document.createElement('a');
-    a.href = dataUrl; a.download = `${row.quote_no}.png`; a.click();
+  try {
+    await navigator.share({ files: [file], title: row.quote_no });
+  } catch (e) {
+    // user cancelled → do nothing; real failure → fall back to download
+    if (e && e.name !== 'AbortError') downloadPNG(row);
   }
 }
 
@@ -437,11 +455,18 @@ export default function QuotationTab({ session, prices }) {
                         borderRadius:10, padding:'12px 16px', display:'flex', gap:12,
                         alignItems:'center', flexWrap:'wrap' }}>
             <span style={{ fontWeight:800, color:C.green }}>✓ {savedRow.quote_no} disimpan.</span>
-            <button onClick={() => sharePNG(savedRow)}
+            <button onClick={() => downloadPNG(savedRow)}
               style={{ padding:'9px 18px', border:'none', borderRadius:8, fontWeight:700, fontSize:13,
-                       background:C.green, color:C.white, cursor:'pointer' }}>
-              📤 Hantar / Muat Turun PNG
+                       background:C.navy, color:C.white, cursor:'pointer' }}>
+              ⬇ Muat Turun PNG
             </button>
+            {canShareFiles() && (
+              <button onClick={() => sharePNG(savedRow)}
+                style={{ padding:'9px 18px', border:'none', borderRadius:8, fontWeight:700, fontSize:13,
+                         background:C.green, color:C.white, cursor:'pointer' }}>
+                📤 Kongsi (WhatsApp)
+              </button>
+            )}
             <button onClick={() => setSavedRow(null)}
               style={{ padding:'9px 12px', border:'none', borderRadius:8, fontWeight:700, fontSize:12,
                        background:'transparent', color:C.muted, cursor:'pointer' }}>✕</button>
@@ -537,12 +562,20 @@ export default function QuotationTab({ session, prices }) {
                           )
                         )}
                       </td>
-                      <td style={{ padding:'7px 10px' }}>
-                        <button onClick={() => sharePNG(r)}
+                      <td style={{ padding:'7px 10px', whiteSpace:'nowrap' }}>
+                        <button onClick={() => downloadPNG(r)}
                           style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:6,
                                    padding:'3px 10px', fontSize:11, color:C.navy, fontWeight:700, cursor:'pointer' }}>
-                          📤 PNG
+                          ⬇ PNG
                         </button>
+                        {canShareFiles() && (
+                          <button onClick={() => sharePNG(r)}
+                            style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:6,
+                                     padding:'3px 10px', fontSize:11, color:C.green, fontWeight:700,
+                                     cursor:'pointer', marginLeft:4 }}>
+                            📤
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );

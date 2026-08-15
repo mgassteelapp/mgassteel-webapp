@@ -212,9 +212,9 @@ export default function QuotationTab({ session, prices }) {
     ).slice(0, 8);
   }, [search, picked, priceList]);
 
-  // auto price on pick/qty change
+  // auto price on pick/qty change — always 2 decimals
   useEffect(() => {
-    if (picked && qty > 0) setPrice(String(tierPrice(picked, Number(qty))));
+    if (picked && qty > 0) setPrice((Number(tierPrice(picked, Number(qty))) || 0).toFixed(2));
   }, [picked, qty]);
 
   // ── Customer typeahead — searches the CRM (same names as SQL Accounting),
@@ -245,7 +245,8 @@ export default function QuotationTab({ session, prices }) {
   useEffect(() => { load(); }, []);
 
   const addLine = () => {
-    const q = Number(qty), up = Number(price);
+    const q = Number(qty);
+    const up = Math.round((Number(price) || 0) * 100) / 100;  // clamp to 2 decimals
     if (!q || q <= 0 || !up || up <= 0) return;
     const name = picked ? (picked.product || picked.itemCode) : search.trim();
     if (!name) return;
@@ -253,7 +254,7 @@ export default function QuotationTab({ session, prices }) {
       code: picked ? picked.itemCode : '',
       name, desc2: '',
       qty: q, unitPrice: up,
-      listPrice: picked ? tierPrice(picked, q) : up,
+      listPrice: picked ? Math.round(tierPrice(picked, q) * 100) / 100 : up,
       lineTotal: Math.round(q * up * 100) / 100,
     }]);
     setSearch(''); setPicked(null); setQty(''); setPrice('');

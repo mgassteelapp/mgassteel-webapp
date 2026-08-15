@@ -185,6 +185,9 @@ async function sharePNG(row) {
 // ════════════════════════════════════════════════════════════════════════════
 export default function QuotationTab({ session, prices }) {
   const isManager = ['owner','senior','manager'].includes(session?.role);
+  // Cost/margin is OWNER-ONLY. For non-owners the cost fields in `prices`
+  // are 0 (never loaded into their browser), so this is defence in depth.
+  const isOwner = session?.role === 'owner';
 
   // ── form state ──
   const [custName,  setCustName]  = useState('');
@@ -209,6 +212,23 @@ export default function QuotationTab({ session, prices }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const priceList = useMemo(() => (prices || []).filter(p => p.itemCode), [prices]);
+  const costByCode = useMemo(() => {
+    const m = new Map();
+    if (isOwner) (prices || []).forEach(p => { if (p.itemCode && Number(p.cost) > 0) m.set(p.itemCode, Number(p.cost)); });
+    return m;
+  }, [prices, isOwner]);
+  const marginPct = (sell, cost) => sell > 0 && cost > 0 ? ((sell - cost) / sell) * 100 : null;
+  // Margin for a saved quote row — only if every line has a known cost
+  const quoteMargin = (row) => {
+    if (!isOwner || !row.items?.length) return null;
+    let cost = 0;
+    for (const it of row.items) {
+      const c = it.code ? costByCode.get(it.code) : null;
+      if (!c) return null;
+      cost += c * it.qty;
+    }
+    return marginPct(Number(row.total), cost);
+  };
   const matches = useMemo(() => {
     const s = search.trim().toLowerCase();
     if (!s || picked) return [];
@@ -411,6 +431,12 @@ export default function QuotationTab({ session, prices }) {
           <div style={{ fontSize:10, color:C.muted, marginTop:6 }}>
             Harga auto ikut kuantiti (senarai harga) — boleh diubah. Item bukan senarai: taip nama terus, letak harga sendiri.
           </div>
+          {isOwner && picked && Number(price) > 0 && costByCode.get(picked.itemCode) > 0 && (
+            <div style={{ fontSize:11, color:'#7c3aed', fontWeight:700, marginTop:4 }}>
+              Kos: RM {fmt(costByCode.get(picked.itemCode))} · Margin pada harga ini:{' '}
+              {marginPct(Number(price), costByCode.get(picked.itemCode)).toFixed(1)}%
+            </div>
+          )}
         </div>
 
         {/* lines */}
@@ -418,13 +444,16 @@ export default function QuotationTab({ session, prices }) {
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12, marginBottom:12 }}>
             <thead>
               <tr style={{ background:C.navy }}>
-                {['#','Barang','Qty','Harga','Jumlah',''].map(h => (
+                {['#','Barang','Qty','Harga','Jumlah', ...(isOwner ? ['Margin'] : []), ''].map(h => (
                   <th key={h} style={{ padding:'7px 9px', color:C.white, textAlign:'left', fontWeight:600 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {lines.map((l, i) => (
+              {lines.map((l, i) => {
+                const lc = l.code ? costByCode.get(l.code) : null;
+                const lm = lc ? marginPct(l.unitPrice, lc) : null;
+                return (
                 <tr key={i} style={{ borderBottom:`1px solid ${C.border}` }}>
                   <td style={{ padding:'6px 9px' }}>{i + 1}</td>
                   <td style={{ padding:'6px 9px' }}>
@@ -437,15 +466,32 @@ export default function QuotationTab({ session, prices }) {
                       <span style={{ color:C.red, fontSize:10 }}> (senarai {fmt(l.listPrice)})</span>}
                   </td>
                   <td style={{ padding:'6px 9px', fontWeight:700 }}>{fmt(l.lineTotal)}</td>
+                  {isOwner && (
+                    <td style={{ padding:'6px 9px', fontWeight:700, fontSize:11,
+                                 color: lm == null ? C.muted : lm < 5 ? '#dc2626' : '#7c3aed' }}>
+                      {lm == null ? '—' : lm.toFixed(1) + '%'}
+                    </td>
+                  )}
                   <td style={{ padding:'6px 9px' }}>
                     <button onClick={() => setLines(ls => ls.filter((_, j) => j !== i))}
                       style={{ background:'none', border:'none', color:C.red, cursor:'pointer', fontWeight:700 }}>✕</button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               <tr>
                 <td colSpan={4} style={{ padding:'8px 9px', textAlign:'right', fontWeight:800, color:C.navy }}>JUMLAH</td>
-                <td colSpan={2} style={{ padding:'8px 9px', fontWeight:800, color:C.navy }}>{fmtRM(total)}</td>
+                <td colSpan={isOwner ? 3 : 2} style={{ padding:'8px 9px', fontWeight:800, color:C.navy }}>
+                  {fmtRM(total)}
+                  {isOwner && (() => {
+                    const m = quoteMargin({ items: lines, total });
+                    return m != null ? (
+                      <span style={{ marginLeft:10, fontSize:12, color: m < 5 ? '#dc2626' : '#7c3aed' }}>
+                        (margin {m.toFixed(1)}%)
+                      </span>
+                    ) : null;
+                  })()}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -540,7 +586,8 @@ export default function QuotationTab({ session, prices }) {
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead>
                 <tr style={{ background:C.navy }}>
-                  {['No.','Tarikh','Pelanggan', ...(isManager ? ['Agen'] : []),'Jumlah','Status','Tindakan',''].map(h => (
+                  {['No.','Tarikh','Pelanggan', ...(isManager ? ['Agen'] : []),'Jumlah',
+                    ...(isOwner ? ['Margin'] : []),'Status','Tindakan',''].map(h => (
                     <th key={h} style={{ padding:'8px 10px', color:C.white, textAlign:'left',
                                          fontWeight:600, whiteSpace:'nowrap' }}>{h}</th>
                   ))}
@@ -560,6 +607,15 @@ export default function QuotationTab({ session, prices }) {
                                    textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.customer_name}</td>
                       {isManager && <td style={{ padding:'7px 10px' }}>{r.created_by}</td>}
                       <td style={{ padding:'7px 10px', fontWeight:700, whiteSpace:'nowrap' }}>{fmtRM(r.total)}</td>
+                      {isOwner && (() => {
+                        const m = quoteMargin(r);
+                        return (
+                          <td style={{ padding:'7px 10px', fontWeight:700, fontSize:11, whiteSpace:'nowrap',
+                                       color: m == null ? C.muted : m < 5 ? '#dc2626' : '#7c3aed' }}>
+                            {m == null ? '—' : m.toFixed(1) + '%'}
+                          </td>
+                        );
+                      })()}
                       <td style={{ padding:'7px 10px' }}>
                         <span style={{ background:st.bg, color:st.tx, padding:'2px 10px',
                                        borderRadius:12, fontSize:11, fontWeight:800, whiteSpace:'nowrap' }}>

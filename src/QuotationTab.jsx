@@ -166,6 +166,9 @@ export default function QuotationTab({ session, prices }) {
   // ── form state ──
   const [custName,  setCustName]  = useState('');
   const [custPhone, setCustPhone] = useState('');
+  const [custCode,  setCustCode]  = useState(null);   // CRM customer code when picked from search
+  const [custMatches, setCustMatches] = useState([]);
+  const [custSearching, setCustSearching] = useState(false);
   const [validity,  setValidity]  = useState(3);
   const [notes,     setNotes]     = useState('');
   const [lines,     setLines]     = useState([]);
@@ -195,6 +198,24 @@ export default function QuotationTab({ session, prices }) {
   useEffect(() => {
     if (picked && qty > 0) setPrice(String(tierPrice(picked, Number(qty))));
   }, [picked, qty]);
+
+  // ── Customer typeahead — searches the CRM (same names as SQL Accounting),
+  //    so no spelling mistakes. Manual typing still allowed for new customers.
+  useEffect(() => {
+    const q = custName.trim();
+    if (custCode || q.length < 2) { setCustMatches([]); return; }
+    const t = setTimeout(async () => {
+      setCustSearching(true);
+      try {
+        const { data } = await supabase.functions.invoke('reconcile-proxy', {
+          body: { action: 'customers', q },
+        });
+        setCustMatches(data?.customers || []);
+      } catch { setCustMatches([]); }
+      setCustSearching(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [custName, custCode]);
 
   const load = async () => {
     setLoading(true);
@@ -235,6 +256,7 @@ export default function QuotationTab({ session, prices }) {
         quote_no: qn,
         created_by: session.name,
         customer_name: custName.trim(),
+        customer_code: custCode || null,
         customer_phone: custPhone.trim() || null,
         items: lines,
         total: Math.round(total * 100) / 100,
@@ -245,7 +267,7 @@ export default function QuotationTab({ session, prices }) {
       const { data: ins, error: e2 } = await supabase.from('quotations').insert(row).select('*').single();
       if (e2) throw e2;
       setSavedRow(ins);
-      setLines([]); setCustName(''); setCustPhone(''); setNotes('');
+      setLines([]); setCustName(''); setCustPhone(''); setCustCode(null); setNotes('');
       load();
     } catch (e) {
       setError('Gagal simpan: ' + String(e?.message || e));
@@ -278,8 +300,40 @@ export default function QuotationTab({ session, prices }) {
         </div>
 
         <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:12 }}>
-          <input style={{ ...inp, flex:2, minWidth:200 }} placeholder="Nama pelanggan *"
-            value={custName} onChange={e => setCustName(e.target.value)} />
+          <div style={{ flex:2, minWidth:200, position:'relative' }}>
+            <input style={{ ...inp, width:'100%',
+                            borderColor: custCode ? '#16a34a' : C.border }}
+              placeholder="Nama pelanggan * (cari dari sistem)"
+              value={custName}
+              onChange={e => { setCustName(e.target.value); setCustCode(null); }} />
+            {custCode && (
+              <span style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)',
+                             fontSize:10, fontWeight:800, color:'#16a34a' }}>✓ SISTEM</span>
+            )}
+            {(custMatches.length > 0 || custSearching) && !custCode && (
+              <div style={{ position:'absolute', top:'100%', left:0, right:0, zIndex:30,
+                            background:C.white, border:`1px solid ${C.border}`, borderRadius:8,
+                            boxShadow:'0 8px 24px rgba(0,0,0,0.12)', maxHeight:260, overflowY:'auto' }}>
+                {custSearching && <div style={{ padding:'8px 12px', fontSize:11, color:C.muted }}>Mencari...</div>}
+                {custMatches.map((c, i) => (
+                  <div key={c.code + i}
+                    onClick={() => { setCustName(c.name); setCustCode(c.code);
+                                     if (c.phone && !custPhone) setCustPhone(c.phone);
+                                     setCustMatches([]); }}
+                    style={{ padding:'8px 12px', cursor:'pointer', fontSize:12,
+                             borderBottom:`1px solid ${C.border}` }}>
+                    <b>{c.name}</b>
+                    <span style={{ color:C.muted }}> · {c.code}{c.phone ? ' · ' + c.phone : ''}</span>
+                  </div>
+                ))}
+                {!custSearching && custMatches.length > 0 && (
+                  <div style={{ padding:'6px 12px', fontSize:10, color:C.muted, fontStyle:'italic' }}>
+                    Tiada dalam senarai? Taip terus nama pelanggan baru.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <input style={{ ...inp, flex:1, minWidth:150 }} placeholder="No. telefon (opsional)"
             value={custPhone} onChange={e => setCustPhone(e.target.value)} />
           <select style={{ ...inp, fontWeight:600 }} value={validity} onChange={e => setValidity(e.target.value)}>

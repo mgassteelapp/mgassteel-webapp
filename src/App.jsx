@@ -298,7 +298,7 @@ function getRulesAnswer(text, prices=[], scenarios=[]) {
 // ════════════════════════════════════════════════════════════════════════════
 // LOGIN SCREEN
 // ════════════════════════════════════════════════════════════════════════════
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, notice }) {
   const [selected,    setSelected]    = useState("");
   const [pin,         setPin]         = useState("");
   const [err,         setErr]         = useState("");
@@ -354,6 +354,13 @@ function LoginScreen({ onLogin }) {
 
         <Card style={{ padding:28 }}>
           <div style={{ fontWeight:700, fontSize:15, color:C.navy, marginBottom:20, textAlign:"center" }}>Log Masuk</div>
+          {notice && (
+            <div style={{ background:"#fef3e2", border:"1.5px solid #f5c78e", color:"#9a4d00",
+                          borderRadius:10, padding:"12px 14px", fontSize:12.5, fontWeight:700,
+                          marginBottom:14, textAlign:"center", lineHeight:1.5 }}>
+              🕢 {notice}
+            </div>
+          )}
 
           {/* Name selector */}
           <div style={{ marginBottom:14 }}>
@@ -418,6 +425,7 @@ export default function App() {
   const [dcResults, setDcResults] = useState([]);
   const [rcResults, setRcResults] = useState(null);
   const [rcAlert,   setRcAlert]   = useState(null); // {count, runAt} — auto-reconcile discrepancy alert
+  const [accessNotice, setAccessNotice] = useState(""); // shown on login screen (no browser alert)
   const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(false);
   const [gsStatus,  setGsStatus]  = useState("connecting"); // connecting | ok | error
@@ -485,7 +493,7 @@ export default function App() {
         localStorage.removeItem("mgas_login_time");
         await supabase.auth.signOut();
         setSession_(null);
-        alert(ACCESS_MSG);
+        setAccessNotice(ACCESS_MSG);
       }
     };
     check(); // immediate — covers session restore outside the window
@@ -526,13 +534,14 @@ export default function App() {
   // Staff cannot log in outside the access window (7:30am–7pm, no Friday)
   if (s.role === "staff" && !withinStaffWindow()) {
     await supabase.auth.signOut();
-    alert(ACCESS_MSG);
+    setAccessNotice(ACCESS_MSG);
     return;
   }
+  setAccessNotice("");
   const loginTime = Date.now();
   localStorage.setItem("mgas_login_time", String(loginTime));
   setSession_({ ...s, loginTime });
-}} />;
+}} notice={accessNotice} />;
 
   if (typeof window !== 'undefined' && !document.body.style.background) {
     document.body.style.background = '#f0f4f8';

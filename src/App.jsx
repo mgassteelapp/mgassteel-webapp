@@ -156,17 +156,22 @@ const SESSION_KEY = "mgas_session";
 // have NO access on Fridays. Owners, managers and seniors are exempt.
 // The old 15-minute idle timeout / 5:30pm cutoff are abolished — no forced
 // logout inside the window, no idle tracking.
-const ACCESS_MSG = "Akses aplikasi untuk staf dibenarkan 7:30 pagi hingga 7:00 malam sahaja (tiada akses hari Jumaat).";
-function withinStaffWindow(nowMs = Date.now()) {
+// Staff with extended evening hours (until 8:00pm instead of 7:00pm).
+// Add names here exactly as they appear in profiles (e.g. "Ken").
+const EXTENDED_STAFF = new Set(["Ken"]);
+const staffEndMins = (name) => EXTENDED_STAFF.has(name) ? 20 * 60 : 19 * 60;
+const accessMsgFor = (name) =>
+  `Akses aplikasi untuk staf dibenarkan 7:30 pagi hingga ${EXTENDED_STAFF.has(name) ? "8:00" : "7:00"} malam sahaja (tiada akses hari Jumaat).`;
+function withinStaffWindow(name, nowMs = Date.now()) {
   const kl = new Date(nowMs + 8 * 3600 * 1000); // Malaysia time (UTC+8)
   if (kl.getUTCDay() === 5) return false;       // Friday — no access
   const mins = kl.getUTCHours() * 60 + kl.getUTCMinutes();
-  return mins >= 7 * 60 + 30 && mins < 19 * 60; // 07:30 – 19:00
+  return mins >= 7 * 60 + 30 && mins < staffEndMins(name); // 07:30 – 19:00/20:00
 }
 function sessionExpired(session) {
   if (!session) return false;
   if (session.role !== "staff") return false;
-  return !withinStaffWindow();
+  return !withinStaffWindow(session.name);
 }
 
 function clearSession() {
@@ -493,7 +498,7 @@ export default function App() {
         localStorage.removeItem("mgas_login_time");
         await supabase.auth.signOut();
         setSession_(null);
-        setAccessNotice(ACCESS_MSG);
+        setAccessNotice(accessMsgFor(session.name));
       }
     };
     check(); // immediate — covers session restore outside the window
@@ -532,9 +537,9 @@ export default function App() {
   // Show login if no session (AFTER all hooks — required by React)
   if (!session) return <LoginScreen onLogin={async s => {
   // Staff cannot log in outside the access window (7:30am–7pm, no Friday)
-  if (s.role === "staff" && !withinStaffWindow()) {
+  if (s.role === "staff" && !withinStaffWindow(s.name)) {
     await supabase.auth.signOut();
-    setAccessNotice(ACCESS_MSG);
+    setAccessNotice(accessMsgFor(s.name));
     return;
   }
   setAccessNotice("");

@@ -770,3 +770,16 @@ Monitoring: staff see/update own quotes (RLS via pc_name()/pc_role()),
 owner/senior/manager see all + Agen column + win-rate chip; status
 pending→success/fail via buttons, managers can reopen. If quote fields
 change, update both the table shape (items jsonb) and renderQuotePNG.
+
+### 10c. Reconcile activity log + daily manager reminder
+
+run-reconcile gained action:"history" (last 20 runs, summary fields) and
+poDays>1 windows work now (missing CRM indexes added: delivery_order_items.
+delivery_order_id, delivery_orders.docdate/docno, sales_documents.docno —
+they caused statement timeouts). Manual runs are stamped "webapp: <name>" by
+the proxy. ReconcileTab shows a 📜 Log Aktiviti card: run history (who/when/
+exceptions) + today's daily_check_log acknowledgements. DailyCheckReminder in
+App.jsx pops up for role=manager (Fei/Mira) every non-Friday from 9am until
+they insert their daily_check_log row (✓ Sudah Selesai) — snooze 1h available.
+Monitored codes now match by FAMILY (suffix variants like -PERABONG) via
+isMonitored() in the edge function; mirror in webapp manual fallback someday.

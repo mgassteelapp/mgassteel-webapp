@@ -589,6 +589,7 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Segoe UI',system-ui,sans-serif", color:C.text }}>
       <AgentQueryPopup session={session} />
+      {session.role === "manager" && <DailyCheckReminder session={session} goCheck={() => setTab("reconcile")} />}
       <div style={{ background:C.navy }}>
         <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 0" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
@@ -2559,3 +2560,89 @@ function QueriesTab({ session }) {
   );
 }
 
+
+// ════════════════════════════════════════════════════════════════════════════
+// DAILY CHECK REMINDER — pops up for managers (Fei/Mira) every working day
+// until they run/acknowledge the daily checks. Acknowledgement is recorded
+// in daily_check_log (visible in the reconcile tab's activity log).
+// ════════════════════════════════════════════════════════════════════════════
+function DailyCheckReminder({ session, goCheck }) {
+  const [show, setShow]     = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const klNow  = () => new Date(Date.now() + 8 * 3600 * 1000);
+  const klDate = () => klNow().toISOString().slice(0, 10);
+
+  const check = async () => {
+    try {
+      const kl = klNow();
+      if (kl.getUTCDay() === 5) return;                 // Friday — rest day
+      if (kl.getUTCHours() < 9) return;                 // remind from 9:00 am
+      const snooze = Number(localStorage.getItem('mgas_dcl_snooze') || 0);
+      if (Date.now() < snooze) return;
+      const { data } = await supabase.from('daily_check_log')
+        .select('id').eq('check_date', klDate()).eq('done_by', session.name).maybeSingle();
+      setShow(!data);
+    } catch { /* table missing on older deploys */ }
+  };
+  useEffect(() => {
+    check();
+    const iv = setInterval(check, 30 * 60 * 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line
+  }, []);
+
+  if (!show) return null;
+
+  const markDone = async () => {
+    setSaving(true);
+    const { error } = await supabase.from('daily_check_log').insert({ done_by: session.name });
+    setSaving(false);
+    if (error && !String(error.message).includes('duplicate')) {
+      alert('Gagal simpan: ' + error.message); return;
+    }
+    setShow(false);
+  };
+  const later = () => {
+    localStorage.setItem('mgas_dcl_snooze', String(Date.now() + 60 * 60 * 1000));
+    setShow(false);
+  };
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.7)', zIndex:9998,
+                  display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div style={{ background:'#fff', borderRadius:16, maxWidth:440, width:'100%',
+                    boxShadow:'0 24px 64px rgba(0,0,0,0.4)', overflow:'hidden' }}>
+        <div style={{ background:'#e8780a', color:'#fff', padding:'14px 20px',
+                      fontWeight:800, fontSize:15 }}>
+          🔔 Peringatan Semakan Harian
+        </div>
+        <div style={{ padding:'18px 20px' }}>
+          <div style={{ fontSize:13.5, lineHeight:1.6, marginBottom:16 }}>
+            Hai <b>{session.name}</b> — semakan harian belum ditanda selesai hari ini.<br/>
+            Sila jalankan <b>Check Daily Sales Price</b> dan <b>Check Daily Purchase Order</b>,
+            kemudian tandakan selesai.
+          </div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <button onClick={() => { later(); goCheck(); }}
+              style={{ flex:1, minWidth:130, padding:'11px', border:'none', borderRadius:9,
+                       fontWeight:800, fontSize:13, background:'#0f2744', color:'#fff', cursor:'pointer' }}>
+              ▶ Buka Semakan
+            </button>
+            <button onClick={markDone} disabled={saving}
+              style={{ flex:1, minWidth:130, padding:'11px', border:'none', borderRadius:9,
+                       fontWeight:800, fontSize:13, background: saving ? '#94a3b8' : '#166534',
+                       color:'#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
+              ✓ Sudah Selesai
+            </button>
+            <button onClick={later}
+              style={{ padding:'11px 14px', border:'none', borderRadius:9, fontWeight:700,
+                       fontSize:12, background:'transparent', color:'#64748b', cursor:'pointer' }}>
+              Nanti (1 jam)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

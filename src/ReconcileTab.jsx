@@ -587,6 +587,7 @@ export default function ReconcileTab({ session, results, setResults }) {
       } else {
         setAutoRun(null);
       }
+      fetchLog();
     } catch (e) {
       setAutoError('Semakan auto tidak tersedia: ' + String(e?.message || e));
     }
@@ -594,8 +595,24 @@ export default function ReconcileTab({ session, results, setResults }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poDays, setResults]);
 
-  // Load the latest automated run when the tab opens
-  useEffect(() => { fetchAuto('latest'); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
+  // ── Activity log: recent runs + today's daily-check acknowledgements ──
+  const [runLog,   setRunLog]   = useState([]);
+  const [dclToday, setDclToday] = useState([]);
+  const fetchLog = async () => {
+    try {
+      const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'history' } });
+      if (data?.runs) setRunLog(data.runs);
+    } catch { /* ignore */ }
+    try {
+      const klDate = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+      const { data: marks } = await supabase.from('daily_check_log')
+        .select('done_by, done_at').eq('check_date', klDate).order('done_at');
+      setDclToday(marks || []);
+    } catch { /* table may not exist on older deploys */ }
+  };
+
+  // Load the latest automated run + log when the tab opens
+  useEffect(() => { fetchAuto('latest'); fetchLog(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
   const [filterStatus,setFilterStatus]= useState('ALL');
   const [search,      setSearch]      = useState('');
   const [expandedId,  setExpandedId]  = useState(null);
@@ -830,6 +847,59 @@ export default function ReconcileTab({ session, results, setResults }) {
         )}
       </div>
       </details>
+
+      {/* ── Activity log ── */}
+      <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
+                    boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'12px 16px', marginBottom:12 }}>
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', marginBottom:8 }}>
+          <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>📜 Log Aktiviti Semakan</div>
+          <span style={{ fontSize:11, color:C.muted }}>
+            Semakan harian hari ini:{' '}
+            {dclToday.length ? dclToday.map(m =>
+              `✓ ${m.done_by} (${new Date(m.done_at).toLocaleTimeString('en-MY', { timeZone:'Asia/Kuala_Lumpur', hour:'2-digit', minute:'2-digit' })})`
+            ).join(' · ') : <b style={{ color:'#c0392b' }}>belum ditanda selesai</b>}
+          </span>
+          <button onClick={fetchLog}
+            style={{ marginLeft:'auto', padding:'4px 10px', border:`1px solid ${C.border}`, borderRadius:6,
+                     fontSize:11, fontWeight:700, background:C.white, color:C.navy, cursor:'pointer' }}>🔄</button>
+        </div>
+        {runLog.length > 0 && (
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+            <thead>
+              <tr style={{ borderBottom:`2px solid ${C.border}` }}>
+                {['Masa','Tetingkap','PO Baris','Pengecualian','Dicetus Oleh'].map(h => (
+                  <th key={h} style={{ padding:'4px 8px', textAlign:'left', color:C.muted, fontWeight:700 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {runLog.map((r, i) => {
+                const t = r.trigger_source || '';
+                const who = t === 'cron' ? '🤖 Auto (15 min)'
+                  : t.startsWith('webapp: ') ? '👤 ' + t.slice(8)
+                  : t.startsWith('webapp') ? '👤 Manual' : t;
+                return (
+                  <tr key={i} style={{ borderBottom:`1px solid ${C.border}`,
+                                       background: i % 2 ? C.gray : C.white }}>
+                    <td style={{ padding:'4px 8px', whiteSpace:'nowrap' }}>
+                      {new Date(r.run_at).toLocaleString('en-MY', { timeZone:'Asia/Kuala_Lumpur',
+                        day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
+                    </td>
+                    <td style={{ padding:'4px 8px' }}>{r.po_days} hari</td>
+                    <td style={{ padding:'4px 8px' }}>{r.po_rows}</td>
+                    <td style={{ padding:'4px 8px' }}>
+                      {r.exceptions_count > 0
+                        ? <b style={{ color:'#c0392b' }}>{r.exceptions_count} ⚠️</b>
+                        : <span style={{ color:'#166534' }}>0 ✓</span>}
+                    </td>
+                    <td style={{ padding:'4px 8px' }}>{who}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* ── Summary chips ── */}
       {results && (

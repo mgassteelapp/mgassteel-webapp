@@ -161,7 +161,7 @@ const SESSION_KEY = "mgas_session";
 const EXTENDED_STAFF = new Set(["Ken"]);
 const staffEndMins = (name) => EXTENDED_STAFF.has(name) ? 20 * 60 : 19 * 60;
 const accessMsgFor = (name) =>
-  `Akses aplikasi untuk staf dibenarkan 7:30 pagi hingga ${EXTENDED_STAFF.has(name) ? "8:00" : "7:00"} malam sahaja (tiada akses hari Jumaat).`;
+  `Akses aplikasi dibenarkan 7:30 pagi hingga ${EXTENDED_STAFF.has(name) ? "8:00" : "7:00"} malam sahaja (Jumaat Hari Rehat, Selamat Rehat).`;
 function withinStaffWindow(name, nowMs = Date.now()) {
   const kl = new Date(nowMs + 8 * 3600 * 1000); // Malaysia time (UTC+8)
   if (kl.getUTCDay() === 5) return false;       // Friday — no access

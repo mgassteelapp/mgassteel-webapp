@@ -794,3 +794,37 @@ Lihat/Muat Turun links (KATALOG_PDFS list at top of KatalogTab.jsx). To re-
 watermark (e.g. new catalogue or logo), the overlay generator lives in this
 chat's history — reportlab overlay merged per page-size with pypdf. ~16MB
 total; fine for Vercel, keep an eye on repo size if adding more.
+
+### 14. Cadangan PO (PurchasingTab) — proxy data path + shared market
+
+PurchasingTab no longer has any direct CRM client (supabaseCrm deleted from
+src/supabase.js; VITE_CRM_* env vars unused). Velocity + open POs come from
+reconcile-proxy action:"purchasing" (owner/manager gate) → run-reconcile
+action:"purchasing" in mgas-crm: family-matched (same boundary rule as
+isMonitored: exact, or base + -/space/. + suffix), last 6 calendar months,
+cancelled excluded, returns { monthly[6], qty_6mo, active_months, open_pos,
+variants }. The old item_velocity_* views had their anon/authenticated grants
+REVOKED (they leaked 6-month sales data to anyone with the bundled CRM anon
+key); all browser grants on CRM data tables also revoked. Market signals live
+in pricecheck table market_state (single row id=1, RLS owner/manager):
+HRC weekly-manual (stamps updated_by/as_of), USD/MYR auto-fetched daily by
+the first visitor (fx_as_of gate, does not touch updated_by). NOTE: open-PO
+qty is ordered qty — received/outstanding qty is not in the Firebird sync yet.
+NOTE: deploy_edge_function MCP tool defaults verify_jwt=true which BREAKS the
+secret-only callers (cron, sync script, proxy) — always pass verify_jwt:false
+when redeploying run-reconcile or reconcile-proxy.
+
+### 15. Aktiviti / Pengguna / Deals / Senario — Supabase (Apps Script dead)
+
+The old Google Apps Script backend (GS_URL) returned 404 and was removed from
+App.jsx entirely (gsGet/gsPost deleted). Replacements, all in mgas-pricecheck:
+activity_log (insert: any authenticated with name=pc_name(); select: owner) —
+logActivity() writes, ActivityTab reads last 200. profiles gained owner-wide
+select/update policies: UsersTab lists real users, owner can change role and
+toggle active (active=false blocks login at LoginScreen + session restore +
+proxy). PIN UI removed — login is email+password (section 12); password
+changes happen from the admin chat into BOTH projects, never in-app. deals
+and scenarios tables replace the Sheets storage for Rekod Tawaran / Senario
+AI (scenarios: owner-only writes, all read — the AI prompt uses them).
+loadDeals()/loadScenarios() were referenced but never defined (every load
+threw and flipped gsStatus to error) — now real Supabase queries.

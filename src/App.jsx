@@ -9,28 +9,40 @@ import PurchasingTab from './PurchasingTab';
 
 
 // ── Google Sheets API ─────────────────────────────────────────────────────────
-const GS_URL = "https://script.google.com/macros/s/AKfycbwPmMDlupOcw_Rx5J56-xKd6xC_M69sqZJZnXKDh0a9B5jd9us-MYAPLlM9qQMhN2Ed/exec";
-
-async function gsGet(action) {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
-    const res  = await fetch(`${GS_URL}?action=${action}`, { signal: controller.signal });
-    clearTimeout(timeout);
-    const data = await res.json();
-    return data;
-  } catch(e) { return { error: e.message }; }
+// ── Deals & Scenarios — stored in Supabase (the old Google Apps Script
+// backend is dead; every feature now shares the same database) ──────────────
+async function loadDeals() {
+  const { data, error } = await supabase.from('deals')
+    .select('*').order('created_at', { ascending: false }).limit(300);
+  if (error) throw error;
+  return (data || []).map(r => ({
+    id: r.id,
+    date: r.deal_date || "",
+    invoiceNo: r.invoice_no || "",
+    product: r.product || "",
+    quantity: r.quantity || "",
+    unit: r.unit || "pcs",
+    originalPrice: r.original_price != null ? String(r.original_price) : "",
+    discountPct: r.discount_pct != null ? String(r.discount_pct) : "",
+    finalPrice: r.final_price != null ? String(r.final_price) : "",
+    reason: r.reason || "",
+    staff: r.staff || "",
+    photoRef: r.photo_ref || "",
+    notes: r.notes || "",
+  }));
 }
 
-async function gsPost(payload) {
-  try {
-    const res  = await fetch(GS_URL, {
-      method: "POST",
-      body:   JSON.stringify(payload),
-    });
-    const data = await res.json();
-    return data;
-  } catch(e) { return { error: e.message }; }
+async function loadScenarios() {
+  const { data, error } = await supabase.from('scenarios')
+    .select('*').order('id', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(r => ({
+    id: r.id,
+    situation: r.situation || "",
+    keywords: r.keywords || "",
+    answer: r.answer || "",
+    addedAt: r.created_at ? new Date(r.created_at).toLocaleDateString("en-MY") : "",
+  }));
 }
 
 // ── Load functions (from Google Sheets, fallback to local) ────────────────────
@@ -71,11 +83,41 @@ async function loadPrices() {
 }
 
 
-// ── Save functions (to Google Sheets) ────────────────────────────────────────
-async function saveDealToSheet(deal)         { return await gsPost({ action:"saveDeal",       deal }); }
-async function saveScenarioToSheet(scenario) { return await gsPost({ action:"saveScenario",   scenario }); }
-async function updateScenarioInSheet(scenario){ return await gsPost({ action:"updateScenario", scenario }); }
-async function deleteScenarioFromSheet(id)   { return await gsPost({ action:"deleteScenario", id }); }
+// ── Save functions (to Supabase) ─────────────────────────────────────────────
+async function saveDealToDb(deal, createdBy) {
+  const { error } = await supabase.from('deals').insert({
+    deal_date:      deal.date || null,
+    invoice_no:     deal.invoiceNo || "",
+    product:        deal.product || "",
+    quantity:       deal.quantity || "",
+    unit:           deal.unit || "pcs",
+    original_price: parseFloat(deal.originalPrice) || null,
+    discount_pct:   parseFloat(deal.discountPct) || null,
+    final_price:    parseFloat(deal.finalPrice) || null,
+    reason:         deal.reason || "",
+    staff:          deal.staff || "",
+    photo_ref:      deal.photoRef || "",
+    notes:          deal.notes || "",
+    created_by:     createdBy || "",
+  });
+  return { success: !error, error: error?.message };
+}
+async function saveScenarioToDb(scenario) {
+  const { data, error } = await supabase.from('scenarios')
+    .insert({ situation: scenario.situation, keywords: scenario.keywords || "", answer: scenario.answer })
+    .select('id').single();
+  return { success: !error, id: data?.id, error: error?.message };
+}
+async function updateScenarioInDb(scenario) {
+  const { error } = await supabase.from('scenarios')
+    .update({ situation: scenario.situation, keywords: scenario.keywords || "", answer: scenario.answer, updated_at: new Date().toISOString() })
+    .eq('id', scenario.id);
+  return { success: !error, error: error?.message };
+}
+async function deleteScenarioFromDb(id) {
+  const { error } = await supabase.from('scenarios').delete().eq('id', id);
+  return { success: !error, error: error?.message };
+}
 
 // ── Legacy local save (kept as fallback) ─────────────────────────────────────
 async function saveDeals(d)    { try { await window.storage.set("mgas_deals",     JSON.stringify(d)); } catch {} }
@@ -128,7 +170,7 @@ const STAFF_LOGIN = [
 ];
 
 // ── Daily price check access ──────────────────────────────────────────────────
-// Edit these two lists when roles change — names must match STAFF_PINS exactly.
+// Edit these two lists when roles change — names must match profiles exactly.
 function canAccessDaily(sess) {
   if (!sess) return false;
   return sess.role === "owner" || sess.role === "senior" || sess.role === "manager";
@@ -180,16 +222,12 @@ function clearSession() {
 
 async function logActivity(staff, action, detail="") {
   try {
-    await gsPost({
-      action: "logActivity",
-      log: {
-        name:   staff.name,
-        role:   staff.role,
-        action,
-        detail,
-        time:   new Date().toLocaleString("en-MY"),
-        device: navigator.userAgent.includes("Mobile") ? "Mobile" : "Desktop",
-      }
+    await supabase.from('activity_log').insert({
+      name:   staff.name,
+      role:   staff.role,
+      action,
+      detail,
+      device: navigator.userAgent.includes("Mobile") ? "Mobile" : "Desktop",
     });
   } catch {}
 }
@@ -338,11 +376,16 @@ function LoginScreen({ onLogin, notice }) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, role')
+      .select('name, role, active')
       .eq('id', data.user.id)
       .single();
 
     if (!profile) { setErr("Profil tidak dijumpai."); return; }
+    if (profile.active === false) {
+      await supabase.auth.signOut();
+      setErr("Akaun ini telah dinyahaktifkan. Sila hubungi pengurusan.");
+      return;
+    }
 
     onLogin({ name: profile.name, role: profile.role, email: staff.email });
   };
@@ -442,9 +485,13 @@ export default function App() {
       if (!sbSession) return;
       const { data: profile } = await supabase
         .from('profiles')
-        .select('name, role')
+        .select('name, role, active')
         .eq('id', sbSession.user.id)
         .single();
+      if (profile && profile.active === false) {
+        await supabase.auth.signOut();
+        return;
+      }
       if (profile) {
         const stored = localStorage.getItem("mgas_login_time");
         const loginTime = stored ? Number(stored) : Date.now();
@@ -1046,10 +1093,10 @@ function LogTab({ deals, setDeals, prices=[], session }) {
     if (!validate()) return;
     setSaving(true);
     const deal = { ...form, id: Date.now() };
-    // Save to Google Sheets
-    const result = await saveDealToSheet(deal);
+    // Save to Supabase (shared across all devices)
+    const result = await saveDealToDb(deal, session?.name);
     if (result.success) {
-      setSyncStatus("☁ Disimpan ke Google Sheets");
+      setSyncStatus("☁ Disimpan ke sistem");
     } else {
       setSyncStatus("⚠️ Simpan tempatan sahaja");
     }
@@ -1215,10 +1262,10 @@ function ScenariosTab({ scenarios, setScenarios, session }) {
     const item = { ...form, id: editing!==null ? editing : Date.now(), addedAt: new Date().toLocaleDateString("en-MY") };
     let result;
     if (editing!==null) {
-      result = await updateScenarioInSheet(item);
+      result = await updateScenarioInDb(item);
       setScenarios(scenarios.map(s=>String(s.id)===String(item.id)?item:s));
     } else {
-      result = await saveScenarioToSheet(item);
+      result = await saveScenarioToDb(item);
       // use server-assigned id if available
       if (result.success && result.id) item.id = result.id;
       setScenarios([item,...scenarios]);
@@ -1229,7 +1276,7 @@ function ScenariosTab({ scenarios, setScenarios, session }) {
   };
   const del = async id => {
     if (!window.confirm("Padam senario ini?")) return;
-    await deleteScenarioFromSheet(String(id));
+    await deleteScenarioFromDb(id);
     const updated = scenarios.filter(s=>String(s.id)!==String(id));
     setScenarios(updated); saveScenarios(updated);
   };
@@ -1450,127 +1497,85 @@ function UsersTab({ session }) {
   const [users,   setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [saved,   setSaved]   = useState("");
-  const [editing, setEditing] = useState(null);
-  const [form,    setForm]    = useState({});
-  const [showPin, setShowPin] = useState({});
+  const [errMsg,  setErrMsg]  = useState("");
 
-  useEffect(() => {
-    gsGet("getUsers").then(r => {
-      if (r.success && r.users.length > 0) setUsers(r.users);
-      else setUsers(STAFF_PINS.map(s => ({ ...s, active:"yes" })));
-      setLoading(false);
-    });
-  }, []);
+  const load = async () => {
+    const { data, error } = await supabase.from('profiles')
+      .select('id, name, role, active').order('name');
+    if (error) { setErrMsg("Gagal memuatkan senarai pengguna: " + error.message); }
+    else setUsers(data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
 
-  const saveUser = async () => {
-    if (!form.name || !form.pin) return;
-    let updated;
-    if (editing === "new") updated = [...users, { ...form, active:"yes" }];
-    else updated = users.map(u => u.name === editing ? { ...u, ...form } : u);
-    setUsers(updated);
-    const result = await gsPost({ action:"saveUsers", users: updated });
-    setEditing(null); setForm({});
-    setSaved(result.success ? "✅ Berjaya disimpan!" : "⚠️ Gagal simpan ke Google Sheets");
-    setTimeout(() => setSaved(""), 3000);
+  const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 3000); };
+
+  const toggleActive = async (u) => {
+    const next = u.active === false; // false → activate, true → deactivate
+    const { error } = await supabase.from('profiles').update({ active: next }).eq('id', u.id);
+    if (error) { flash("⚠️ Gagal simpan: " + error.message); return; }
+    setUsers(users.map(x => x.id === u.id ? { ...x, active: next } : x));
+    flash(next ? `✅ ${u.name} diaktifkan.` : `✅ ${u.name} dinyahaktifkan — tidak boleh log masuk lagi.`);
   };
 
-  const toggleActive = async (name) => {
-    const updated = users.map(u => u.name === name ? { ...u, active: u.active === "yes" ? "no" : "yes" } : u);
-    setUsers(updated);
-    await gsPost({ action:"saveUsers", users: updated });
+  const changeRole = async (u, role) => {
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', u.id);
+    if (error) { flash("⚠️ Gagal simpan: " + error.message); return; }
+    setUsers(users.map(x => x.id === u.id ? { ...x, role } : x));
+    flash(`✅ Peranan ${u.name} ditukar ke ${role}.`);
   };
-
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   if (loading) return <Card style={{ padding:40, textAlign:"center" }}><div style={{ color:C.muted }}>Memuatkan...</div></Card>;
 
   return (
     <div>
       {saved && <Alert color={saved.startsWith("✅") ? "green" : "orange"}>{saved}</Alert>}
+      {errMsg && <Alert color="orange">{errMsg}</Alert>}
 
       <Card style={{ padding:"12px 14px", marginBottom:14, background:"#f0f9ff", border:"1px solid #bae6fd" }}>
-        <div style={{ fontWeight:700, fontSize:13, color:"#0369a1", marginBottom:4 }}>👥 Pengurusan Pengguna & PIN</div>
-        <div style={{ fontSize:12, color:"#0369a1" }}>Tambah atau ubah pengguna dan PIN. Perubahan berkuat kuasa serta-merta pada semua peranti.</div>
+        <div style={{ fontWeight:700, fontSize:13, color:"#0369a1", marginBottom:4 }}>👥 Pengurusan Pengguna</div>
+        <div style={{ fontSize:12, color:"#0369a1", lineHeight:1.6 }}>
+          Senarai pengguna sebenar sistem (login email &amp; kata laluan — sama untuk app Ledger).
+          Nyahaktif menghalang log masuk serta-merta pada semua peranti.
+          Pertukaran kata laluan dibuat oleh admin melalui sistem pusat, bukan di sini.
+        </div>
       </Card>
-
-      {editing !== "new" && (
-        <button onClick={() => { setEditing("new"); setForm({ name:"", pin:"", role:"staff", active:"yes" }); }}
-          style={{ width:"100%", padding:"11px", background:C.accent, color:C.white, border:"none", borderRadius:10, fontWeight:700, fontSize:14, cursor:"pointer", marginBottom:14 }}>
-          + Tambah Pengguna Baru
-        </button>
-      )}
-
-      {editing && (
-        <Card style={{ padding:18, marginBottom:14, border:`2px solid ${C.accent}` }}>
-          <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:14 }}>
-            {editing === "new" ? "➕ Tambah Pengguna Baru" : `✏️ Kemaskini — ${editing}`}
-          </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
-            {[["Nama","name","text"],["PIN Baru","pin","text"],["Peranan","role","select"]].map(([label,key,type]) => (
-              <div key={key}>
-                <label style={{ display:"block", fontSize:11, fontWeight:700, color:C.muted, marginBottom:4, textTransform:"uppercase" }}>{label}</label>
-                {type === "select"
-                  ? <select value={form[key]||"staff"} onChange={e => setF(key, e.target.value)}
-                      style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, background:C.white, boxSizing:"border-box" }}>
-                      <option value="staff">Staff</option>
-                      <option value="senior">Senior</option>
-                      <option value="manager">Manager</option>
-                      <option value="owner">Owner</option>
-                    </select>
-                  : <input type="text" inputMode={key==="pin"?"numeric":"text"} value={form[key]||""} onChange={e => setF(key, e.target.value)}
-                      disabled={editing !== "new" && key === "name"}
-                      placeholder={key==="pin"?"4-6 digit":""}
-                      maxLength={key==="pin"?6:50}
-                      style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:key==="pin"?16:13, fontFamily:"inherit", letterSpacing:key==="pin"?4:0, boxSizing:"border-box", background: editing !== "new" && key === "name" ? "#f8fafc" : C.white }} />
-                }
-              </div>
-            ))}
-          </div>
-          <div style={{ display:"flex", gap:8, marginTop:12 }}>
-            <button onClick={saveUser} style={{ padding:"10px 22px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:700, cursor:"pointer", fontSize:13 }}>💾 Simpan</button>
-            <button onClick={() => { setEditing(null); setForm({}); }} style={{ padding:"10px 16px", background:"#e2e8f0", color:C.muted, border:"none", borderRadius:8, fontWeight:600, cursor:"pointer", fontSize:13 }}>Batal</button>
-          </div>
-        </Card>
-      )}
 
       <Card>
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
             <thead>
               <tr style={{ background:C.navy }}>
-                {["Nama","Peranan","PIN","Status","Tindakan"].map(h => (
+                {["Nama","Peranan","Status","Tindakan"].map(h => (
                   <th key={h} style={{ padding:"10px 14px", color:C.white, textAlign:"left", fontWeight:600 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {users.map((u, i) => (
-                <tr key={u.name} style={{ background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, opacity:u.active==="no"?0.5:1 }}>
-                  <td style={{ padding:"10px 14px", fontWeight:600 }}>{u.name}</td>
-                  <td style={{ padding:"10px 14px" }}>
-                    <Badge color={u.role==="owner"?"green":u.role==="manager"?"blue":u.role==="senior"?"yellow":"gray"}>{u.role}</Badge>
+                <tr key={u.id} style={{ background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, opacity:u.active===false?0.5:1 }}>
+                  <td style={{ padding:"10px 14px", fontWeight:600 }}>
+                    {u.name}{u.name === session.name ? <span style={{ marginLeft:6, fontSize:10, color:C.muted }}>(anda)</span> : null}
                   </td>
                   <td style={{ padding:"10px 14px" }}>
-                    <span style={{ fontFamily:"monospace", letterSpacing:3, fontSize:14 }}>
-                      {showPin[u.name] ? u.pin : "••••"}
-                    </span>
-                    <button onClick={() => setShowPin(p => ({ ...p, [u.name]:!p[u.name] }))}
-                      style={{ marginLeft:8, background:"none", border:"none", cursor:"pointer", color:C.muted, fontSize:11 }}>
-                      {showPin[u.name] ? "Sembunyikan" : "Tunjuk"}
-                    </button>
+                    {u.name === session.name
+                      ? <Badge color="green">{u.role}</Badge>
+                      : <select value={u.role} onChange={e => changeRole(u, e.target.value)}
+                          style={{ padding:"5px 8px", borderRadius:7, border:`1.5px solid ${C.border}`, fontSize:12, background:C.white }}>
+                          <option value="staff">staff</option>
+                          <option value="senior">senior</option>
+                          <option value="manager">manager</option>
+                          <option value="owner">owner</option>
+                        </select>}
                   </td>
                   <td style={{ padding:"10px 14px" }}>
-                    <Badge color={u.active==="yes"?"green":"red"}>{u.active==="yes"?"Aktif":"Tidak Aktif"}</Badge>
+                    <Badge color={u.active!==false?"green":"red"}>{u.active!==false?"Aktif":"Tidak Aktif"}</Badge>
                   </td>
-                  <td style={{ padding:"10px 14px", display:"flex", gap:6 }}>
-                    <button onClick={() => { setEditing(u.name); setForm({...u}); }}
-                      style={{ padding:"4px 12px", background:C.accentLight, color:C.accent, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>
-                      Ubah PIN
-                    </button>
+                  <td style={{ padding:"10px 14px" }}>
                     {u.name !== session.name && (
-                      <button onClick={() => toggleActive(u.name)}
-                        style={{ padding:"4px 10px", background:u.active==="yes"?C.redLight:C.greenLight, color:u.active==="yes"?C.red:C.green, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>
-                        {u.active==="yes" ? "Nyahaktif" : "Aktifkan"}
+                      <button onClick={() => toggleActive(u)}
+                        style={{ padding:"4px 10px", background:u.active!==false?C.redLight:C.greenLight, color:u.active!==false?C.red:C.green, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>
+                        {u.active!==false ? "Nyahaktif" : "Aktifkan"}
                       </button>
                     )}
                   </td>
@@ -1592,12 +1597,16 @@ function ActivityTab() {
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState("Semua");
 
-  useEffect(() => {
-    gsGet("getActivityLogs").then(r => {
-      if (r.success) setLogs(r.logs);
-      setLoading(false);
-    });
-  }, []);
+  const load = async () => {
+    const { data } = await supabase.from('activity_log')
+      .select('*').order('ts', { ascending: false }).limit(200);
+    setLogs((data || []).map(l => ({
+      time: l.ts ? new Date(l.ts).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "",
+      name: l.name, role: l.role, action: l.action, detail: l.detail, device: l.device,
+    })));
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
 
   const names = ["Semua", ...new Set(logs.map(l=>l.name))];
   const filtered = filter==="Semua" ? logs : logs.filter(l=>l.name===filter);
@@ -1610,7 +1619,7 @@ function ActivityTab() {
           style={{ padding:"7px 10px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, background:C.white }}>
           {names.map(n=><option key={n}>{n}</option>)}
         </select>
-        <button onClick={()=>gsGet("getActivityLogs").then(r=>{ if(r.success) setLogs(r.logs); })}
+        <button onClick={load}
           style={{ padding:"7px 14px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:600, fontSize:12, cursor:"pointer" }}>
           🔄 Muat Semula
         </button>

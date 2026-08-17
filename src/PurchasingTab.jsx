@@ -3,14 +3,15 @@
 //
 // Data sources:
 //   • prices + costs  → main supabase client (mgas-pricecheck)  [passed in as `prices`]
-//   • velocity        → supabaseCrm client (mgas-crm), views item_velocity_6mo / _monthly
-//   • open POs        → supabaseCrm, purchase_order_items (populated once server sync runs)
-//   • market (HRC)    → weekly manual entry in-app; USD/MYR optional free API
+//   • velocity + open POs → reconcile-proxy edge function, action "purchasing"
+//     (family-matched, same boundary rule as Semakan PO; login + owner/manager)
+//   • market (HRC)    → shared market_state table (all owner/manager see the
+//     same numbers); USD/MYR auto-fetched daily from a free API
 //
 // Read-only. Never writes to accounting.
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { supabaseCrm } from './supabase';
+import { supabase } from './supabase';
 
 // USD/MYR live rate. Note this is api.frankfurter.dev/v1 — the older
 // api.frankfurter.app URL 301s here WITHOUT CORS headers on the redirect,
@@ -50,18 +51,61 @@ function sanitizeMarket(raw) {
   };
 }
 
-// Weekly-manual market signal. Persisted to localStorage; owner updates weekly.
-function useMarket() {
-  const [m, setM] = useState(() => {
-    try { return sanitizeMarket(JSON.parse(localStorage.getItem('mgas_market') || 'null')); }
-    catch { return sanitizeMarket(null); }
-  });
-  const save = (next) => {
+// Weekly-manual market signal — stored in the shared market_state table so
+// every owner/manager sees the same numbers (previously localStorage, which
+// was per-browser and silently diverged between people).
+function useMarket(session) {
+  const [m, setM] = useState(() => sanitizeMarket(null));
+  const [updatedBy, setUpdatedBy] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let stop = false;
+    (async () => {
+      try {
+        const { data } = await supabase.from('market_state').select('*').eq('id', 1).maybeSingle();
+        if (!stop && data) {
+          setM(sanitizeMarket({
+            hrc: data.hrc, hrcPrev: data.hrc_prev,
+            usdMyr: data.usd_myr, usdMyrPrev: data.usd_myr_prev,
+            nickel: data.nickel, asOf: data.as_of, fxAsOf: data.fx_as_of || '',
+          }));
+          setUpdatedBy(data.updated_by || '');
+        }
+      } catch { /* fall back to defaults */ }
+      if (!stop) setLoaded(true);
+    })();
+    return () => { stop = true; };
+  }, []);
+
+  // Manual HRC update — stamps the updater's name + date for everyone.
+  const save = async (next) => {
     const clean = sanitizeMarket(next);
     setM(clean);
-    localStorage.setItem('mgas_market', JSON.stringify(clean));
+    setUpdatedBy(session?.name || '');
+    try {
+      await supabase.from('market_state').update({
+        hrc: clean.hrc, hrc_prev: clean.hrcPrev,
+        usd_myr: clean.usdMyr, usd_myr_prev: clean.usdMyrPrev,
+        nickel: clean.nickel, as_of: clean.asOf,
+        updated_by: session?.name || null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', 1);
+    } catch { /* offline — local state still shows the new value */ }
   };
-  return [m, save];
+
+  // Daily FX auto-fetch — updates only the FX fields, does NOT claim the
+  // "updated by" stamp (that belongs to the manual HRC entry).
+  const saveFx = async (rate, today, prevRate) => {
+    setM(cur => ({ ...cur, usdMyrPrev: prevRate, usdMyr: rate, fxAsOf: today }));
+    try {
+      await supabase.from('market_state').update({
+        usd_myr: rate, usd_myr_prev: prevRate, fx_as_of: today,
+      }).eq('id', 1);
+    } catch { /* ignore */ }
+  };
+
+  return [m, save, saveFx, updatedBy, loaded];
 }
 
 function marketVerdict(m, weighted) {
@@ -87,10 +131,12 @@ export default function PurchasingTab({ prices = [], session }) {
   const [velocity, setVelocity] = useState(null);
   const [monthly, setMonthly] = useState([]);       // [{month_label, qty}]
   const [openPOs, setOpenPOs] = useState([]);
+  const [variants, setVariants] = useState([]);     // family variant codes seen in sales
+  const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(false);
   const [cover, setCover] = useState(2);
   const [offer, setOffer] = useState('');
-  const [market, setMarket] = useMarket();
+  const [market, setMarket, saveFx, marketUpdatedBy, marketLoaded] = useMarket(session);
   const [showMarketEdit, setShowMarketEdit] = useState(false);
   const [fxFailed, setFxFailed] = useState(false);
 
@@ -99,9 +145,11 @@ export default function PurchasingTab({ prices = [], session }) {
   const marketRef = useRef(market);
   marketRef.current = market;
 
-  // Auto-fetch USD/MYR once per day. HRC stays weekly-manual (no free feed).
-  // On any failure we keep the last stored rate and flag it — never a guess.
+  // Auto-fetch USD/MYR once per day (shared — first person in each day updates
+  // it for everyone). HRC stays weekly-manual (no free feed). On any failure
+  // we keep the last stored rate and flag it — never a guess.
   useEffect(() => {
+    if (!marketLoaded) return;                        // wait for the shared row
     const today = new Date().toISOString().slice(0, 10);
     if (marketRef.current.fxAsOf === today) return;   // already fetched today
     let cancelled = false;
@@ -113,16 +161,15 @@ export default function PurchasingTab({ prices = [], session }) {
         const rate = Number(json?.rates?.MYR);
         if (!Number.isFinite(rate) || rate <= 0) throw new Error('unexpected payload');
         if (cancelled) return;
-        const cur = marketRef.current;
         // keep the outgoing rate as "previous" so the up/down trend still works
-        setMarket({ ...cur, usdMyrPrev: cur.usdMyr, usdMyr: rate, fxAsOf: today });
+        saveFx(rate, today, marketRef.current.usdMyr);
         setFxFailed(false);
       } catch {
         if (!cancelled) setFxFailed(true);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [marketLoaded]);
 
   // search over the prices array already loaded by the app
   const results = useMemo(() => {
@@ -134,30 +181,31 @@ export default function PurchasingTab({ prices = [], session }) {
     ).slice(0, 8);
   }, [query, prices]);
 
-  // when an item is picked, pull velocity + open POs from CRM
+  // when an item is picked, pull velocity + open POs from CRM via the secure
+  // proxy (family matched server-side — same boundary rule as Semakan PO)
   useEffect(() => {
     if (!selected) return;
     const code = selected.itemCode;
-    setLoading(true); setVelocity(null); setMonthly([]); setOpenPOs([]);
+    let cancelled = false;
+    setLoading(true); setVelocity(null); setMonthly([]); setOpenPOs([]); setVariants([]); setLoadError("");
     (async () => {
       try {
-        const [{ data: v }, { data: mth }, { data: po }] = await Promise.all([
-          supabaseCrm.from('item_velocity_6mo').select('clean_code, qty_6mo, active_months').eq('clean_code', code).maybeSingle(),
-          supabaseCrm.from('item_velocity_monthly').select('*').eq('clean_code', code).order('month_start'),
-          supabaseCrm.from('purchase_order_items')
-            .select('itemcode, qty, unitprice, purchase_orders(docno, docdate, supplier_code, cancelled)')
-            .ilike('itemcode', code + '%'),
-        ]);
-        setVelocity(v || null);
-        setMonthly(mth || []);
-        // only outstanding (non-cancelled) POs; qty logic refined once sync populates real outstanding qty
-        setOpenPOs((po || []).filter(r => r.purchase_orders && !r.purchase_orders.cancelled));
+        const { data, error } = await supabase.functions.invoke('reconcile-proxy', {
+          body: { action: 'purchasing', code },
+        });
+        if (error || !data || data.error) throw new Error(data?.error || error?.message || 'gagal');
+        if (cancelled) return;
+        setVelocity({ qty_6mo: data.qty_6mo, active_months: data.active_months });
+        setMonthly(data.monthly || []);
+        setOpenPOs(data.open_pos || []);
+        setVariants(data.variants || []);
       } catch (e) {
-        // views/tables may not be reachable yet — leave nulls, UI shows pending
+        if (!cancelled) setLoadError("Gagal memuatkan data CRM — cuba sekali lagi. (" + (e?.message || e) + ")");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => { cancelled = true; };
   }, [selected]);
 
   const weighted = selected ? isWeighted(selected.product) : false;
@@ -165,7 +213,8 @@ export default function PurchasingTab({ prices = [], session }) {
 
   const calc = useMemo(() => {
     if (!selected) return null;
-    const avgSold = velocity ? Math.round(Number(velocity.qty_6mo) / Math.max(velocity.active_months || 6, 1)) : null;
+    const avgSold = (velocity && Number(velocity.qty_6mo) > 0)
+      ? Math.round(Number(velocity.qty_6mo) / Math.max(velocity.active_months || 6, 1)) : null;
     const cost = Number(selected.cost) || 0;
     const retail = Number(selected.retailPrice) || 0;
     const onOrder = openPOs.reduce((a, b) => a + (Number(b.qty) || 0), 0);
@@ -248,9 +297,16 @@ export default function PurchasingTab({ prices = [], session }) {
           {/* Velocity + Market row */}
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14 }}>
             <div style={box}>
-              <div style={lbl}>Jualan / Bulan · 6 bulan</div>
+              <div style={lbl}>Jualan / Bulan · 6 bulan · semua varian kod</div>
               {loading ? <div style={{ color:C.muted, fontSize:13 }}>Memuat…</div>
-                : monthly.length === 0 ? <div style={{ color:C.muted, fontSize:13 }}>Tiada rekod jualan untuk kod ini.</div>
+                : loadError ? (
+                  <div style={{ color:C.red, fontSize:12.5 }}>
+                    {loadError}
+                    <button onClick={() => setSelected({ ...selected })}
+                      style={{ display:'block', marginTop:8, background:C.navy, color:C.white, border:'none', borderRadius:7, padding:'7px 14px', fontWeight:700, fontSize:12, cursor:'pointer' }}>🔄 Cuba Lagi</button>
+                  </div>
+                )
+                : !velocity || Number(velocity.qty_6mo) <= 0 ? <div style={{ color:C.muted, fontSize:13 }}>Tiada rekod jualan 6 bulan untuk famili kod ini.</div>
                 : (
                 <>
                   <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:90 }}>
@@ -264,6 +320,11 @@ export default function PurchasingTab({ prices = [], session }) {
                   </div>
                   <div style={{ marginTop:10, fontSize:12.5, color:C.muted }}>
                     Purata bulanan <b style={{ color:C.text }}>{calc.avgSold} unit</b>
+                    {variants.length > 0 && (
+                      <span style={{ display:'block', marginTop:3, fontSize:11 }}>
+                        Varian dikira: {variants.join(', ')}
+                      </span>
+                    )}
                   </div>
                 </>
               )}
@@ -289,8 +350,9 @@ export default function PurchasingTab({ prices = [], session }) {
                   )}
                   <div style={{ marginTop:8, fontWeight:800, fontSize:14, color: mk.tone==='up'?C.red:mk.tone==='down'?C.green:C.yellow }}>{mk.label}</div>
                   <div style={{ marginTop:4, fontSize:11, color: calc.stale ? C.red : C.muted }}>
-                    {calc.stale ? '⚠ Kemaskini HRC — dah lebih 7 hari' : `Dikemaskini ${market.asOf}`}
+                    {calc.stale ? '⚠ Kemaskini HRC — dah lebih 7 hari' : `Dikemaskini ${market.asOf}${marketUpdatedBy ? ` oleh ${marketUpdatedBy}` : ''}`}
                   </div>
+                  <div style={{ marginTop:2, fontSize:10.5, color:C.muted }}>Nilai dikongsi — semua owner/manager nampak angka sama.</div>
                 </>
               ) : (
                 <div style={{ display:'grid', gap:6, fontSize:12 }}>
@@ -340,7 +402,7 @@ export default function PurchasingTab({ prices = [], session }) {
                 <>
                   <div style={{ fontSize:40, fontWeight:900, lineHeight:1.05, margin:'6px 0' }}>{calc.proposed}<span style={{ fontSize:15, fontWeight:600 }}> unit</span></div>
                   <div style={{ fontSize:12, opacity:.9, lineHeight:1.5 }}>
-                    {cover} bln permintaan ({calc.coverQty}) − dalam perjalanan ({calc.avail}), × pasaran {mk.tone}{!isNaN(parseFloat(offer)) ? ' + tawaran' : ''}.
+                    {cover} bln permintaan ({calc.coverQty}) − PO belum selesai ({calc.avail}), × pasaran {mk.tone}{!isNaN(parseFloat(offer)) ? ' + tawaran' : ''}.
                   </div>
                 </>
               ) : (
@@ -351,33 +413,37 @@ export default function PurchasingTab({ prices = [], session }) {
 
           {/* Outstanding PO */}
           <div style={box}>
-            <div style={lbl}>PO Belum Selesai (kita issue)</div>
-            {openPOs.length === 0 ? (
-              <div style={{ fontSize:13, color:C.muted }}>
-                Tiada PO terbuka untuk item ini.
-                <span style={{ display:'block', marginTop:4, fontSize:11, color:C.yellow }}>Nota: data PO mula mengalir bila sync server dijalankan.</span>
-              </div>
+            <div style={lbl}>PO Belum Selesai (kita issue) · 6 bulan terkini · cancelled dikecualikan</div>
+            {loading ? <div style={{ fontSize:13, color:C.muted }}>Memuat…</div>
+              : openPOs.length === 0 ? (
+              <div style={{ fontSize:13, color:C.muted }}>Tiada PO terbuka (6 bulan) untuk famili kod ini.</div>
             ) : (
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12.5 }}>
                 <thead><tr style={{ color:C.muted, textAlign:'left' }}>
-                  <th style={{ padding:'0 0 6px' }}>PO</th><th>Supplier</th><th style={{ textAlign:'right' }}>Qty</th><th style={{ textAlign:'right' }}>RM/unit</th>
+                  <th style={{ padding:'0 0 6px' }}>PO</th><th>Tarikh</th><th>Supplier</th><th>Kod</th><th style={{ textAlign:'right' }}>Qty</th><th style={{ textAlign:'right' }}>RM/unit</th>
                 </tr></thead>
                 <tbody>
                   {openPOs.map((p, i) => (
                     <tr key={i} style={{ borderTop:`1px solid ${C.border}` }}>
-                      <td style={{ padding:'7px 0', fontWeight:700 }}>{p.purchase_orders?.docno || '—'}</td>
-                      <td>{p.purchase_orders?.supplier_code || '—'}</td>
+                      <td style={{ padding:'7px 0', fontWeight:700 }}>{p.docno || '—'}</td>
+                      <td style={{ whiteSpace:'nowrap' }}>{p.docdate || '—'}</td>
+                      <td>{p.supplier || '—'}</td>
+                      <td style={{ fontSize:11.5 }}>{p.itemcode}</td>
                       <td style={{ textAlign:'right' }}>{Math.round(Number(p.qty))}</td>
-                      <td style={{ textAlign:'right' }}>{p.unitprice != null ? Number(p.unitprice).toFixed(2) : '—'}</td>
+                      <td style={{ textAlign:'right' }}>{p.unitprice != null && p.unitprice > 0 ? Number(p.unitprice).toFixed(2) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
+            <div style={{ marginTop:10, fontSize:11, color:C.muted }}>
+              Padanan ikut family matching — kaedah sama dengan Semakan PO (tangkap varian -PERABONG / -ZINC dsb, tanpa terlebih padan kod lain).
+              Qty ialah qty pesanan (baki terima belum dalam sync).
+            </div>
           </div>
 
           <div style={{ textAlign:'center', fontSize:11, color:C.muted, marginTop:16 }}>
-            Jualan & PO dari CRM (SQL Accounting). Harga & kos dari price-check. Read-only — tidak menulis ke perakaunan.
+            Jualan & PO dari CRM (SQL Accounting) melalui proxy selamat — login &amp; peranan diperlukan. Harga & kos dari price-check. Read-only — tidak menulis ke perakaunan.
           </div>
         </>
       )}

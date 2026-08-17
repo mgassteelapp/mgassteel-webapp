@@ -235,11 +235,9 @@ const KATALOG_PDFS = [
   { file: 'api-pipes.pdf',            icon: '🛢️', name: 'API Pipes' },
 ];
 
-// Temporarily disabled — source PDFs still carry the original supplier's
-// (HTVB, etc.) watermark/logo underneath the new M Gas Steel watermark,
-// which looks bad. Re-enable once the source pages are cleaned and the
-// PDFs regenerated. See CLAUDE.md §Katalog.
-const KATALOG_PDFS_ENABLED = false;
+// Source pages cleaned (supplier HTVB watermark removed pixel-level, pages
+// rebuilt at 150dpi) and re-watermarked with the M Gas Steel overlay.
+const KATALOG_PDFS_ENABLED = true;
 
 export default function KatalogTab({ session }) {
   const [catKey, setCatKey] = useState("ubuc");

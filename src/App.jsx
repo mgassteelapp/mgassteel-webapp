@@ -652,7 +652,7 @@ export default function App() {
           <div style={{ display:"flex", gap:7, flexWrap:"wrap", alignItems:"center" }}>
             {TABS.map(t => {
               const isActive = tab===t.key;
-              const isAlert  = t.key==="reconcile" || t.key==="daily";
+              const isAlert  = ["reconcile","daily","purchasing","queries","activity","users"].includes(t.key);
               return (
                 <button key={t.key} onClick={()=>setTab(t.key)} style={{
                   padding:"8px 14px", border:"none", cursor:"pointer", borderRadius:8,

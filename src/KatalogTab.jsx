@@ -235,6 +235,12 @@ const KATALOG_PDFS = [
   { file: 'api-pipes.pdf',            icon: '🛢️', name: 'API Pipes' },
 ];
 
+// Temporarily disabled — source PDFs still carry the original supplier's
+// (HTVB, etc.) watermark/logo underneath the new M Gas Steel watermark,
+// which looks bad. Re-enable once the source pages are cleaned and the
+// PDFs regenerated. See CLAUDE.md §Katalog.
+const KATALOG_PDFS_ENABLED = false;
+
 export default function KatalogTab({ session }) {
   const [catKey, setCatKey] = useState("ubuc");
   const [search, setSearch] = useState("");
@@ -315,6 +321,7 @@ export default function KatalogTab({ session }) {
       </div>
 
       {/* ── Katalog PDF rasmi — lihat / muat turun untuk pelanggan ── */}
+      {KATALOG_PDFS_ENABLED && (
       <details style={{ marginBottom:14 }}>
         <summary style={{ cursor:'pointer', fontWeight:700, fontSize:13, color:'#0f2744',
                           padding:'10px 14px', background:'#fff', borderRadius:10,
@@ -346,6 +353,7 @@ export default function KatalogTab({ session }) {
           ))}
         </div>
       </details>
+      )}
 
       <div className="kat-catbar">
         {CATEGORIES.map(c => {

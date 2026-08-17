@@ -721,12 +721,13 @@ export default function ReconcileTab({ session, results, setResults }) {
           </div>
           <span style={{ background:'#dcfce7', color:'#166534', padding:'2px 10px',
                          borderRadius:20, fontSize:10, fontWeight:700 }}>
-            LIVE SYNC · SQL ACCOUNTING · SETIAP 15 MINIT
+            LIVE SYNC · SQL ACCOUNTING · AUTO 2X SEHARI
           </span>
         </div>
         <div style={{ fontSize:11, color:C.muted, marginBottom:12 }}>
-          Data PO &amp; jualan diambil terus dari pangkalan data — live sync dari SQL Accounting
-          setiap 15 minit. Tiada muat naik fail diperlukan. Kaedah semakan sama seperti sebelum ini.
+          Data PO &amp; jualan diambil terus dari pangkalan data (live sync setiap 15 minit).
+          Semakan auto 2 kali sehari — 12:30 tengah hari &amp; 6:30 petang — atau tekan
+          Semak Sekarang bila-bila masa. Kaedah semakan sama seperti sebelum ini.
         </div>
 
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
@@ -874,9 +875,9 @@ export default function ReconcileTab({ session, results, setResults }) {
               </tr>
             </thead>
             <tbody>
-              {runLog.map((r, i) => {
+              {runLog.slice(0, 5).map((r, i) => {
                 const t = r.trigger_source || '';
-                const who = t === 'cron' ? '🤖 Auto (15 min)'
+                const who = t === 'cron' ? '🤖 Auto (jadual)'
                   : t.startsWith('webapp: ') ? '👤 ' + t.slice(8)
                   : t.startsWith('webapp') ? '👤 Manual' : t;
                 return (

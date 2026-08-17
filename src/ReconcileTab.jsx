@@ -120,12 +120,13 @@ const STATUS_CFG = {
   'STOCK — NO SALES':    { bg:'#e3f2fd', text:'#1565c0', label:'STOK — TIADA JUALAN' },
   'MATCHED ✓':           { bg:'#f0fdf4', text:'#166534', label:'SEPADAN ✓'      },
   'UNKNOWN REF':         { bg:'#f5f3ff', text:'#5b21b6', label:'REF TIDAK DIKENALI' },
+  'ADA SO — TIADA DO/INV': { bg:'#ede9fe', text:'#6d28d9', label:'ADA SO — TIADA DO/INV' },
 };
 
 const SORT_ORDER = {
   'NO REFERENCE': 0, 'QTY MISMATCH': 1, 'HIGH PO — VERIFY': 2,
   'INVALID REF (DO-)': 3, 'MISSING INVOICE': 4, 'ITEM NOT ON INVOICE': 5,
-  'STOCK — NO SALES': 6, 'MATCHED ✓': 7, 'UNKNOWN REF': 2,
+  'STOCK — NO SALES': 6, 'MATCHED ✓': 7, 'UNKNOWN REF': 2, 'ADA SO — TIADA DO/INV': 2,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -910,6 +911,7 @@ export default function ReconcileTab({ session, results, setResults }) {
             {[
               ['NO REFERENCE','🟣'],['QTY MISMATCH','🟠'],['HIGH PO — VERIFY','🔵'],
               ['INVALID REF (DO-)','🔴'],['MISSING INVOICE','🔴'],['ITEM NOT ON INVOICE','🟠'],
+              ['ADA SO — TIADA DO/INV','🟪'],
             ].map(([s, icon]) => counts[s] ? (
               <span key={s}
                 style={{ background:STATUS_CFG[s].bg, color:STATUS_CFG[s].text,

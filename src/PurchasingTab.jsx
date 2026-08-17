@@ -130,7 +130,9 @@ export default function PurchasingTab({ prices = [], session }) {
   // NOT read from the view's own avg_qty_per_month, so there is a single velocity number.
   const [velocity, setVelocity] = useState(null);
   const [monthly, setMonthly] = useState([]);       // [{month_label, qty}]
-  const [openPOs, setOpenPOs] = useState([]);
+  const [openPOs, setOpenPOs] = useState([]);       // outstanding only (ordered − received)
+  const [received, setReceived] = useState([]);     // last 3 goods received (purchase invoices)
+  const [stockInfo, setStockInfo] = useState(null); // { qty, damaged_qty, branches, as_of }
   const [variants, setVariants] = useState([]);     // family variant codes seen in sales
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -187,7 +189,7 @@ export default function PurchasingTab({ prices = [], session }) {
     if (!selected) return;
     const code = selected.itemCode;
     let cancelled = false;
-    setLoading(true); setVelocity(null); setMonthly([]); setOpenPOs([]); setVariants([]); setLoadError("");
+    setLoading(true); setVelocity(null); setMonthly([]); setOpenPOs([]); setReceived([]); setStockInfo(null); setVariants([]); setLoadError("");
     (async () => {
       try {
         const { data, error } = await supabase.functions.invoke('reconcile-proxy', {
@@ -198,6 +200,8 @@ export default function PurchasingTab({ prices = [], session }) {
         setVelocity({ qty_6mo: data.qty_6mo, active_months: data.active_months });
         setMonthly(data.monthly || []);
         setOpenPOs(data.open_pos || []);
+        setReceived(data.received_last || []);
+        setStockInfo(data.stock || null);
         setVariants(data.variants || []);
       } catch (e) {
         if (!cancelled) setLoadError("Gagal memuatkan data CRM — cuba sekali lagi. (" + (e?.message || e) + ")");
@@ -217,10 +221,10 @@ export default function PurchasingTab({ prices = [], session }) {
       ? Math.round(Number(velocity.qty_6mo) / Math.max(velocity.active_months || 6, 1)) : null;
     const cost = Number(selected.cost) || 0;
     const retail = Number(selected.retailPrice) || 0;
-    const onOrder = openPOs.reduce((a, b) => a + (Number(b.qty) || 0), 0);
-    // NOTE: on-hand + committed not yet in pricecheck; treat available as (onOrder only) placeholder
-    // Once stock sync lands, avail = onHand - committed + onOrder.
-    const avail = onOrder;
+    // Supply already secured = outstanding PO qty (ordered − received) + stock on hand
+    const onOrder = openPOs.reduce((a, b) => a + (Number(b.outstanding) || 0), 0);
+    const stockQty = stockInfo ? (Number(stockInfo.qty) || 0) : 0;
+    const avail = onOrder + stockQty;
     let proposed = null, coverQty = null;
     if (avgSold != null) {
       coverQty = avgSold * cover;
@@ -239,8 +243,8 @@ export default function PurchasingTab({ prices = [], session }) {
       else { offerNote = `Berpatutan — dalam ${vs.toFixed(1)}% dari kos.${mtxt}`; dealTone = 'flat'; }
     }
     const staleDays = (Date.now() - new Date(market.asOf)) / 86400000;
-    return { avgSold, cost, retail, onOrder, avail, coverQty, proposed, offerNote, dealTone, stale: staleDays > 7 };
-  }, [selected, velocity, openPOs, cover, offer, mk.mult, mk.tone, market.asOf, weighted]);
+    return { avgSold, cost, retail, onOrder, stockQty, avail, coverQty, proposed, offerNote, dealTone, stale: staleDays > 7 };
+  }, [selected, velocity, openPOs, stockInfo, cover, offer, mk.mult, mk.tone, market.asOf, weighted]);
 
   const maxBar = monthly.length ? Math.max(...monthly.map(m => Number(m.qty))) : 1;
   const box = { background:C.white, border:`1px solid ${C.border}`, borderRadius:12, padding:16 };
@@ -277,91 +281,96 @@ export default function PurchasingTab({ prices = [], session }) {
 
       {selected && (
         <>
-          {/* Item header */}
-          <div style={{ ...box, marginBottom:14 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:10 }}>
-              <div>
-                <div style={{ fontSize:18, fontWeight:800, color:C.navy }}>{selected.itemCode}</div>
-                <div style={{ fontSize:13, color:C.muted }}>{selected.product}</div>
-                <span style={{ display:'inline-block', marginTop:6, fontSize:11, background: weighted ? C.accentLight : C.gray, color: weighted ? C.accent : C.muted, padding:'3px 9px', borderRadius:6 }}>
-                  {weighted ? '⚖ berkait berat — HRC pengaruh kos' : 'per unit — HRC konteks sahaja'}
-                </span>
-              </div>
-              <div style={{ textAlign:'right', fontSize:13, color:C.muted, lineHeight:1.7 }}>
-                <div>Kos <b style={{ color:C.text }}>RM{calc.cost.toFixed(2)}</b></div>
-                <div>Retail <b style={{ color:C.text }}>RM{calc.retail.toFixed(2)}</b></div>
-              </div>
-            </div>
-          </div>
+          {/* Row 1 — item+stok · jualan · pasaran · cadangan (satu skrin, tiada skrol) */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))', gap:10, marginBottom:10 }}>
 
-          {/* Velocity + Market row */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14 }}>
-            <div style={box}>
-              <div style={lbl}>Jualan / Bulan · 6 bulan · semua varian kod</div>
-              {loading ? <div style={{ color:C.muted, fontSize:13 }}>Memuat…</div>
-                : loadError ? (
-                  <div style={{ color:C.red, fontSize:12.5 }}>
-                    {loadError}
-                    <button onClick={() => setSelected({ ...selected })}
-                      style={{ display:'block', marginTop:8, background:C.navy, color:C.white, border:'none', borderRadius:7, padding:'7px 14px', fontWeight:700, fontSize:12, cursor:'pointer' }}>🔄 Cuba Lagi</button>
-                  </div>
-                )
-                : !velocity || Number(velocity.qty_6mo) <= 0 ? <div style={{ color:C.muted, fontSize:13 }}>Tiada rekod jualan 6 bulan untuk famili kod ini.</div>
+            {/* Item + Stok Di Tangan */}
+            <div style={{ ...box, padding:12 }}>
+              <div style={{ fontSize:16, fontWeight:800, color:C.navy, lineHeight:1.2 }}>{selected.itemCode}</div>
+              <div style={{ fontSize:11.5, color:C.muted, marginBottom:6 }}>{selected.product}</div>
+              <div style={{ display:'flex', gap:10, fontSize:12, color:C.muted, marginBottom:8 }}>
+                <span>Kos <b style={{ color:C.text }}>RM{calc.cost.toFixed(2)}</b></span>
+                <span>Retail <b style={{ color:C.text }}>RM{calc.retail.toFixed(2)}</b></span>
+              </div>
+              <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
+                <div style={lbl}>Stok Di Tangan (SQL)</div>
+                {loading ? <div style={{ fontSize:12, color:C.muted }}>Memuat…</div>
+                  : !stockInfo ? <div style={{ fontSize:12, color:C.muted }}>Tiada rekod stok untuk famili kod ini.</div>
+                  : (
+                  <>
+                    <div style={{ fontSize:26, fontWeight:900, color:C.navy, lineHeight:1.1 }}>
+                      {Math.round(stockInfo.qty)}<span style={{ fontSize:12, fontWeight:600, color:C.muted }}> unit</span>
+                    </div>
+                    <div style={{ fontSize:11, color:C.muted, marginTop:3, lineHeight:1.5 }}>
+                      {(stockInfo.branches || []).map(b => `${b.branch.replace('_',' ')}: ${Math.round(b.qty)}`).join(' · ')}
+                      {stockInfo.damaged_qty > 0 ? ` · rosak: ${Math.round(stockInfo.damaged_qty)}` : ''}
+                      <span style={{ display:'block' }}>Setakat {stockInfo.as_of}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              {loadError && (
+                <div style={{ marginTop:8, fontSize:11.5, color:C.red }}>
+                  {loadError}
+                  <button onClick={() => setSelected({ ...selected })}
+                    style={{ display:'block', marginTop:6, background:C.navy, color:C.white, border:'none', borderRadius:7, padding:'6px 12px', fontWeight:700, fontSize:11, cursor:'pointer' }}>🔄 Cuba Lagi</button>
+                </div>
+              )}
+            </div>
+
+            {/* Velocity */}
+            <div style={{ ...box, padding:12 }}>
+              <div style={lbl}>Jualan / Bulan · 6 bln · semua varian</div>
+              {loading ? <div style={{ color:C.muted, fontSize:12 }}>Memuat…</div>
+                : !velocity || Number(velocity.qty_6mo) <= 0 ? <div style={{ color:C.muted, fontSize:12 }}>Tiada rekod jualan 6 bulan.</div>
                 : (
                 <>
-                  <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:90 }}>
+                  <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:64 }}>
                     {monthly.map((s, i) => (
                       <div key={i} style={{ flex:1, textAlign:'center' }}>
-                        <div style={{ background: i === monthly.length-1 ? C.accent : C.navy, opacity: i === monthly.length-1 ? 1 : .55, height:`${(Number(s.qty)/maxBar)*64}px`, borderRadius:'3px 3px 0 0' }} />
-                        <div style={{ fontSize:10, fontWeight:700, marginTop:3 }}>{Math.round(Number(s.qty))}</div>
-                        <div style={{ fontSize:10, color:C.muted }}>{s.month_label}</div>
+                        <div style={{ background: i === monthly.length-1 ? C.accent : C.navy, opacity: i === monthly.length-1 ? 1 : .55, height:`${(Number(s.qty)/maxBar)*42}px`, borderRadius:'2px 2px 0 0' }} />
+                        <div style={{ fontSize:9, fontWeight:700, marginTop:2 }}>{Math.round(Number(s.qty))}</div>
+                        <div style={{ fontSize:9, color:C.muted }}>{s.month_label}</div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ marginTop:10, fontSize:12.5, color:C.muted }}>
-                    Purata bulanan <b style={{ color:C.text }}>{calc.avgSold} unit</b>
-                    {variants.length > 0 && (
-                      <span style={{ display:'block', marginTop:3, fontSize:11 }}>
-                        Varian dikira: {variants.join(', ')}
-                      </span>
-                    )}
+                  <div style={{ marginTop:8, fontSize:11.5, color:C.muted }}>
+                    Purata <b style={{ color:C.text }}>{calc.avgSold} unit/bln</b>
+                    {variants.length > 1 && <span style={{ display:'block', fontSize:10, marginTop:2 }}>Varian: {variants.join(', ')}</span>}
                   </div>
                 </>
               )}
             </div>
 
-            <div style={{ ...box, borderLeft:`4px solid ${mk.tone==='up'?C.red:mk.tone==='down'?C.green:C.yellow}` }}>
+            {/* Market */}
+            <div style={{ ...box, padding:12, borderLeft:`4px solid ${mk.tone==='up'?C.red:mk.tone==='down'?C.green:C.yellow}` }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <div style={lbl}>Pasaran Besi</div>
-                <button onClick={() => setShowMarketEdit(v => !v)} style={{ background:'none', border:'none', color:C.accent, fontSize:11, cursor:'pointer', fontWeight:600 }}>
+                <div style={{ ...lbl, marginBottom:0 }}>Pasaran Besi</div>
+                <button onClick={() => setShowMarketEdit(v => !v)} style={{ background:'none', border:'none', color:C.accent, fontSize:10.5, cursor:'pointer', fontWeight:600 }}>
                   {showMarketEdit ? 'Tutup' : 'Kemaskini'}
                 </button>
               </div>
               {!showMarketEdit ? (
                 <>
-                  <div style={{ fontSize:13, lineHeight:1.9 }}>
+                  <div style={{ fontSize:12, lineHeight:1.8, marginTop:4 }}>
                     <div>HRC <b style={{ color: market.hrc>market.hrcPrev?C.red:market.hrc<market.hrcPrev?C.green:C.yellow }}>{market.hrc>market.hrcPrev?'▲':market.hrc<market.hrcPrev?'▼':'▬'} RM{market.hrc}/MT</b></div>
                     <div>USD/MYR <b style={{ color: market.usdMyr>market.usdMyrPrev?C.red:C.green }}>{market.usdMyr.toFixed(2)}</b></div>
                   </div>
-                  {fxFailed && (
-                    <div style={{ marginTop:2, fontSize:11, color:C.muted }}>
-                      Kadar USD/MYR tak tersedia — guna nilai terakhir
-                    </div>
-                  )}
-                  <div style={{ marginTop:8, fontWeight:800, fontSize:14, color: mk.tone==='up'?C.red:mk.tone==='down'?C.green:C.yellow }}>{mk.label}</div>
-                  <div style={{ marginTop:4, fontSize:11, color: calc.stale ? C.red : C.muted }}>
+                  {fxFailed && <div style={{ fontSize:10, color:C.muted }}>FX tak tersedia — guna nilai terakhir</div>}
+                  <div style={{ marginTop:6, fontWeight:800, fontSize:12.5, color: mk.tone==='up'?C.red:mk.tone==='down'?C.green:C.yellow }}>{mk.label}</div>
+                  <div style={{ marginTop:3, fontSize:10, color: calc.stale ? C.red : C.muted }}>
                     {calc.stale ? '⚠ Kemaskini HRC — dah lebih 7 hari' : `Dikemaskini ${market.asOf}${marketUpdatedBy ? ` oleh ${marketUpdatedBy}` : ''}`}
+                    <span style={{ display:'block' }}>Dikongsi semua owner/manager.</span>
                   </div>
-                  <div style={{ marginTop:2, fontSize:10.5, color:C.muted }}>Nilai dikongsi — semua owner/manager nampak angka sama.</div>
                 </>
               ) : (
-                <div style={{ display:'grid', gap:6, fontSize:12 }}>
+                <div style={{ display:'grid', gap:5, fontSize:11, marginTop:4 }}>
                   <label>HRC RM/MT (baru)
-                    <input type="number" defaultValue={market.hrc} id="_hrc" style={{ width:'100%', padding:6, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6 }} /></label>
+                    <input type="number" defaultValue={market.hrc} id="_hrc" style={{ width:'100%', padding:5, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6, boxSizing:'border-box' }} /></label>
                   <label>HRC minggu lepas
-                    <input type="number" defaultValue={market.hrcPrev} id="_hrcp" style={{ width:'100%', padding:6, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6 }} /></label>
+                    <input type="number" defaultValue={market.hrcPrev} id="_hrcp" style={{ width:'100%', padding:5, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6, boxSizing:'border-box' }} /></label>
                   <label>USD/MYR
-                    <input type="number" step="0.01" defaultValue={market.usdMyr} id="_fx" style={{ width:'100%', padding:6, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6 }} /></label>
+                    <input type="number" step="0.01" defaultValue={market.usdMyr} id="_fx" style={{ width:'100%', padding:5, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6, boxSizing:'border-box' }} /></label>
                   <button onClick={() => {
                     // blank or unparseable → keep the previous value rather than storing NaN
                     const hrc     = safeNum(document.getElementById('_hrc').value,  market.hrc);
@@ -369,81 +378,110 @@ export default function PurchasingTab({ prices = [], session }) {
                     const usdMyr  = safeNum(document.getElementById('_fx').value,   market.usdMyr);
                     setMarket({ ...market, hrc, hrcPrev, usdMyrPrev: market.usdMyr, usdMyr, asOf: new Date().toISOString().slice(0,10) });
                     setShowMarketEdit(false);
-                  }} style={{ background:C.navy, color:C.white, border:'none', borderRadius:6, padding:'8px', fontWeight:700, cursor:'pointer' }}>Simpan</button>
+                  }} style={{ background:C.navy, color:C.white, border:'none', borderRadius:6, padding:'7px', fontWeight:700, cursor:'pointer', fontSize:11 }}>Simpan</button>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Decision */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14 }}>
-            <div style={box}>
-              <div style={lbl}>Rancang Pembelian</div>
-              <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>Cover berapa bulan permintaan</div>
-              <div style={{ display:'flex', gap:6, marginBottom:14 }}>
+            {/* Decision — navy card with cover + offer + proposed */}
+            <div style={{ ...box, padding:12, background:C.navy, color:C.white, border:'none' }}>
+              <div style={{ ...lbl, color:'#9db8d2' }}>Cadangan Order</div>
+              <div style={{ display:'flex', gap:4, margin:'4px 0 8px' }}>
                 {[1,2,3].map(n => (
                   <button key={n} onClick={() => setCover(n)}
-                    style={{ flex:1, padding:'9px 0', borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer',
-                      border:`1px solid ${cover===n?C.accent:C.border}`, background: cover===n?C.accent:C.white, color: cover===n?C.white:C.text }}>{n} bln</button>
+                    style={{ flex:1, padding:'5px 0', borderRadius:6, fontWeight:700, fontSize:11, cursor:'pointer',
+                      border:`1px solid ${cover===n?C.accent:'#39567a'}`, background: cover===n?C.accent:'transparent', color:C.white }}>{n} bln</button>
                 ))}
               </div>
-              <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>Harga tawaran supplier (RM/unit)</div>
-              <input value={offer} onChange={e => setOffer(e.target.value)} inputMode="decimal"
-                placeholder={calc.cost ? `cth: ${(calc.cost*0.97).toFixed(2)}` : 'cth: 25.00'}
-                style={{ width:'100%', boxSizing:'border-box', border:`1px solid ${C.border}`, borderRadius:8, padding:'10px 12px', fontSize:15 }} />
-              {calc.offerNote && (
-                <div style={{ marginTop:10, fontSize:12.5, fontWeight:600, lineHeight:1.5, color: calc.dealTone==='buy'?C.green:calc.dealTone==='hold'?C.red:C.yellow }}>{calc.offerNote}</div>
-              )}
-            </div>
-
-            <div style={{ ...box, background:C.navy, color:C.white, border:'none', display:'flex', flexDirection:'column', justifyContent:'center' }}>
-              <div style={{ ...lbl, color:'#9db8d2' }}>Cadangan Order</div>
               {calc.proposed != null ? (
                 <>
-                  <div style={{ fontSize:40, fontWeight:900, lineHeight:1.05, margin:'6px 0' }}>{calc.proposed}<span style={{ fontSize:15, fontWeight:600 }}> unit</span></div>
-                  <div style={{ fontSize:12, opacity:.9, lineHeight:1.5 }}>
-                    {cover} bln permintaan ({calc.coverQty}) − PO belum selesai ({calc.avail}), × pasaran {mk.tone}{!isNaN(parseFloat(offer)) ? ' + tawaran' : ''}.
+                  <div style={{ fontSize:34, fontWeight:900, lineHeight:1.05 }}>{calc.proposed}<span style={{ fontSize:13, fontWeight:600 }}> unit</span></div>
+                  <div style={{ fontSize:10.5, opacity:.9, lineHeight:1.5, margin:'4px 0 8px' }}>
+                    {cover} bln permintaan ({calc.coverQty}) − stok ({Math.round(calc.stockQty)}) − PO belum terima ({Math.round(calc.onOrder)}), × pasaran {mk.tone}{!isNaN(parseFloat(offer)) ? ' + tawaran' : ''}.
                   </div>
                 </>
               ) : (
-                <div style={{ fontSize:13, opacity:.85, padding:'10px 0' }}>Tiada data jualan untuk kira cadangan. Kod ini mungkin tiada rekod 6 bulan.</div>
+                <div style={{ fontSize:12, opacity:.85, padding:'8px 0' }}>Tiada data jualan untuk kira cadangan.</div>
+              )}
+              <input value={offer} onChange={e => setOffer(e.target.value)} inputMode="decimal"
+                placeholder={calc.cost ? `Tawaran supplier cth: ${(calc.cost*0.97).toFixed(2)}` : 'Tawaran supplier RM/unit'}
+                style={{ width:'100%', boxSizing:'border-box', border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:7, padding:'7px 10px', fontSize:12 }} />
+              {calc.offerNote && (
+                <div style={{ marginTop:6, fontSize:10.5, fontWeight:600, lineHeight:1.45, color: calc.dealTone==='buy'?'#86efac':calc.dealTone==='hold'?'#fca5a5':'#fde68a' }}>{calc.offerNote}</div>
               )}
             </div>
           </div>
 
-          {/* Outstanding PO */}
-          <div style={box}>
-            <div style={lbl}>PO Belum Selesai (kita issue) · 6 bulan terkini · cancelled dikecualikan</div>
-            {loading ? <div style={{ fontSize:13, color:C.muted }}>Memuat…</div>
-              : openPOs.length === 0 ? (
-              <div style={{ fontSize:13, color:C.muted }}>Tiada PO terbuka (6 bulan) untuk famili kod ini.</div>
-            ) : (
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12.5 }}>
-                <thead><tr style={{ color:C.muted, textAlign:'left' }}>
-                  <th style={{ padding:'0 0 6px' }}>PO</th><th>Tarikh</th><th>Supplier</th><th>Kod</th><th style={{ textAlign:'right' }}>Qty</th><th style={{ textAlign:'right' }}>RM/unit</th>
-                </tr></thead>
-                <tbody>
-                  {openPOs.map((p, i) => (
-                    <tr key={i} style={{ borderTop:`1px solid ${C.border}` }}>
-                      <td style={{ padding:'7px 0', fontWeight:700 }}>{p.docno || '—'}</td>
-                      <td style={{ whiteSpace:'nowrap' }}>{p.docdate || '—'}</td>
-                      <td>{p.supplier || '—'}</td>
-                      <td style={{ fontSize:11.5 }}>{p.itemcode}</td>
-                      <td style={{ textAlign:'right' }}>{Math.round(Number(p.qty))}</td>
-                      <td style={{ textAlign:'right' }}>{p.unitprice != null && p.unitprice > 0 ? Number(p.unitprice).toFixed(2) : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <div style={{ marginTop:10, fontSize:11, color:C.muted }}>
-              Padanan ikut family matching — kaedah sama dengan Semakan PO (tangkap varian -PERABONG / -ZINC dsb, tanpa terlebih padan kod lain).
-              Qty ialah qty pesanan (baki terima belum dalam sync).
+          {/* Row 2 — PO belum selesai · 3 penerimaan terakhir */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(340px, 1fr))', gap:10 }}>
+
+            {/* Outstanding PO */}
+            <div style={{ ...box, padding:12 }}>
+              <div style={lbl}>PO Belum Selesai — Belum Terima (order − terima) · 6 bln</div>
+              {loading ? <div style={{ fontSize:12, color:C.muted }}>Memuat…</div>
+                : openPOs.length === 0 ? (
+                <div style={{ fontSize:12, color:C.muted }}>Tiada PO tertunggak untuk famili kod ini. 👍</div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11.5 }}>
+                  <thead><tr style={{ color:C.muted, textAlign:'left' }}>
+                    <th style={{ padding:'0 0 4px' }}>PO</th><th>Tarikh</th><th>Supplier</th>
+                    <th style={{ textAlign:'right' }}>Order</th><th style={{ textAlign:'right' }}>Terima</th>
+                    <th style={{ textAlign:'right', color:C.red }}>Baki</th><th style={{ textAlign:'right' }}>RM</th>
+                  </tr></thead>
+                  <tbody>
+                    {openPOs.slice(0, 6).map((p, i) => (
+                      <tr key={i} style={{ borderTop:`1px solid ${C.border}` }}>
+                        <td style={{ padding:'5px 0', fontWeight:700 }}>{p.docno || '—'}</td>
+                        <td style={{ whiteSpace:'nowrap', color:C.muted }}>{p.docdate || '—'}</td>
+                        <td style={{ fontSize:10.5 }}>{p.supplier || '—'}</td>
+                        <td style={{ textAlign:'right' }}>{Math.round(Number(p.qty))}</td>
+                        <td style={{ textAlign:'right', color:C.green }}>{Math.round(Number(p.received))}</td>
+                        <td style={{ textAlign:'right', fontWeight:800, color:C.red }}>{Math.round(Number(p.outstanding))}</td>
+                        <td style={{ textAlign:'right' }}>{p.unitprice != null && p.unitprice > 0 ? Number(p.unitprice).toFixed(2) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <div style={{ marginTop:6, fontSize:9.5, color:C.muted }}>
+                Terima dikira dari invois pembelian yang ada rujukan PO. Invois tanpa rujukan PO tidak ditolak — pastikan staf isi PO ref pada invois supplier.
+              </div>
+            </div>
+
+            {/* Last 3 goods received */}
+            <div style={{ ...box, padding:12 }}>
+              <div style={lbl}>3 Penerimaan Terakhir (invois pembelian)</div>
+              {loading ? <div style={{ fontSize:12, color:C.muted }}>Memuat…</div>
+                : received.length === 0 ? (
+                <div style={{ fontSize:12, color:C.muted }}>Tiada penerimaan 12 bulan untuk famili kod ini.</div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11.5 }}>
+                  <thead><tr style={{ color:C.muted, textAlign:'left' }}>
+                    <th style={{ padding:'0 0 4px' }}>Invois</th><th>Tarikh</th><th>Supplier</th><th>PO Ref</th>
+                    <th style={{ textAlign:'right' }}>Qty</th><th style={{ textAlign:'right' }}>RM/unit</th>
+                  </tr></thead>
+                  <tbody>
+                    {received.map((r, i) => (
+                      <tr key={i} style={{ borderTop:`1px solid ${C.border}` }}>
+                        <td style={{ padding:'5px 0', fontWeight:700 }}>{r.docno || '—'}</td>
+                        <td style={{ whiteSpace:'nowrap', color:C.muted }}>{r.docdate || '—'}</td>
+                        <td style={{ fontSize:10.5 }}>{r.supplier || '—'}</td>
+                        <td style={{ fontSize:10.5 }}>{r.po_ref || <span style={{ color:C.yellow }}>tiada</span>}</td>
+                        <td style={{ textAlign:'right', fontWeight:700 }}>{Math.round(Number(r.qty))}</td>
+                        <td style={{ textAlign:'right' }}>{r.unitprice != null && r.unitprice > 0 ? Number(r.unitprice).toFixed(2) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <div style={{ marginTop:6, fontSize:9.5, color:C.muted }}>
+                Harga penerimaan terakhir = rujukan terbaik untuk nilai tawaran supplier baru.
+              </div>
             </div>
           </div>
 
-          <div style={{ textAlign:'center', fontSize:11, color:C.muted, marginTop:16 }}>
-            Jualan & PO dari CRM (SQL Accounting) melalui proxy selamat — login &amp; peranan diperlukan. Harga & kos dari price-check. Read-only — tidak menulis ke perakaunan.
+          <div style={{ textAlign:'center', fontSize:10, color:C.muted, marginTop:10 }}>
+            Jualan, PO, penerimaan & stok dari CRM (SQL Accounting) melalui proxy selamat. Family matching sama dengan Semakan PO. Read-only.
           </div>
         </>
       )}

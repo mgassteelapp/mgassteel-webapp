@@ -1013,7 +1013,7 @@ export default function ReconcileTab({ session, results, setResults }) {
                       <td style={{ padding:'7px 9px' }}>
                         <span style={{ background:ss.text, color:'#fff', padding:'2px 7px',
                                        borderRadius:4, fontSize:10, fontWeight:700,
-                                       whiteSpace:'nowrap' }}>
+                                       display:'inline-block', lineHeight:1.3 }}>
                           {ss.label}
                         </span>
                       </td>

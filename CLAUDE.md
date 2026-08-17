@@ -783,3 +783,14 @@ App.jsx pops up for role=manager (Fei/Mira) every non-Friday from 9am until
 they insert their daily_check_log row (✓ Sudah Selesai) — snooze 1h available.
 Monitored codes now match by FAMILY (suffix variants like -PERABONG) via
 isMonitored() in the edge function; mirror in webapp manual fallback someday.
+
+### 9b. Katalog PDF downloads (watermarked)
+
+public/katalog-pdf/*.pdf — the 13 supplier catalogues, each page overlaid with
+the M Gas Steel logo (11% alpha, centred), diagonal company-name text, and a
+navy footer strip "Disediakan oleh M GAS STEEL SDN BHD". Served as Vercel
+static files; KatalogTab shows a collapsible "📕 Katalog PDF Rasmi" grid with
+Lihat/Muat Turun links (KATALOG_PDFS list at top of KatalogTab.jsx). To re-
+watermark (e.g. new catalogue or logo), the overlay generator lives in this
+chat's history — reportlab overlay merged per page-size with pypdf. ~16MB
+total; fine for Vercel, keep an eye on repo size if adding more.

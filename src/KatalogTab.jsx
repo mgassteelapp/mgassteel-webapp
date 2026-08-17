@@ -218,6 +218,23 @@ const GRADES = [
   { key: "bs", label: "BS" },
 ];
 
+// ── Downloadable watermarked catalogue PDFs (public/katalog-pdf/) ──────────
+const KATALOG_PDFS = [
+  { file: 'i-beam-ub-uc.pdf',         icon: '🏗️', name: 'I-Beam (UB/UC)' },
+  { file: 'chs-paip-bulat.pdf',       icon: '⭕', name: 'CHS — Paip Bulat' },
+  { file: 'shs-hollow-segi.pdf',      icon: '⬛', name: 'SHS — Hollow Segi' },
+  { file: 'rhs-hollow-segiempat.pdf', icon: '▭',  name: 'RHS — Hollow Segi Empat' },
+  { file: 'angle-bar-sama.pdf',       icon: '📐', name: 'Angle Bar (Sama)' },
+  { file: 'angle-bar-tak-sama.pdf',   icon: '📐', name: 'Angle Bar (Tak Sama)' },
+  { file: 'u-channel.pdf',            icon: '🇺', name: 'U Channel' },
+  { file: 'round-deformed-bar.pdf',   icon: '➖', name: 'Round & Deformed Bar' },
+  { file: 'hot-rolled-plates.pdf',    icon: '🔥', name: 'Hot Rolled Plates' },
+  { file: 'cold-rolled-sheets.pdf',   icon: '❄️', name: 'Cold Rolled Sheets' },
+  { file: 'galvanised-sheet.pdf',     icon: '✨', name: 'Galvanised Sheet' },
+  { file: 'chequered-plates.pdf',     icon: '🔳', name: 'Chequered Plates' },
+  { file: 'api-pipes.pdf',            icon: '🛢️', name: 'API Pipes' },
+];
+
 export default function KatalogTab({ session }) {
   const [catKey, setCatKey] = useState("ubuc");
   const [search, setSearch] = useState("");
@@ -296,6 +313,39 @@ export default function KatalogTab({ session }) {
           plat/kepingan.
         </p>
       </div>
+
+      {/* ── Katalog PDF rasmi — lihat / muat turun untuk pelanggan ── */}
+      <details style={{ marginBottom:14 }}>
+        <summary style={{ cursor:'pointer', fontWeight:700, fontSize:13, color:'#0f2744',
+                          padding:'10px 14px', background:'#fff', borderRadius:10,
+                          border:'1px solid #e2e8f0', userSelect:'none' }}>
+          📕 Katalog PDF Rasmi — lihat atau muat turun untuk hantar kepada pelanggan
+          <span style={{ fontWeight:500, fontSize:11, color:'#64748b' }}> (dengan tera air M Gas Steel)</span>
+        </summary>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(230px, 1fr))',
+                      gap:10, marginTop:10 }}>
+          {KATALOG_PDFS.map(p => (
+            <div key={p.file} style={{ background:'#fff', border:'1px solid #e2e8f0', borderRadius:10,
+                                       padding:'10px 12px', display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:20 }}>{p.icon}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontWeight:700, fontSize:12, color:'#0f2744', whiteSpace:'nowrap',
+                              overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</div>
+                <div style={{ display:'flex', gap:8, marginTop:4 }}>
+                  <a href={`/katalog-pdf/${p.file}`} target="_blank" rel="noreferrer"
+                     style={{ fontSize:11, fontWeight:700, color:'#0f2744', textDecoration:'none' }}>
+                    👁 Lihat
+                  </a>
+                  <a href={`/katalog-pdf/${p.file}`} download
+                     style={{ fontSize:11, fontWeight:700, color:'#e8780a', textDecoration:'none' }}>
+                    ⬇ Muat Turun
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </details>
 
       <div className="kat-catbar">
         {CATEGORIES.map(c => {

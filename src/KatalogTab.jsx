@@ -227,12 +227,14 @@ const KATALOG_PDFS = [
   { file: 'angle-bar-sama.pdf',       icon: '📐', name: 'Angle Bar (Sama)' },
   { file: 'angle-bar-tak-sama.pdf',   icon: '📐', name: 'Angle Bar (Tak Sama)' },
   { file: 'u-channel.pdf',            icon: '🇺', name: 'U Channel' },
-  { file: 'round-deformed-bar.pdf',   icon: '➖', name: 'Round & Deformed Bar' },
+  // 'round-deformed-bar.pdf' excluded — still carries the original HTVB
+  // watermark/logo underneath the M Gas one; not yet re-cleaned.
   { file: 'hot-rolled-plates.pdf',    icon: '🔥', name: 'Hot Rolled Plates' },
   { file: 'cold-rolled-sheets.pdf',   icon: '❄️', name: 'Cold Rolled Sheets' },
   { file: 'galvanised-sheet.pdf',     icon: '✨', name: 'Galvanised Sheet' },
   { file: 'chequered-plates.pdf',     icon: '🔳', name: 'Chequered Plates' },
-  { file: 'api-pipes.pdf',            icon: '🛢️', name: 'API Pipes' },
+  // 'api-pipes.pdf' excluded — still carries the original HTVB
+  // watermark/logo underneath the M Gas one; not yet re-cleaned.
 ];
 
 // Source pages cleaned (supplier HTVB watermark removed pixel-level, pages

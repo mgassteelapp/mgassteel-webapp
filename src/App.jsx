@@ -169,22 +169,31 @@ const STAFF_LOGIN = [
   { name:"Ken",             email:"ken@mgas.local" },
 ];
 
-// ── Daily price check access ──────────────────────────────────────────────────
-// Edit these two lists when roles change — names must match profiles exactly.
-function canAccessDaily(sess) {
+// ── Feature permissions ──────────────────────────────────────────────────────
+// Role DEFAULTS below; owners can override per user in the Pengguna tab
+// (profiles.permissions jsonb: { key: true|false }, missing key = role
+// default). Owners are ALWAYS allowed everything — lockout protection.
+// The reconcile-proxy edge function enforces the same map server-side.
+const PERM_FEATURES = [
+  { key: "prices",     label: "Senarai Harga",    def: (r) => ["owner","senior","manager"].includes(r) },
+  { key: "daily",      label: "Daily Sales Price", def: (r) => ["owner","senior","manager"].includes(r) },
+  { key: "reconcile",  label: "Daily PO Check",    def: (r) => ["owner","senior","manager"].includes(r) },
+  { key: "purchasing", label: "Cadangan PO",       def: (r) => ["owner","manager"].includes(r) },
+  { key: "queries",    label: "Pertanyaan Harga",  def: (r) => ["owner","senior","manager"].includes(r) },
+  { key: "quote",      label: "Sebut Harga",       def: () => true },
+];
+function hasPerm(sess, key) {
   if (!sess) return false;
-  return sess.role === "owner" || sess.role === "senior" || sess.role === "manager";
+  if (sess.role === "owner") return true;
+  const ov = sess.perms && sess.perms[key];
+  if (ov === true || ov === false) return ov;
+  const f = PERM_FEATURES.find((x) => x.key === key);
+  return f ? f.def(sess.role) : false;
 }
-function canAccessReconcile(sess) {
-  if (!sess) return false;
-  return sess.role === 'owner' || sess.role === 'senior' || sess.role === 'manager';
-}
-// Cadangan PO — owner + manager only. Managers (Fei, Mira) get it; seniors
-// (KY Han, Syafiq, Syahlin) do not, which is why this is not a senior check.
-function canAccessPurchasing(sess) {
-  if (!sess) return false;
-  return sess.role === "owner" || sess.role === "manager";
-}
+function canAccessDaily(sess)      { return hasPerm(sess, "daily"); }
+function canAccessReconcile(sess)  { return hasPerm(sess, "reconcile"); }
+function canAccessPurchasing(sess) { return hasPerm(sess, "purchasing"); }
+// Cost & margin stays a HARD owner-only rule (not permission-managed).
 function canSeeCostMargin(sess) {
   if (!sess) return false;
   return sess.role === "owner";
@@ -376,7 +385,7 @@ function LoginScreen({ onLogin, notice }) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, role, active')
+      .select('name, role, active, permissions')
       .eq('id', data.user.id)
       .single();
 
@@ -387,7 +396,7 @@ function LoginScreen({ onLogin, notice }) {
       return;
     }
 
-    onLogin({ name: profile.name, role: profile.role, email: staff.email });
+    onLogin({ name: profile.name, role: profile.role, email: staff.email, perms: profile.permissions || {} });
   };
 
   return (
@@ -485,7 +494,7 @@ export default function App() {
       if (!sbSession) return;
       const { data: profile } = await supabase
         .from('profiles')
-        .select('name, role, active')
+        .select('name, role, active, permissions')
         .eq('id', sbSession.user.id)
         .single();
       if (profile && profile.active === false) {
@@ -496,7 +505,7 @@ export default function App() {
         const stored = localStorage.getItem("mgas_login_time");
         const loginTime = stored ? Number(stored) : Date.now();
         if (!stored) localStorage.setItem("mgas_login_time", String(loginTime));
-        setSession_({ name: profile.name, role: profile.role, email: sbSession.user.email, loginTime });
+        setSession_({ name: profile.name, role: profile.role, email: sbSession.user.email, perms: profile.permissions || {}, loginTime });
       }
     };
     restore();
@@ -608,8 +617,10 @@ export default function App() {
     { key:"assistant", label:"🤖 Pembantu AI" },
     { key:"plate", label:"🛠️ Service Center" },
     { key:"katalog", label:"📖 Katalog & Kira Berat" },
-    { key:"quote", label:"📝 Sebut Harga" },
-    ...((session.role==="owner" || session.role==="senior" || session.role==="manager") ? [
+    ...(hasPerm(session, "quote") ? [
+      { key:"quote", label:"📝 Sebut Harga" },
+    ] : []),
+    ...(hasPerm(session, "prices") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
     { key:"log",       label:"📋 Rekod Tawaran" },
@@ -624,7 +635,7 @@ export default function App() {
     ...(canAccessPurchasing(session) ? [
       { key:"purchasing", label:"Cadangan PO" },
     ] : []),
-    ...(canAccessReconcile(session) ? [
+    ...(hasPerm(session, "queries") ? [
       { key:"queries", label:"❓ Pertanyaan Harga" },
     ] : []),
     ...(session.role==="owner" ? [
@@ -1501,7 +1512,7 @@ function UsersTab({ session }) {
 
   const load = async () => {
     const { data, error } = await supabase.from('profiles')
-      .select('id, name, role, active').order('name');
+      .select('id, name, role, active, permissions').order('name');
     if (error) { setErrMsg("Gagal memuatkan senarai pengguna: " + error.message); }
     else setUsers(data || []);
     setLoading(false);
@@ -1523,6 +1534,28 @@ function UsersTab({ session }) {
     if (error) { flash("⚠️ Gagal simpan: " + error.message); return; }
     setUsers(users.map(x => x.id === u.id ? { ...x, role } : x));
     flash(`✅ Peranan ${u.name} ditukar ke ${role}.`);
+  };
+
+  // Effective permission for the matrix: explicit override, else role default.
+  const effPerm = (u, key) => {
+    if (u.role === "owner") return true;
+    const ov = (u.permissions || {})[key];
+    if (ov === true || ov === false) return ov;
+    const f = PERM_FEATURES.find(x => x.key === key);
+    return f ? f.def(u.role) : false;
+  };
+  const togglePerm = async (u, key) => {
+    const next = { ...(u.permissions || {}), [key]: !effPerm(u, key) };
+    const { error } = await supabase.from('profiles').update({ permissions: next }).eq('id', u.id);
+    if (error) { flash("⚠️ Gagal simpan: " + error.message); return; }
+    setUsers(users.map(x => x.id === u.id ? { ...x, permissions: next } : x));
+    flash(`✅ Kebenaran ${u.name} dikemaskini — berkuat kuasa pada log masuk seterusnya.`);
+  };
+  const resetPerms = async (u) => {
+    const { error } = await supabase.from('profiles').update({ permissions: {} }).eq('id', u.id);
+    if (error) { flash("⚠️ Gagal simpan: " + error.message); return; }
+    setUsers(users.map(x => x.id === u.id ? { ...x, permissions: {} } : x));
+    flash(`✅ Kebenaran ${u.name} dikembalikan ke default peranan.`);
   };
 
   if (loading) return <Card style={{ padding:40, textAlign:"center" }}><div style={{ color:C.muted }}>Memuatkan...</div></Card>;
@@ -1581,6 +1614,69 @@ function UsersTab({ session }) {
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* ── Permissions matrix — per-user feature control ── */}
+      <Card style={{ marginTop:14 }}>
+        <div style={{ padding:"12px 14px", borderBottom:`1px solid ${C.border}` }}>
+          <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>🔐 Kebenaran Ciri (Permissions)</div>
+          <div style={{ fontSize:11.5, color:C.muted, marginTop:2 }}>
+            Klik untuk benarkan (✓) atau sekat (✕) setiap ciri bagi setiap pengguna. Kotak kelabu = ikut default peranan.
+            Owner sentiasa ada semua akses. Perubahan berkuat kuasa pada log masuk seterusnya.
+          </div>
+        </div>
+        <div style={{ overflowX:"auto" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+            <thead>
+              <tr style={{ background:C.navy }}>
+                <th style={{ padding:"9px 14px", color:C.white, textAlign:"left", fontWeight:600 }}>Pengguna</th>
+                {PERM_FEATURES.map(f => (
+                  <th key={f.key} style={{ padding:"9px 8px", color:C.white, textAlign:"center", fontWeight:600, whiteSpace:"nowrap" }}>{f.label}</th>
+                ))}
+                <th style={{ padding:"9px 8px" }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, i) => {
+                const isOwnerRow = u.role === "owner";
+                const hasOverrides = u.permissions && Object.keys(u.permissions).length > 0;
+                return (
+                  <tr key={u.id} style={{ background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}` }}>
+                    <td style={{ padding:"8px 14px", fontWeight:600, whiteSpace:"nowrap" }}>
+                      {u.name} <span style={{ fontSize:10, color:C.muted }}>({u.role})</span>
+                    </td>
+                    {PERM_FEATURES.map(f => {
+                      const on = effPerm(u, f.key);
+                      const overridden = !isOwnerRow && u.permissions && (u.permissions[f.key] === true || u.permissions[f.key] === false);
+                      return (
+                        <td key={f.key} style={{ padding:"6px 8px", textAlign:"center" }}>
+                          <button onClick={() => !isOwnerRow && togglePerm(u, f.key)}
+                            disabled={isOwnerRow}
+                            title={isOwnerRow ? "Owner sentiasa dibenarkan" : overridden ? "Ditetapkan khas — klik untuk tukar" : "Default peranan — klik untuk tetapkan khas"}
+                            style={{ width:30, height:24, borderRadius:6, fontWeight:800, fontSize:12,
+                              cursor:isOwnerRow ? "default" : "pointer",
+                              border:`1.5px solid ${on ? "#86efac" : "#fca5a5"}`,
+                              background: isOwnerRow ? "#f1f5f9" : overridden ? (on ? C.greenLight : C.redLight) : C.white,
+                              color: on ? C.green : C.red, opacity:isOwnerRow ? 0.55 : 1 }}>
+                            {on ? "✓" : "✕"}
+                          </button>
+                        </td>
+                      );
+                    })}
+                    <td style={{ padding:"6px 8px", textAlign:"right", whiteSpace:"nowrap" }}>
+                      {!isOwnerRow && hasOverrides && (
+                        <button onClick={() => resetPerms(u)}
+                          style={{ padding:"3px 9px", background:"#e2e8f0", color:C.muted, border:"none", borderRadius:6, fontWeight:600, fontSize:10, cursor:"pointer" }}>
+                          Reset default
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

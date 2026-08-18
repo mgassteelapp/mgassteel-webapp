@@ -150,11 +150,11 @@ export default function SSMonitor({ session, selected }) {
     return sectionKg(shape, Number(od), Number(dimB), Number(wall), Number(lengthM));
   }, [shape, od, dimB, wall, lengthM, kgOverride]);
 
-  const canEval = Number(list) > 0 && Number(d1) > 0 && kg > 0 && nickel;
+  const canEval = Number(list) > 0 && kg > 0 && !!nickel; // discounts optional (blank = 0)
 
   const runEval = () => {
     if (!canEval) return;
-    setResult(evaluate({ list: Number(list), d1: Number(d1), d2: Number(d2) || 0, kg, nickel: nickel.usd, fx }));
+    setResult(evaluate({ list: Number(list), d1: Number(d1) || 0, d2: Number(d2) || 0, kg, nickel: nickel.usd, fx }));
   };
 
   const saveEval = async () => {
@@ -162,7 +162,7 @@ export default function SSMonitor({ session, selected }) {
     try {
       const { error } = await supabase.from('ss_discount_checks').insert({
         created_by: session?.name || '', item_code: itemCode || '(no code)', item_desc: itemDesc || null,
-        list_price: Number(list), disc1: Number(d1), disc2: Number(d2) || 0, nett: result.nett,
+        list_price: Number(list), disc1: Number(d1) || 0, disc2: Number(d2) || 0, nett: result.nett,
         weight_kg: kg, nickel_usd: nickel.usd, usd_myr: fx, coil_rm_kg: result.coilRmKg,
         mill_cost: result.millCost, fair_low: result.fairLow, fair_high: result.fairHigh,
         verdict: result.verdict, proposed_disc1: result.pd1, proposed_disc2: result.pd2, proposed_nett: result.pnett,
@@ -250,11 +250,11 @@ export default function SSMonitor({ session, selected }) {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
                 <div><label style={flbl}>List price (RM)</label>
-                  <input style={fld} inputMode="decimal" value={list} onChange={e => setList(e.target.value)} placeholder="265.00" /></div>
+                  <input style={fld} inputMode="decimal" value={list} onChange={e => setList(e.target.value)} placeholder="e.g. 265" /></div>
                 <div><label style={flbl}>Discount 1 (%)</label>
-                  <input style={fld} inputMode="decimal" value={d1} onChange={e => setD1(e.target.value)} placeholder="64" /></div>
+                  <input style={fld} inputMode="decimal" value={d1} onChange={e => setD1(e.target.value)} placeholder="e.g. 64 (or 0)" /></div>
                 <div><label style={flbl}>+ Discount 2 (%)</label>
-                  <input style={fld} inputMode="decimal" value={d2} onChange={e => setD2(e.target.value)} placeholder="3" /></div>
+                  <input style={fld} inputMode="decimal" value={d2} onChange={e => setD2(e.target.value)} placeholder="e.g. 3 (or 0)" /></div>
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 {SHAPES.map(s => (
@@ -283,9 +283,9 @@ export default function SSMonitor({ session, selected }) {
                     onChange={e => setKgOverride(e.target.value)} placeholder="auto" /></div>
               </div>
               <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>
-                {Number(list) > 0 && Number(d1) > 0
+                {Number(list) > 0
                   ? <>Nett = {list} × {100 - Number(d1)}% × {100 - (Number(d2) || 0)}% = <b style={{ color: C.accent }}>RM{r2(Number(list) * (1 - Number(d1) / 100) * (1 - (Number(d2) || 0) / 100)).toFixed(2)}</b>{kg > 0 && <> · RM{r2(Number(list) * (1 - Number(d1) / 100) * (1 - (Number(d2) || 0) / 100) / kg).toFixed(2)}/kg</>}</>
-                  : 'Enter list price + discount to see the nett'}
+                  : 'Enter the list price to see the nett'}
               </div>
               <button onClick={runEval} disabled={!canEval}
                 style={{ width: '100%', marginTop: 8, background: canEval ? C.navy : C.border, color: canEval ? C.white : C.muted, border: 'none', borderRadius: 8, padding: 9, fontWeight: 700, fontSize: 13, cursor: canEval ? 'pointer' : 'not-allowed' }}>

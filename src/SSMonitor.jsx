@@ -6,7 +6,10 @@
 //   1. You enter the supplier's discount offer (list price, disc1 + disc2).
 //   2. The engine rebuilds the mill's cost from LME nickel (manual weekly,
 //      shared via market_state) + USD/MYR (auto daily) and judges the offer:
-//      CHEAP / FAIR / EXPENSIVE with a fair-price range.
+//      FAIR PRICE (below range) / FAIR (lower/upper half) / EXPENSIVE, all
+//      relative to a fair-price range — "cheap" is deliberately avoided,
+//      it invites the wrong read on a genuine trade discount (Wylee,
+//      chat 2026-08-18).
 //   3. It proposes the discount to counter-ask, with a justification line.
 //   4. Every evaluation is saved (ss_discount_checks) → the chart plots the
 //      fair nett line vs your offered/paid netts over time, plus a projection.
@@ -167,7 +170,7 @@ function evaluate({ material, shape, list, d1, d2, d3, kg, lengthM, nickel, hrc,
   }
   const fairMid = r2((fairLow + fairHigh) / 2);
   let verdict, tone;
-  if (nett < fairLow) { verdict = 'CHEAP — below fair range'; tone = 'good'; }
+  if (nett < fairLow) { verdict = 'FAIR PRICE — below range'; tone = 'good'; }
   else if (nett <= fairMid) { verdict = 'FAIR — lower half'; tone = 'ok'; }
   else if (nett <= fairHigh) { verdict = 'FAIR — upper end'; tone = 'warn'; }
   else { verdict = 'EXPENSIVE — above fair range'; tone = 'bad'; }

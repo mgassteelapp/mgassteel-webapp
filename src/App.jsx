@@ -6,6 +6,7 @@ import PlateCalculator from './PlateCalculator';
 import KatalogTab from './KatalogTab';
 import QuotationTab from './QuotationTab';
 import PurchasingTab from './PurchasingTab';
+import CiptaPOTab from './CiptaPOTab';
 
 
 // ── Google Sheets API ─────────────────────────────────────────────────────────
@@ -639,6 +640,7 @@ export default function App() {
       { key:"queries", label:"❓ Pertanyaan Harga" },
     ] : []),
     ...(session.role==="owner" ? [
+      { key:"ciptapo",  label:"🧾 Cipta PO (Uji)" },
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
     ] : []),
@@ -686,7 +688,7 @@ export default function App() {
           </div>
         </div>
       </div>
-      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
+      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" || tab==="ciptapo" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
         {rcAlert && tab !== "reconcile" && (
           <div onClick={() => setTab("reconcile")}
             style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", color:"#991b1b",
@@ -703,6 +705,7 @@ export default function App() {
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
+        {tab==="ciptapo"   && session.role==="owner" && <CiptaPOTab prices={prices} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}

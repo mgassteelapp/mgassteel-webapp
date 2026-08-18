@@ -11,6 +11,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabase';
+import PurchasingTab from './PurchasingTab';
 
 const C = { navy:'#0f2744', accent:'#e8780a', border:'#e2e8f0', gray:'#f8fafc',
             text:'#1e2d3d', muted:'#64748b', white:'#ffffff',
@@ -561,6 +562,14 @@ export default function CiptaPOTab({ prices = [], session }) {
           </div>
         )}
       </div>
+
+      {/* ── Cadangan PO — full decision info (velocity, market trend, proposed
+           qty, offer evaluation, outstanding PO, last received, Mill Price
+           Monitor) — same tab, one screen, no switching to decide. ── */}
+      <div style={{ fontWeight:700, fontSize:14, color:C.navy, margin:'4px 4px 8px' }}>
+        📊 Cadangan PO — Semak Sebelum Putuskan Kuantiti
+      </div>
+      <PurchasingTab prices={prices} session={session} />
 
       {/* ── history ── */}
       <div style={card}>

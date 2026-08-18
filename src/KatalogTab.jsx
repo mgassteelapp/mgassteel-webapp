@@ -233,6 +233,7 @@ const KATALOG_PDFS = [
   { file: 'cold-rolled-sheets.pdf',   icon: '❄️', name: 'Cold Rolled Sheets' },
   { file: 'galvanised-sheet.pdf',     icon: '✨', name: 'Galvanised Sheet' },
   { file: 'chequered-plates.pdf',     icon: '🔳', name: 'Chequered Plates' },
+  { file: 'ms-flat-bar.pdf',          icon: '📏', name: 'MS Flat Bar' },
   // 'api-pipes.pdf' excluded — still carries the original HTVB
   // watermark/logo underneath the M Gas one; not yet re-cleaned.
 ];

@@ -692,7 +692,14 @@ function AssistantTab({ prices, gsStatus, session }) {
         body: { messages: newMsgs.map(m => ({ role:m.role, content:m.content })), priceContext },
       });
       if (error || !data || data.error) {
-        setMessages([...newMsgs, { role:"assistant", content: `⚠️ ${data?.error || error?.message || "Ralat menghubungi pembantu AI. Cuba lagi."}` }]);
+        // supabase-js swallows the edge function's JSON error body behind a
+        // generic "non-2xx status code" message — dig the real message out
+        // of error.context (the raw Response) so staff see something useful.
+        let serverMsg = data?.error;
+        if (!serverMsg && error?.context && typeof error.context.json === "function") {
+          try { const body = await error.context.json(); serverMsg = body?.error; } catch {}
+        }
+        setMessages([...newMsgs, { role:"assistant", content: `⚠️ ${serverMsg || error?.message || "Ralat menghubungi pembantu AI. Cuba lagi."}` }]);
       } else {
         setMessages([...newMsgs, { role:"assistant", content: data.reply }]);
       }

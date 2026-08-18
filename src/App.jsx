@@ -730,6 +730,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [calcQty,         setCalcQty]         = useState("");
   const [stockMap,        setStockMap]        = useState({}); // itemCode -> {qty,branches,as_of} | 'loading' | null
+  const [stockDetail,     setStockDetail]     = useState(null); // 4-metric projection for selectedProduct | 'loading' | null
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, thinking]);
@@ -768,6 +769,26 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
   };
   useEffect(() => { fetchStock(codeResults.slice(0, 15).map(p => p.itemCode)); }, [codeResults]); // eslint-disable-line
   useEffect(() => { if (selectedProduct?.itemCode) fetchStock([selectedProduct.itemCode]); }, [selectedProduct]); // eslint-disable-line
+
+  // ── Stock projection (4-metric breakdown) — computed on-demand for the
+  // single product open in the calculator only (heavier SO/DO/PO query, not
+  // run for the whole search list). SO/DO netted over a rolling 30-day
+  // window per Wylee 2026-08-18 ("staff have to clear/cancel all previous
+  // month SO that is not successful"); PO backlog uses the existing 6-month
+  // Cadangan PO window since incoming purchases don't go stale the same way.
+  useEffect(() => {
+    const code = selectedProduct?.itemCode;
+    if (!code) { setStockDetail(null); return; }
+    setStockDetail('loading');
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'stockDetail', code } });
+        setStockDetail(data && !data.error ? data : null);
+      } catch {
+        setStockDetail(null);
+      }
+    })();
+  }, [selectedProduct]); // eslint-disable-line
 
   const BRANCH_LABEL = { tanah_merah: 'HQ', pasir_puteh: 'PP' };
   const stockBadge = (code) => {
@@ -909,6 +930,39 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                     <span style={{ fontSize:11, color:C.muted }}>HQ <b style={{ color:C.text }}>{branchQty('tanah_merah')}</b> · PP <b style={{ color:C.text }}>{branchQty('pasir_puteh')}</b></span>
                     {s.damaged_qty>0 && <span style={{ fontSize:10.5, color:C.red }}>({s.damaged_qty} rosak, tak dikira)</span>}
                     {s.as_of && <span style={{ marginLeft:"auto", fontSize:10, color:"#94a3b8" }}>as of {s.as_of}</span>}
+                  </div>
+                );
+              })()}
+
+              {/* Stock projection — 4-metric breakdown (Wylee 2026-08-18):
+                  Actual = raw SQL book balance (above); Projected Stock for
+                  Sale = Actual − open SO (30d); True Actual Stock for Sale =
+                  Actual − DO (30d, SQL only decrements at invoice so book
+                  stock can lag physical shipments); Projected = Projected
+                  for Sale + outstanding PO. SO/DO/PO have no branch field in
+                  the CRM so these 3 are company-wide (HQ+PP), unlike the
+                  branch-split Actual Stock above. */}
+              {(() => {
+                const d = stockDetail;
+                if (d === 'loading') return <div style={{ fontSize:11, color:C.muted, marginTop:8 }}>Mengira unjuran stok…</div>;
+                if (!d) return null;
+                const cell = (label, val, color) => (
+                  <div style={{ flex:"1 1 120px", minWidth:110 }}>
+                    <div style={{ fontSize:9.5, fontWeight:700, color:C.muted, textTransform:"uppercase", marginBottom:2 }}>{label}</div>
+                    <div style={{ fontWeight:900, fontSize:17, color: val<0 ? C.red : color }}>{val}</div>
+                  </div>
+                );
+                return (
+                  <div style={{ marginTop:8, background:"#fffbea", border:"1px solid #fde68a", borderRadius:8, padding:"10px 12px" }}>
+                    <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
+                      {cell("Unjuran Stok utk Jualan", d.projected_for_sale, C.navy)}
+                      {cell("Stok Sebenar utk Jualan (Sebenar)", d.true_actual_for_sale, C.navy)}
+                      {cell("Unjuran Stok (+PO)", d.projected, C.green)}
+                    </div>
+                    <div style={{ fontSize:10, color:"#92702a", marginTop:8, lineHeight:1.5 }}>
+                      Unjuran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir). Stok Sebenar = Stok − DO ({d.do_30d} unit, {d.window_days} hari terakhir) — DO mungkin belum dipotong dalam SQL sehingga invois dikeluarkan. Unjuran (+PO) = Unjuran Jualan + PO belum sampai ({d.outstanding_po} unit).
+                      <br /><b>{d.scope_note}</b>
+                    </div>
                   </div>
                 );
               })()}

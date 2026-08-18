@@ -22,14 +22,31 @@ import { supabase } from './supabase';
 const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
 
 // ── Cost-model constants ─────────────────────────────────────────────────────
+// SS 304 (nickel-driven, per-kg conversion, cost+margin band):
 const COIL_BASE_USD = 610;   // non-nickel part of 304 coil (base + Cr + CR rolling)
 const NI_FACTOR     = 0.08;  // 304 ≈ 8% nickel
 const YIELD_FACTOR  = 0.94;  // 6% trim/weld loss
-const CONV_RM_KG    = 1.71;  // forming + welding + polishing per kg
-const PACKING_RM    = 2.50;  // packing + delivery per piece
-const DENSITY       = 7.93;  // g/cm3 austenitic SS
-const MARGIN_LOW    = 1.16;  // fair band = mill cost × 1.16 … 1.20
+const CONV_RM_KG    = 1.71;  // SS forming + welding + polishing per kg
+const PACKING_RM    = 2.50;  // SS packing + delivery per piece
+const MARGIN_LOW    = 1.16;  // SS fair band = mill cost × 1.16 … 1.20
 const MARGIN_HIGH   = 1.20;
+// Mild steel (HRC-driven, per-METRE conversion — calibrated 2026-08-18 from
+// Wylee's real quotes: plate RM2,400-2,450/MT (= HRC US$583-595 × MYR4.12),
+// 25×25×0.65 @ 22.60 less 54+5+3 and 50×100×1.3 @ 118 less 55+5+3 both fit
+// fair = kg × coil ÷ 0.94 + RM0.33/m within 1.5%):
+const MS_CONV_RM_M  = 0.33;  // forming + welding + mill margin, per metre
+const MS_BAND       = 0.035; // fair band = model ± 3.5%
+// GI / Prezinc: PROVISIONAL — HRC × 1.15 for the zinc coating until a real
+// GI quote calibrates it (same method as MS above).
+const GI_COIL_FACTOR = 1.15;
+const GI_CONV_RM_M   = 0.36;
+const GI_BAND        = 0.05;
+
+const MATERIALS = [
+  { key: 'ss304', label: 'SS 304',       density: 7.93, driver: 'nickel' },
+  { key: 'ms',    label: 'Mild Steel',   density: 7.85, driver: 'hrc' },
+  { key: 'gi',    label: 'GI / Prezinc', density: 7.85, driver: 'hrc', provisional: true },
+];
 
 const r2 = (n) => Math.round(n * 100) / 100;
 
@@ -42,12 +59,12 @@ function sectionAreaMm2(shape, a, b, t) {
   if (shape === 'square') return 4 * t * (a - t);
   return 2 * t * (a + b - 2 * t); // rect
 }
-function sectionKg(shape, a, b, t, lengthM) {
+function sectionKg(shape, a, b, t, lengthM, density) {
   if (!(a > 0 && t > 0 && lengthM > 0)) return 0;
   if (shape === 'round' && t >= a) return 0;
   if (shape === 'square' && 2 * t >= a) return 0;
   if (shape === 'rect' && !(b > 0 && 2 * t < a && 2 * t < b)) return 0;
-  return r2(sectionAreaMm2(shape, a, b, t) * DENSITY / 1000 * lengthM);
+  return r2(sectionAreaMm2(shape, a, b, t) * density / 1000 * lengthM);
 }
 
 const SHAPES = [
@@ -56,31 +73,50 @@ const SHAPES = [
   { key: 'rect',   label: 'Rect. hollow', dimA: 'Width (mm)', dimB: 'Height (mm)' },
 ];
 
-function evaluate({ list, d1, d2, kg, nickel, fx }) {
-  const nett = r2(list * (1 - d1 / 100) * (1 - d2 / 100));
-  const coilUsd = COIL_BASE_USD + NI_FACTOR * nickel;
-  const coilRmKg = r2(coilUsd * fx / 1000);
-  const millCost = r2(kg * coilRmKg / YIELD_FACTOR + kg * CONV_RM_KG + PACKING_RM);
-  const fairLow = r2(millCost * MARGIN_LOW);
-  const fairHigh = r2(millCost * MARGIN_HIGH);
+function evaluate({ material, list, d1, d2, d3, kg, lengthM, nickel, hrc, fx }) {
+  const nett = r2(list * (1 - d1 / 100) * (1 - d2 / 100) * (1 - d3 / 100));
+  let coilRmKg, matCost, convCost, millCost, fairLow, fairHigh;
+  if (material === 'ss304') {
+    coilRmKg = r2((COIL_BASE_USD + NI_FACTOR * nickel) * fx / 1000);
+    matCost = r2(kg * coilRmKg / YIELD_FACTOR);
+    convCost = r2(kg * CONV_RM_KG + PACKING_RM);
+    millCost = r2(matCost + convCost);
+    fairLow = r2(millCost * MARGIN_LOW);
+    fairHigh = r2(millCost * MARGIN_HIGH);
+  } else {
+    // MS / GI: coil from HRC (USD/t, the shared market number); conversion
+    // AND mill margin are per metre (validated against real quotes).
+    const factor = material === 'gi' ? GI_COIL_FACTOR : 1;
+    const convM = material === 'gi' ? GI_CONV_RM_M : MS_CONV_RM_M;
+    const band = material === 'gi' ? GI_BAND : MS_BAND;
+    coilRmKg = r2(hrc * fx / 1000 * factor);
+    matCost = r2(kg * coilRmKg / YIELD_FACTOR);
+    convCost = r2(convM * lengthM);
+    millCost = r2(matCost + convCost);  // model fair nett (margin inside conv)
+    fairLow = r2(millCost * (1 - band));
+    fairHigh = r2(millCost * (1 + band));
+  }
   const fairMid = r2((fairLow + fairHigh) / 2);
   let verdict, tone;
   if (nett < fairLow) { verdict = 'CHEAP — below fair range'; tone = 'good'; }
   else if (nett <= fairMid) { verdict = 'FAIR — lower half'; tone = 'ok'; }
   else if (nett <= fairHigh) { verdict = 'FAIR — upper end'; tone = 'warn'; }
   else { verdict = 'EXPENSIVE — above fair range'; tone = 'bad'; }
-  // proposal: aim for the band midpoint, keep disc1, raise disc2 (max +2 per ask)
-  let pd1 = d1, pd2 = d2, pnett = nett, ask = false;
-  if (nett > fairMid && list > 0 && d1 < 100) {
-    const target = fairMid;
-    let want = Math.ceil((1 - target / (list * (1 - d1 / 100))) * 100);
-    want = Math.min(want, d2 + 2);            // realistic step per negotiation
-    if (want > d2) { pd2 = want; pnett = r2(list * (1 - d1 / 100) * (1 - pd2 / 100)); ask = true; }
+  // proposal: aim for the band midpoint; keep earlier discounts, raise the
+  // LAST discount level (max +2 per ask — realistic negotiation step)
+  let pd1 = d1, pd2 = d2, pd3 = d3, pnett = nett, ask = false;
+  const preNet = list * (1 - d1 / 100) * (1 - d2 / 100);
+  if (nett > fairMid && preNet > 0) {
+    let want = Math.ceil((1 - fairMid / preNet) * 100);
+    want = Math.min(want, d3 + 2);
+    if (want > d3) { pd3 = want; pnett = r2(preNet * (1 - pd3 / 100)); ask = true; }
   }
   const marginRm = r2(nett - millCost);
   const marginPct = millCost > 0 ? Math.round(marginRm / millCost * 100) : 0;
   const premiumKg = kg > 0 ? r2(nett / kg - coilRmKg) : 0;
-  return { nett, coilRmKg, millCost, fairLow, fairMid, fairHigh, verdict, tone, marginRm, marginPct, premiumKg, pd1, pd2, pnett, ask };
+  const devPct = millCost > 0 ? r2((nett - millCost) / millCost * 100) : 0;
+  return { nett, coilRmKg, matCost, convCost, millCost, fairLow, fairMid, fairHigh,
+           verdict, tone, marginRm, marginPct, premiumKg, devPct, pd1, pd2, pd3, pnett, ask };
 }
 
 const VERDICT_STYLE = {
@@ -100,9 +136,12 @@ export default function SSMonitor({ session, selected }) {
   // offer inputs
   const [itemCode, setItemCode] = useState('');
   const [itemDesc, setItemDesc] = useState('');
+  const [material, setMaterial] = useState('ss304');
   const [list, setList] = useState('');
   const [d1, setD1] = useState('');
   const [d2, setD2] = useState('0');
+  const [d3, setD3] = useState('0');
+  const [hrc, setHrc] = useState(592);              // USD/t — shared weekly (market_state.hrc)
   const [shape, setShape] = useState('round');
   const [od, setOd] = useState('50');       // OD / side / width, per shape
   const [dimB, setDimB] = useState('');     // height (rect only)
@@ -123,6 +162,7 @@ export default function SSMonitor({ session, selected }) {
         if (!stop && data) {
           setNickel({ usd: Number(data.nickel_usd) || 16750, prev: Number(data.nickel_prev) || 16750, asOf: data.nickel_as_of || '' });
           setFx(Number(data.usd_myr) || 4.1);
+          setHrc(Number(data.hrc) || 592);
         }
       } catch { /* defaults stand */ }
       loadHistory();
@@ -144,17 +184,18 @@ export default function SSMonitor({ session, selected }) {
     } catch { /* section still works without history */ }
   };
 
+  const mat = MATERIALS.find(m => m.key === material) || MATERIALS[0];
   const kg = useMemo(() => {
     const o = Number(kgOverride);
     if (o > 0) return o;
-    return sectionKg(shape, Number(od), Number(dimB), Number(wall), Number(lengthM));
-  }, [shape, od, dimB, wall, lengthM, kgOverride]);
+    return sectionKg(shape, Number(od), Number(dimB), Number(wall), Number(lengthM), mat.density);
+  }, [shape, od, dimB, wall, lengthM, kgOverride, mat.density]);
 
   const canEval = Number(list) > 0 && kg > 0 && !!nickel; // discounts optional (blank = 0)
 
   const runEval = () => {
     if (!canEval) return;
-    setResult(evaluate({ list: Number(list), d1: Number(d1) || 0, d2: Number(d2) || 0, kg, nickel: nickel.usd, fx }));
+    setResult(evaluate({ material, list: Number(list), d1: Number(d1) || 0, d2: Number(d2) || 0, d3: Number(d3) || 0, kg, lengthM: Number(lengthM) || 6, nickel: nickel.usd, hrc, fx }));
   };
 
   const saveEval = async () => {
@@ -162,10 +203,11 @@ export default function SSMonitor({ session, selected }) {
     try {
       const { error } = await supabase.from('ss_discount_checks').insert({
         created_by: session?.name || '', item_code: itemCode || '(no code)', item_desc: itemDesc || null,
-        list_price: Number(list), disc1: Number(d1) || 0, disc2: Number(d2) || 0, nett: result.nett,
+        material,
+        list_price: Number(list), disc1: Number(d1) || 0, disc2: Number(d2) || 0, disc3: Number(d3) || 0, nett: result.nett,
         weight_kg: kg, nickel_usd: nickel.usd, usd_myr: fx, coil_rm_kg: result.coilRmKg,
         mill_cost: result.millCost, fair_low: result.fairLow, fair_high: result.fairHigh,
-        verdict: result.verdict, proposed_disc1: result.pd1, proposed_disc2: result.pd2, proposed_nett: result.pnett,
+        verdict: result.verdict, proposed_disc1: result.pd1, proposed_disc2: result.pd3, proposed_nett: result.pnett,
       });
       setSaveMsg(error ? 'Save failed: ' + error.message : 'Saved to negotiation history ✓');
       if (!error) loadHistory();
@@ -192,6 +234,7 @@ export default function SSMonitor({ session, selected }) {
   // chart data: this item's saved checks (fair mid line + nett dots) + live point
   const chart = useMemo(() => {
     const pts = history
+      .filter(h => (h.material || 'ss304') === material)
       .filter(h => !itemCode || h.item_code === itemCode)
       .map(h => ({
         date: String(h.created_at).slice(5, 10),
@@ -204,13 +247,14 @@ export default function SSMonitor({ session, selected }) {
     let proj = null;
     if (nickel && result) {
       const nextNi = nickel.usd + (nickel.usd - nickel.prev);
-      const e = evaluate({ list: Number(list) || 0, d1: Number(d1) || 0, d2: Number(d2) || 0, kg, nickel: nextNi, fx });
+      const e = evaluate({ material, list: Number(list) || 0, d1: Number(d1) || 0, d2: Number(d2) || 0, d3: Number(d3) || 0,
+                           kg, lengthM: Number(lengthM) || 6, nickel: nextNi, hrc, fx });
       proj = e.fairMid;
     }
     const values = pts.flatMap(p => [p.low, p.high, p.nett]).concat(proj ? [proj] : []);
     const min = Math.min(...values) - 1.5, max = Math.max(...values) + 1.5;
     return { pts, proj, min, max };
-  }, [history, itemCode, result, nickel, list, d1, d2, kg, fx]);
+  }, [history, itemCode, result, nickel, hrc, material, list, d1, d2, d3, kg, lengthM, fx]);
 
   const box = { background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 };
   const lbl = { fontSize: 10.5, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase', color: C.muted, marginBottom: 8 };
@@ -225,11 +269,13 @@ export default function SSMonitor({ session, selected }) {
       <div onClick={() => setOpen(o => !o)}
         style={{ ...box, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
         <span style={{ fontSize: 14 }}>📈</span>
-        <span style={{ fontWeight: 800, fontSize: 13, color: C.navy }}>SS Discount Monitor</span>
-        <span style={{ fontSize: 11, color: C.muted }}>evaluate supplier discounts against the nickel market</span>
+        <span style={{ fontWeight: 800, fontSize: 13, color: C.navy }}>Mill Price Monitor</span>
+        <span style={{ fontSize: 11, color: C.muted }}>SS · Mild Steel · GI — evaluate supplier prices against nickel / HRC</span>
         {nickel && (
           <span style={{ marginLeft: 'auto', fontSize: 11, background: C.gray, border: `1px solid ${C.border}`, borderRadius: 6, padding: '3px 8px' }}>
-            Nickel <b style={{ color: nickel.usd >= nickel.prev ? C.red : C.green }}>{niTrend} ${nickel.usd.toLocaleString()}</b>
+            Ni <b style={{ color: nickel.usd >= nickel.prev ? C.red : C.green }}>{niTrend} ${nickel.usd.toLocaleString()}</b>
+            <span style={{ margin: '0 5px', color: C.border }}>|</span>
+            HRC <b>${hrc}</b>
           </span>
         )}
         <span style={{ fontSize: 12, color: C.muted }}>{open ? '▲' : '▼'}</span>
@@ -242,19 +288,32 @@ export default function SSMonitor({ session, selected }) {
             {/* 1 · OFFER INPUT */}
             <div style={box}>
               <div style={lbl}>1 · Supplier Offer</div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                {MATERIALS.map(m => (
+                  <button key={m.key} onClick={() => { setMaterial(m.key); setResult(null); }}
+                    style={{ flex: 1, padding: '7px 0', borderRadius: 7, fontWeight: 800, fontSize: 11.5, cursor: 'pointer',
+                      border: `1.5px solid ${material === m.key ? C.navy : C.border}`,
+                      background: material === m.key ? C.navy : C.white,
+                      color: material === m.key ? C.white : C.muted }}>
+                    {m.label}{m.provisional ? '*' : ''}
+                  </button>
+                ))}
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: 8, marginBottom: 8 }}>
                 <div><label style={flbl}>Item code</label>
                   <input style={fld} value={itemCode} onChange={e => setItemCode(e.target.value)} placeholder="e.g. 3041050-JT" /></div>
                 <div><label style={flbl}>Description</label>
                   <input style={fld} value={itemDesc} onChange={e => setItemDesc(e.target.value)} placeholder="SS PIPE 304 50mm × 1.0mm" /></div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
                 <div><label style={flbl}>List price (RM)</label>
                   <input style={fld} inputMode="decimal" value={list} onChange={e => setList(e.target.value)} placeholder="e.g. 265" /></div>
-                <div><label style={flbl}>Discount 1 (%)</label>
-                  <input style={fld} inputMode="decimal" value={d1} onChange={e => setD1(e.target.value)} placeholder="e.g. 64 (or 0)" /></div>
-                <div><label style={flbl}>+ Discount 2 (%)</label>
-                  <input style={fld} inputMode="decimal" value={d2} onChange={e => setD2(e.target.value)} placeholder="e.g. 3 (or 0)" /></div>
+                <div><label style={flbl}>Disc 1 (%)</label>
+                  <input style={fld} inputMode="decimal" value={d1} onChange={e => setD1(e.target.value)} placeholder="e.g. 54" /></div>
+                <div><label style={flbl}>+ Disc 2 (%)</label>
+                  <input style={fld} inputMode="decimal" value={d2} onChange={e => setD2(e.target.value)} placeholder="e.g. 5" /></div>
+                <div><label style={flbl}>+ Disc 3 (%)</label>
+                  <input style={fld} inputMode="decimal" value={d3} onChange={e => setD3(e.target.value)} placeholder="e.g. 3" /></div>
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 {SHAPES.map(s => (
@@ -284,7 +343,8 @@ export default function SSMonitor({ session, selected }) {
               </div>
               <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>
                 {Number(list) > 0
-                  ? <>Nett = {list} × {100 - Number(d1)}% × {100 - (Number(d2) || 0)}% = <b style={{ color: C.accent }}>RM{r2(Number(list) * (1 - Number(d1) / 100) * (1 - (Number(d2) || 0) / 100)).toFixed(2)}</b>{kg > 0 && <> · RM{r2(Number(list) * (1 - Number(d1) / 100) * (1 - (Number(d2) || 0) / 100) / kg).toFixed(2)}/kg</>}</>
+                  ? (() => { const n = r2(Number(list) * (1 - (Number(d1) || 0) / 100) * (1 - (Number(d2) || 0) / 100) * (1 - (Number(d3) || 0) / 100));
+                      return <>Nett = {list} less {(Number(d1) || 0)}%+{(Number(d2) || 0)}%+{(Number(d3) || 0)}% = <b style={{ color: C.accent }}>RM{n.toFixed(2)}</b>{kg > 0 && <> · RM{r2(n / kg).toFixed(2)}/kg</>}</>; })()
                   : 'Enter the list price to see the nett'}
               </div>
               <button onClick={runEval} disabled={!canEval}
@@ -298,7 +358,10 @@ export default function SSMonitor({ session, selected }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <div style={lbl}>2 · Evaluation</div>
                 <div style={{ fontSize: 10, color: C.muted }}>
-                  nickel <b>${nickel ? nickel.usd.toLocaleString() : '—'}</b> · MYR <b>{fx.toFixed(2)}</b>
+                  {material === 'ss304'
+                    ? <>nickel <b>${nickel ? nickel.usd.toLocaleString() : '—'}</b></>
+                    : <>HRC <b>US${hrc.toLocaleString()}/t</b> (≈RM{r2(hrc * fx / 1000).toFixed(2)}/kg)</>}
+                  {' '}· MYR <b>{fx.toFixed(2)}</b>
                   {' '}<button onClick={() => { setNickelDraft(String(nickel?.usd || '')); setEditNickel(v => !v); }}
                     style={{ background: 'none', border: 'none', color: C.accent, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>update nickel</button>
                 </div>
@@ -322,16 +385,27 @@ export default function SSMonitor({ session, selected }) {
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5 }}>
                     <tbody>
-                      <tr><td style={{ color: C.muted, padding: '2px 0' }}>304 coil ({kg}kg × RM{result.coilRmKg.toFixed(2)} ÷ {Math.round(YIELD_FACTOR * 100)}% yield)</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{r2(kg * result.coilRmKg / YIELD_FACTOR).toFixed(2)}</td></tr>
-                      <tr><td style={{ color: C.muted, padding: '2px 0' }}>Forming + welding + polishing</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{r2(kg * CONV_RM_KG).toFixed(2)}</td></tr>
-                      <tr><td style={{ color: C.muted, padding: '2px 0' }}>Packing + delivery</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{PACKING_RM.toFixed(2)}</td></tr>
-                      <tr style={{ borderTop: `1px solid ${C.border}` }}><td style={{ fontWeight: 700, padding: '2px 0' }}>Estimated full mill cost</td><td style={{ textAlign: 'right', fontWeight: 800 }}>≈ {result.millCost.toFixed(2)}</td></tr>
-                      <tr><td style={{ color: C.red, fontWeight: 700, padding: '2px 0' }}>Mill margin at this offer</td><td style={{ textAlign: 'right', fontWeight: 800, color: C.red }}>{result.marginRm.toFixed(2)} ({result.marginPct}%)</td></tr>
+                      <tr><td style={{ color: C.muted, padding: '2px 0' }}>{material === 'ss304' ? '304' : material === 'gi' ? 'GI' : 'MS'} coil ({kg}kg × RM{result.coilRmKg.toFixed(2)} ÷ {Math.round(YIELD_FACTOR * 100)}% yield)</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{result.matCost.toFixed(2)}</td></tr>
+                      {material === 'ss304' ? (
+                        <>
+                          <tr><td style={{ color: C.muted, padding: '2px 0' }}>Forming + welding + polishing + packing</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{result.convCost.toFixed(2)}</td></tr>
+                          <tr style={{ borderTop: `1px solid ${C.border}` }}><td style={{ fontWeight: 700, padding: '2px 0' }}>Estimated full mill cost</td><td style={{ textAlign: 'right', fontWeight: 800 }}>≈ {result.millCost.toFixed(2)}</td></tr>
+                          <tr><td style={{ color: C.red, fontWeight: 700, padding: '2px 0' }}>Mill margin at this offer</td><td style={{ textAlign: 'right', fontWeight: 800, color: C.red }}>{result.marginRm.toFixed(2)} ({result.marginPct}%)</td></tr>
+                        </>
+                      ) : (
+                        <>
+                          <tr><td style={{ color: C.muted, padding: '2px 0' }}>Forming + welding + mill margin (RM{(material === 'gi' ? GI_CONV_RM_M : MS_CONV_RM_M).toFixed(2)}/m × {Number(lengthM) || 6}m)</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{result.convCost.toFixed(2)}</td></tr>
+                          <tr style={{ borderTop: `1px solid ${C.border}` }}><td style={{ fontWeight: 700, padding: '2px 0' }}>Model fair nett</td><td style={{ textAlign: 'right', fontWeight: 800 }}>≈ {result.millCost.toFixed(2)}</td></tr>
+                          <tr><td style={{ color: result.devPct > 0 ? C.red : C.green, fontWeight: 700, padding: '2px 0' }}>Offer vs model</td><td style={{ textAlign: 'right', fontWeight: 800, color: result.devPct > 0 ? C.red : C.green }}>{result.devPct > 0 ? '+' : ''}{result.devPct.toFixed(1)}%</td></tr>
+                        </>
+                      )}
                     </tbody>
                   </table>
                   <div style={{ fontSize: 10.5, color: C.muted, marginTop: 6 }}>
-                    Conversion premium: <b>RM{result.premiumKg.toFixed(2)}/kg</b> over coil (fair band 3.50–5.00)
-                    {niDeltaPct !== 0 && <> · nickel {niDeltaPct < 0 ? 'down' : 'up'} {Math.abs(niDeltaPct)}% since last update</>}
+                    Conversion premium: <b>RM{result.premiumKg.toFixed(2)}/kg</b> over coil{material === 'ss304' ? ' (fair band 3.50–5.00)' : ''}
+                    {material === 'gi' ? <> · <b>GI model provisional</b> — give one real GI quote to calibrate</> : null}
+                    {material === 'ss304' && niDeltaPct !== 0 && <> · nickel {niDeltaPct < 0 ? 'down' : 'up'} {Math.abs(niDeltaPct)}% since last update</>}
+                    {material !== 'ss304' && <> · plate benchmark ≈ RM{Math.round(hrc * fx)}/MT</>}
                   </div>
                 </>
               )}
@@ -345,12 +419,15 @@ export default function SSMonitor({ session, selected }) {
               ) : result.ask ? (
                 <>
                   <div style={{ fontSize: 11, opacity: .85 }}>Ask for</div>
-                  <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1.1, margin: '2px 0' }}>{result.pd1}% <span style={{ fontSize: 18 }}>+</span> {result.pd2}%</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.1, margin: '2px 0' }}>
+                    {result.pd1}% <span style={{ fontSize: 17 }}>+</span> {result.pd2}% <span style={{ fontSize: 17 }}>+</span> {result.pd3}%
+                  </div>
                   <div style={{ fontSize: 12.5, marginBottom: 8 }}>→ nett <b style={{ color: '#fdba74' }}>RM{result.pnett.toFixed(2)}</b> <span style={{ opacity: .75 }}>(saves RM{r2(result.nett - result.pnett).toFixed(2)}/pc · {r2((result.nett - result.pnett) / result.nett * 100)}%)</span></div>
                   <div style={{ fontSize: 10.5, opacity: .9, lineHeight: 1.55, borderTop: '1px solid #39567a', paddingTop: 8 }}>
-                    <b>Justification:</b> the 304 alloy surcharge tracks LME nickel
-                    {niDeltaPct < 0 ? ` — down ${Math.abs(niDeltaPct)}% since the last update (≈ −RM${r2(kg * NI_FACTOR * Math.abs(nickel.usd - nickel.prev) * fx / 1000 / YIELD_FACTOR).toFixed(2)}/pc coil cost)` : ''}.
-                    The discount should follow the market.
+                    <b>Justification:</b> {material === 'ss304'
+                      ? <>the 304 alloy surcharge tracks LME nickel{niDeltaPct < 0 ? ` — down ${Math.abs(niDeltaPct)}% since the last update (≈ −RM${r2(kg * NI_FACTOR * Math.abs(nickel.usd - nickel.prev) * fx / 1000 / YIELD_FACTOR).toFixed(2)}/pc coil cost)` : ''}</>
+                      : <>hollow/pipe cost tracks HRC coil — at US${hrc}/t (≈RM{r2(hrc * fx / 1000).toFixed(2)}/kg) plus the usual RM0.33/m mill charge, fair nett works out to RM{result.fairMid.toFixed(2)}</>}.
+                    The price should follow the market.
                   </div>
                 </>
               ) : (
@@ -375,7 +452,7 @@ export default function SSMonitor({ session, selected }) {
 
           {/* CHART */}
           <div style={{ ...box, marginTop: 10 }}>
-            <div style={lbl}>Fair nett (nickel-driven) vs offered/paid — RM/pc {itemCode ? `· ${itemCode}` : '· all items'}</div>
+            <div style={lbl}>Fair nett ({material === 'ss304' ? 'nickel' : 'HRC'}-driven) vs offered/paid — RM/pc {itemCode ? `· ${itemCode}` : '· all items'} · {mat.label}</div>
             {!chart ? (
               <div style={{ fontSize: 12, color: C.muted, padding: '10px 0' }}>
                 No history yet — evaluate an offer and save it. Each saved check adds a point; the trend builds itself.
@@ -418,9 +495,9 @@ export default function SSMonitor({ session, selected }) {
               );
             })()}
             <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>
-              Blue line = fair nett computed from LME nickel + USD/MYR (band = fair range). Orange dots = offers you evaluated/paid.
-              Nickel falling while your nett stays flat = your signal to push for a bigger discount.
-              Nickel: manual weekly update (shared) · FX auto daily · every saved check extends this chart.
+              Blue line = fair nett computed from {material === 'ss304' ? 'LME nickel' : 'HRC coil'} + USD/MYR (band = fair range). Orange dots = offers you evaluated/paid.
+              {material === 'ss304' ? ' Nickel' : ' HRC'} falling while your nett stays flat = your signal to push for a bigger discount.
+              Nickel & HRC: manual weekly update (shared) · FX auto daily · every saved check extends this chart.
             </div>
           </div>
         </div>

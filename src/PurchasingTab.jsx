@@ -354,7 +354,7 @@ export default function PurchasingTab({ prices = [], session }) {
               {!showMarketEdit ? (
                 <>
                   <div style={{ fontSize:12, lineHeight:1.8, marginTop:4 }}>
-                    <div>HRC <b style={{ color: market.hrc>market.hrcPrev?C.red:market.hrc<market.hrcPrev?C.green:C.yellow }}>{market.hrc>market.hrcPrev?'▲':market.hrc<market.hrcPrev?'▼':'▬'} RM{market.hrc}/MT</b></div>
+                    <div>HRC <b style={{ color: market.hrc>market.hrcPrev?C.red:market.hrc<market.hrcPrev?C.green:C.yellow }}>{market.hrc>market.hrcPrev?'▲':market.hrc<market.hrcPrev?'▼':'▬'} US${market.hrc}/MT</b></div>
                     <div>USD/MYR <b style={{ color: market.usdMyr>market.usdMyrPrev?C.red:C.green }}>{market.usdMyr.toFixed(2)}</b></div>
                   </div>
                   {fxFailed && <div style={{ fontSize:10, color:C.muted }}>FX tak tersedia — guna nilai terakhir</div>}
@@ -366,9 +366,9 @@ export default function PurchasingTab({ prices = [], session }) {
                 </>
               ) : (
                 <div style={{ display:'grid', gap:5, fontSize:11, marginTop:4 }}>
-                  <label>HRC RM/MT (baru)
+                  <label>HRC USD/MT (baru)
                     <input type="number" defaultValue={market.hrc} id="_hrc" style={{ width:'100%', padding:5, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6, boxSizing:'border-box' }} /></label>
-                  <label>HRC minggu lepas
+                  <label>HRC USD/MT minggu lepas
                     <input type="number" defaultValue={market.hrcPrev} id="_hrcp" style={{ width:'100%', padding:5, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6, boxSizing:'border-box' }} /></label>
                   <label>USD/MYR
                     <input type="number" step="0.01" defaultValue={market.usdMyr} id="_fx" style={{ width:'100%', padding:5, marginTop:2, border:`1px solid ${C.border}`, borderRadius:6, boxSizing:'border-box' }} /></label>

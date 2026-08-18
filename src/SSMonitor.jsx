@@ -41,6 +41,15 @@ const MS_BAND       = 0.035; // fair band = model ± 3.5%
 const GI_COIL_FACTOR = 1.15;
 const GI_CONV_RM_M   = 0.36;
 const GI_BAND        = 0.05;
+// Plate: no forming/welding, so no tube-forming yield loss either — a flat
+// sheet is slit/cut from coil, not bent+welded into shape. Cost = coil +
+// a flat slitting fee (Wylee's estimate, chat 2026-08-18: ~RM40/MT) + a
+// trading/processing margin (Wylee: "not sure, likely around 7-9%").
+// (Flat bar keeps the per-metre MS/GI charge — it's rolled bar stock, not
+// a flat resell like sheet, and IS bent/formed like hollow.)
+const PLATE_SLITTING_RM_MT  = 40;    // flat RM/MT slitting fee
+const PLATE_PROCESSING_LOW  = 0.07;  // trading/processing margin band
+const PLATE_PROCESSING_HIGH = 0.09;
 
 // ── Actual-vs-nominal wall thickness ────────────────────────────────────────
 // Hollow/pipe sections are sold by a NOMINAL gauge but rolled thinner — the
@@ -97,13 +106,31 @@ function sectionKg(shape, a, b, t, lengthM, density) {
   return r2(sectionAreaMm2(shape, a, b, t) * density / 1000 * lengthM);
 }
 
+// Solid (non-hollow) shapes — plate and flat bar. No wall to subtract; the
+// whole cross-section is steel. Confirmed against Wylee's real numbers
+// (chat 2026-08-18): 4x8ft x 3mm MS plate = 1219 × 2438 × 3mm × 7.85 ÷ 1e6
+// ≈ 70.0kg; 50×6mm flat bar × 6m = 50 × 6 × 6000mm × 7.85 ÷ 1e6 ≈ 14.13kg
+// (both match the standard trade reference weights for these sizes).
+//   plate:    kg = width(mm) × length(mm) × thickness(mm) × density ÷ 1e6
+//   flat bar: kg = width(mm) × thickness(mm) × length(m) × density ÷ 1000
+function plateKg(widthMm, lengthMm, thicknessMm, density) {
+  if (!(widthMm > 0 && lengthMm > 0 && thicknessMm > 0)) return 0;
+  return r2(widthMm * lengthMm * thicknessMm * density / 1e6);
+}
+function flatBarKg(widthMm, thicknessMm, lengthM, density) {
+  if (!(widthMm > 0 && thicknessMm > 0 && lengthM > 0)) return 0;
+  return r2(widthMm * thicknessMm * lengthM * density / 1000);
+}
+
 const SHAPES = [
-  { key: 'round',  label: 'Round pipe',  dimA: 'OD (mm)',    dimB: null },
-  { key: 'square', label: 'Square hollow', dimA: 'Side (mm)', dimB: null },
-  { key: 'rect',   label: 'Rect. hollow', dimA: 'Width (mm)', dimB: 'Height (mm)' },
+  { key: 'round',   label: 'Round pipe',    dimA: 'OD (mm)',    dimB: null,          kind: 'hollow' },
+  { key: 'square',  label: 'Square hollow', dimA: 'Side (mm)',  dimB: null,          kind: 'hollow' },
+  { key: 'rect',    label: 'Rect. hollow',  dimA: 'Width (mm)', dimB: 'Height (mm)', kind: 'hollow' },
+  { key: 'plate',   label: 'Plate',         dimA: 'Width (mm)', dimB: 'Length (mm)', kind: 'solid' },
+  { key: 'flatbar', label: 'Flat bar',      dimA: 'Width (mm)', dimB: null,          kind: 'solid' },
 ];
 
-function evaluate({ material, list, d1, d2, d3, kg, lengthM, nickel, hrc, fx }) {
+function evaluate({ material, shape, list, d1, d2, d3, kg, lengthM, nickel, hrc, fx }) {
   const nett = r2(list * (1 - d1 / 100) * (1 - d2 / 100) * (1 - d3 / 100));
   let coilRmKg, matCost, convCost, millCost, fairLow, fairHigh;
   if (material === 'ss304') {
@@ -113,9 +140,21 @@ function evaluate({ material, list, d1, d2, d3, kg, lengthM, nickel, hrc, fx }) 
     millCost = r2(matCost + convCost);
     fairLow = r2(millCost * MARGIN_LOW);
     fairHigh = r2(millCost * MARGIN_HIGH);
+  } else if (shape === 'plate') {
+    // Plate: coil cost (NO yield-loss division — that's tube-forming scrap,
+    // doesn't apply to a slit sheet) + flat slitting fee + processing %.
+    const factor = material === 'gi' ? GI_COIL_FACTOR : 1;
+    coilRmKg = r2(hrc * fx / 1000 * factor);
+    matCost = r2(kg * coilRmKg);
+    convCost = r2(kg * PLATE_SLITTING_RM_MT / 1000); // slitting fee (shown as "conversion" for the shared UI)
+    const midProc = (PLATE_PROCESSING_LOW + PLATE_PROCESSING_HIGH) / 2;
+    millCost = r2(matCost * (1 + midProc) + convCost);
+    fairLow = r2(matCost * (1 + PLATE_PROCESSING_LOW) + convCost);
+    fairHigh = r2(matCost * (1 + PLATE_PROCESSING_HIGH) + convCost);
   } else {
-    // MS / GI: coil from HRC (USD/t, the shared market number); conversion
-    // AND mill margin are per metre (validated against real quotes).
+    // MS / GI hollow & flat bar: coil from HRC (USD/t, the shared market
+    // number); conversion AND mill margin are per metre (validated against
+    // real quotes).
     const factor = material === 'gi' ? GI_COIL_FACTOR : 1;
     const convM = material === 'gi' ? GI_CONV_RM_M : MS_CONV_RM_M;
     const band = material === 'gi' ? GI_BAND : MS_BAND;
@@ -225,6 +264,8 @@ export default function SSMonitor({ session, selected }) {
   const kg = useMemo(() => {
     const o = Number(kgOverride);
     if (o > 0) return o;
+    if (shape === 'plate') return plateKg(Number(od), Number(dimB), wallActual, mat.density);
+    if (shape === 'flatbar') return flatBarKg(Number(od), wallActual, Number(lengthM), mat.density);
     return sectionKg(shape, Number(od), Number(dimB), wallActual, Number(lengthM), mat.density);
   }, [shape, od, dimB, wallActual, lengthM, kgOverride, mat.density]);
 
@@ -232,7 +273,7 @@ export default function SSMonitor({ session, selected }) {
 
   const runEval = () => {
     if (!canEval) return;
-    setResult(evaluate({ material, list: Number(list), d1: Number(d1) || 0, d2: Number(d2) || 0, d3: Number(d3) || 0, kg, lengthM: Number(lengthM) || 6, nickel: nickel.usd, hrc, fx }));
+    setResult(evaluate({ material, shape, list: Number(list), d1: Number(d1) || 0, d2: Number(d2) || 0, d3: Number(d3) || 0, kg, lengthM: Number(lengthM) || 6, nickel: nickel.usd, hrc, fx }));
   };
 
   const saveEval = async () => {
@@ -285,14 +326,14 @@ export default function SSMonitor({ session, selected }) {
     let proj = null;
     if (nickel && result) {
       const nextNi = nickel.usd + (nickel.usd - nickel.prev);
-      const e = evaluate({ material, list: Number(list) || 0, d1: Number(d1) || 0, d2: Number(d2) || 0, d3: Number(d3) || 0,
+      const e = evaluate({ material, shape, list: Number(list) || 0, d1: Number(d1) || 0, d2: Number(d2) || 0, d3: Number(d3) || 0,
                            kg, lengthM: Number(lengthM) || 6, nickel: nextNi, hrc, fx });
       proj = e.fairMid;
     }
     const values = pts.flatMap(p => [p.low, p.high, p.nett]).concat(proj ? [proj] : []);
     const min = Math.min(...values) - 1.5, max = Math.max(...values) + 1.5;
     return { pts, proj, min, max };
-  }, [history, itemCode, result, nickel, hrc, material, list, d1, d2, d3, kg, lengthM, fx]);
+  }, [history, itemCode, result, nickel, hrc, material, shape, list, d1, d2, d3, kg, lengthM, fx]);
 
   const box = { background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 };
   const lbl = { fontSize: 10.5, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase', color: C.muted, marginBottom: 8 };
@@ -353,9 +394,9 @@ export default function SSMonitor({ session, selected }) {
                 <div><label style={flbl}>+ Disc 3 (%)</label>
                   <input style={fld} inputMode="decimal" value={d3} onChange={e => setD3(e.target.value)} placeholder="e.g. 3" /></div>
               </div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                {SHAPES.map(s => (
-                  <button key={s.key} onClick={() => { setShape(s.key); setKgOverride(''); }}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                {SHAPES.filter(s => s.kind === 'hollow').map(s => (
+                  <button key={s.key} onClick={() => { setShape(s.key); setKgOverride(''); setFinish('cq'); }}
                     style={{ flex: 1, padding: '6px 0', borderRadius: 7, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                       border: `1px solid ${shape === s.key ? C.accent : C.border}`,
                       background: shape === s.key ? C.accentLight : C.white,
@@ -364,38 +405,66 @@ export default function SSMonitor({ session, selected }) {
                   </button>
                 ))}
               </div>
-              {material !== 'ss304' && (
-                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                  {FINISHES.map(f => (
-                    <button key={f.key} onClick={() => setKgOverride('') || setFinish(f.key)}
-                      title={f.note}
-                      style={{ flex: 1, padding: '5px 0', borderRadius: 7, fontWeight: 700, fontSize: 10.5, cursor: 'pointer',
-                        border: `1px solid ${finish === f.key ? C.navy : C.border}`,
-                        background: finish === f.key ? C.navy : C.white,
-                        color: finish === f.key ? C.white : C.muted }}>
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: shape === 'rect' ? '1fr 1fr 1fr 1fr 1.1fr' : '1fr 1fr 1fr 1.2fr', gap: 8 }}>
-                <div><label style={flbl}>{SHAPES.find(s => s.key === shape).dimA}</label>
-                  <input style={fld} inputMode="decimal" value={od} onChange={e => { setOd(e.target.value); setKgOverride(''); }} /></div>
-                {shape === 'rect' && (
-                  <div><label style={flbl}>Height (mm)</label>
-                    <input style={fld} inputMode="decimal" value={dimB} onChange={e => { setDimB(e.target.value); setKgOverride(''); }} placeholder="25" /></div>
-                )}
-                <div><label style={flbl}>Wall (mm) — nominal</label>
-                  <input style={fld} inputMode="decimal" value={wall} onChange={e => { setWall(e.target.value); setKgOverride(''); }} /></div>
-                <div><label style={flbl}>Length (m)</label>
-                  <input style={fld} inputMode="decimal" value={lengthM} onChange={e => { setLengthM(e.target.value); setKgOverride(''); }} /></div>
-                <div><label style={flbl}>Weight kg/pc</label>
-                  <input style={{ ...fld, background: C.gray }} inputMode="decimal" value={kgOverride || (kg || '')}
-                    onChange={e => setKgOverride(e.target.value)} placeholder="auto" /></div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                {SHAPES.filter(s => s.kind === 'solid').map(s => (
+                  <button key={s.key} onClick={() => { setShape(s.key); setKgOverride(''); setFinish('plate'); }}
+                    style={{ flex: 1, padding: '6px 0', borderRadius: 7, fontWeight: 700, fontSize: 11, cursor: 'pointer',
+                      border: `1px solid ${shape === s.key ? C.accent : C.border}`,
+                      background: shape === s.key ? C.accentLight : C.white,
+                      color: shape === s.key ? C.accent : C.muted }}>
+                    {s.key === 'plate' ? '▦' : '➖'} {s.label}
+                  </button>
+                ))}
               </div>
+              {material !== 'ss304' && (
+                (shape === 'plate' || shape === 'flatbar') ? (
+                  <div style={{ fontSize: 10, color: C.muted, marginBottom: 8 }}>
+                    Using <b>Plate/Flat bar</b> tolerance (~3.5% under nominal) — fixed for solid shapes.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                    {FINISHES.map(f => (
+                      <button key={f.key} onClick={() => setKgOverride('') || setFinish(f.key)}
+                        title={f.note}
+                        style={{ flex: 1, padding: '5px 0', borderRadius: 7, fontWeight: 700, fontSize: 10.5, cursor: 'pointer',
+                          border: `1px solid ${finish === f.key ? C.navy : C.border}`,
+                          background: finish === f.key ? C.navy : C.white,
+                          color: finish === f.key ? C.white : C.muted }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                )
+              )}
+              {(() => {
+                const shapeDef = SHAPES.find(s => s.key === shape);
+                const hasDimB = !!shapeDef.dimB;
+                const showLengthM = shape !== 'plate';
+                const wallLabel = (shape === 'plate' || shape === 'flatbar') ? 'Thickness (mm) — nominal' : 'Wall (mm) — nominal';
+                const cols = ['1fr', ...(hasDimB ? ['1fr'] : []), '1fr', ...(showLengthM ? ['1fr'] : []), '1.2fr'];
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: cols.join(' '), gap: 8 }}>
+                    <div><label style={flbl}>{shapeDef.dimA}</label>
+                      <input style={fld} inputMode="decimal" value={od} onChange={e => { setOd(e.target.value); setKgOverride(''); }} /></div>
+                    {hasDimB && (
+                      <div><label style={flbl}>{shapeDef.dimB}</label>
+                        <input style={fld} inputMode="decimal" value={dimB} onChange={e => { setDimB(e.target.value); setKgOverride(''); }} placeholder={shape === 'plate' ? 'e.g. 2438' : '25'} /></div>
+                    )}
+                    <div><label style={flbl}>{wallLabel}</label>
+                      <input style={fld} inputMode="decimal" value={wall} onChange={e => { setWall(e.target.value); setKgOverride(''); }} /></div>
+                    {showLengthM && (
+                      <div><label style={flbl}>Length (m)</label>
+                        <input style={fld} inputMode="decimal" value={lengthM} onChange={e => { setLengthM(e.target.value); setKgOverride(''); }} /></div>
+                    )}
+                    <div><label style={flbl}>Weight kg/pc</label>
+                      <input style={{ ...fld, background: C.gray }} inputMode="decimal" value={kgOverride || (kg || '')}
+                        onChange={e => setKgOverride(e.target.value)} placeholder="auto" /></div>
+                  </div>
+                );
+              })()}
               {material !== 'ss304' && Number(wall) > 0 && !kgOverride && (
                 <div style={{ fontSize: 10.5, color: C.accent, marginTop: 4, fontWeight: 700 }}>
-                  Actual wall used for weight: {wallActual.toFixed(3)}mm ({Math.round((1 - wallActual / Number(wall)) * 100)}% under nominal, {FINISHES.find(f => f.key === finish).label} basis)
+                  Actual {(shape === 'plate' || shape === 'flatbar') ? 'thickness' : 'wall'} used for weight: {wallActual.toFixed(3)}mm ({Math.round((1 - wallActual / Number(wall)) * 100)}% under nominal, {FINISHES.find(f => f.key === finish).label} basis)
                 </div>
               )}
               <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>
@@ -449,6 +518,12 @@ export default function SSMonitor({ session, selected }) {
                           <tr style={{ borderTop: `1px solid ${C.border}` }}><td style={{ fontWeight: 700, padding: '2px 0' }}>Estimated full mill cost</td><td style={{ textAlign: 'right', fontWeight: 800 }}>≈ {result.millCost.toFixed(2)}</td></tr>
                           <tr><td style={{ color: C.red, fontWeight: 700, padding: '2px 0' }}>Mill margin at this offer</td><td style={{ textAlign: 'right', fontWeight: 800, color: C.red }}>{result.marginRm.toFixed(2)} ({result.marginPct}%)</td></tr>
                         </>
+                      ) : shape === 'plate' ? (
+                        <>
+                          <tr><td style={{ color: C.muted, padding: '2px 0' }}>Slitting (RM{PLATE_SLITTING_RM_MT}/MT × {kg}kg)</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{result.convCost.toFixed(2)}</td></tr>
+                          <tr style={{ borderTop: `1px solid ${C.border}` }}><td style={{ fontWeight: 700, padding: '2px 0' }}>Model fair nett (+{Math.round((PLATE_PROCESSING_LOW + PLATE_PROCESSING_HIGH) / 2 * 100)}% processing)</td><td style={{ textAlign: 'right', fontWeight: 800 }}>≈ {result.millCost.toFixed(2)}</td></tr>
+                          <tr><td style={{ color: result.devPct > 0 ? C.red : C.green, fontWeight: 700, padding: '2px 0' }}>Offer vs model</td><td style={{ textAlign: 'right', fontWeight: 800, color: result.devPct > 0 ? C.red : C.green }}>{result.devPct > 0 ? '+' : ''}{result.devPct.toFixed(1)}%</td></tr>
+                        </>
                       ) : (
                         <>
                           <tr><td style={{ color: C.muted, padding: '2px 0' }}>Forming + welding + mill margin (RM{(material === 'gi' ? GI_CONV_RM_M : MS_CONV_RM_M).toFixed(2)}/m × {Number(lengthM) || 6}m)</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{result.convCost.toFixed(2)}</td></tr>
@@ -461,8 +536,9 @@ export default function SSMonitor({ session, selected }) {
                   <div style={{ fontSize: 10.5, color: C.muted, marginTop: 6 }}>
                     Conversion premium: <b>RM{result.premiumKg.toFixed(2)}/kg</b> over coil{material === 'ss304' ? ' (fair band 3.50–5.00)' : ''}
                     {material === 'gi' ? <> · <b>GI model provisional</b> — give one real GI quote to calibrate</> : null}
+                    {shape === 'plate' ? <> · <b>plate model provisional</b> — give one real MS plate quote to calibrate slitting/processing</> : null}
                     {material === 'ss304' && niDeltaPct !== 0 && <> · nickel {niDeltaPct < 0 ? 'down' : 'up'} {Math.abs(niDeltaPct)}% since last update</>}
-                    {material !== 'ss304' && <> · plate benchmark ≈ RM{Math.round(hrc * fx)}/MT</>}
+                    {material !== 'ss304' && <> · HRC benchmark ≈ RM{Math.round(hrc * fx)}/MT</>}
                   </div>
                 </>
               )}
@@ -483,7 +559,9 @@ export default function SSMonitor({ session, selected }) {
                   <div style={{ fontSize: 10.5, opacity: .9, lineHeight: 1.55, borderTop: '1px solid #39567a', paddingTop: 8 }}>
                     <b>Justification:</b> {material === 'ss304'
                       ? <>the 304 alloy surcharge tracks LME nickel{niDeltaPct < 0 ? ` — down ${Math.abs(niDeltaPct)}% since the last update (≈ −RM${r2(kg * NI_FACTOR * Math.abs(nickel.usd - nickel.prev) * fx / 1000 / YIELD_FACTOR).toFixed(2)}/pc coil cost)` : ''}</>
-                      : <>hollow/pipe cost tracks HRC coil — at US${hrc}/t (≈RM{r2(hrc * fx / 1000).toFixed(2)}/kg) plus the usual RM0.33/m mill charge, fair nett works out to RM{result.fairMid.toFixed(2)}</>}.
+                      : shape === 'plate'
+                      ? <>flat plate tracks HRC coil directly — at US${hrc}/t (≈RM{r2(hrc * fx / 1000).toFixed(2)}/kg) plus ~RM{PLATE_SLITTING_RM_MT}/MT slitting and {Math.round(PLATE_PROCESSING_LOW * 100)}–{Math.round(PLATE_PROCESSING_HIGH * 100)}% processing, fair nett works out to RM{result.fairMid.toFixed(2)}</>
+                      : <>hollow/pipe cost tracks HRC coil — at US${hrc}/t (≈RM{r2(hrc * fx / 1000).toFixed(2)}/kg) plus the usual RM{(material === 'gi' ? GI_CONV_RM_M : MS_CONV_RM_M).toFixed(2)}/m mill charge, fair nett works out to RM{result.fairMid.toFixed(2)}</>}.
                     The price should follow the market.
                   </div>
                 </>

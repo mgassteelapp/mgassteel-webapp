@@ -614,7 +614,7 @@ export default function App() {
 
 
   const TABS = [
-    { key:"assistant", label:"🤖 Pembantu AI" },
+    { key:"assistant", label:"🔍 Check Harga & Stok" },
     { key:"plate", label:"🛠️ Service Center" },
     { key:"katalog", label:"📖 Katalog & Kira Berat" },
     ...(hasPerm(session, "quote") ? [

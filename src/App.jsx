@@ -954,13 +954,18 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                 );
                 return (
                   <div style={{ marginTop:8, background:"#fffbea", border:"1px solid #fde68a", borderRadius:8, padding:"10px 12px" }}>
+                    {d.sync_stale_days > 1 && (
+                      <div style={{ fontSize:11, fontWeight:700, color:C.red, marginBottom:8 }}>
+                        ⚠️ Sync stok CRM tertangguh {d.sync_stale_days} hari (terakhir disegerak: {d.stock_as_of}) — angka "Stok" di atas mungkin belum termasuk DO terkini. Sila maklumkan IT/pentadbir sync.
+                      </div>
+                    )}
                     <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
                       {cell("Anggaran Stok utk Jualan", d.projected_for_sale, C.navy)}
                       {cell("Stok Sebenar utk Jualan (Sebenar)", d.true_actual_for_sale, C.navy)}
                       {cell("Anggaran Stok (+PO)", d.projected, C.green)}
                     </div>
                     <div style={{ fontSize:10, color:"#92702a", marginTop:8, lineHeight:1.5 }}>
-                      Anggaran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir), minimum 0. Stok Sebenar = Stok − DO ({d.do_30d} unit, {d.window_days} hari terakhir), minimum 0 — DO mungkin belum dipotong dalam SQL sehingga invois dikeluarkan. Anggaran (+PO) = Anggaran Jualan + PO belum sampai ({d.outstanding_po} unit, {d.po_window_months} bulan terakhir sahaja — PO lebih lama dianggap void, tidak dikira).
+                      Anggaran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir), minimum 0. Stok Sebenar = Stok − DO belum disegerak ({d.do_pending} unit, sejak {d.do_window_start}), minimum 0 — SQL Account memotong stok semasa DO disimpan, bukan invois; ini hanya menutup jurang sync. Anggaran (+PO) = Anggaran Jualan + PO belum sampai ({d.outstanding_po} unit, {d.po_window_months} bulan terakhir sahaja — PO lebih lama dianggap void, tidak dikira).
                       <br /><b>{d.scope_note}</b>
                     </div>
                   </div>

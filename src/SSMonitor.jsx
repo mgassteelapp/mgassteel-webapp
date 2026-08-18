@@ -394,25 +394,15 @@ export default function SSMonitor({ session, selected }) {
                 <div><label style={flbl}>+ Disc 3 (%)</label>
                   <input style={fld} inputMode="decimal" value={d3} onChange={e => setD3(e.target.value)} placeholder="e.g. 3" /></div>
               </div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                {SHAPES.filter(s => s.kind === 'hollow').map(s => (
-                  <button key={s.key} onClick={() => { setShape(s.key); setKgOverride(''); setFinish('cq'); }}
-                    style={{ flex: 1, padding: '6px 0', borderRadius: 7, fontWeight: 700, fontSize: 11, cursor: 'pointer',
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                {SHAPES.map(s => (
+                  <button key={s.key}
+                    onClick={() => { setShape(s.key); setKgOverride(''); setFinish(s.kind === 'solid' ? 'plate' : 'cq'); }}
+                    style={{ flex: '1 1 auto', minWidth: 90, padding: '6px 0', borderRadius: 7, fontWeight: 700, fontSize: 11, cursor: 'pointer',
                       border: `1px solid ${shape === s.key ? C.accent : C.border}`,
                       background: shape === s.key ? C.accentLight : C.white,
                       color: shape === s.key ? C.accent : C.muted }}>
-                    {s.key === 'round' ? '⭕' : s.key === 'square' ? '⬛' : '▭'} {s.label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                {SHAPES.filter(s => s.kind === 'solid').map(s => (
-                  <button key={s.key} onClick={() => { setShape(s.key); setKgOverride(''); setFinish('plate'); }}
-                    style={{ flex: 1, padding: '6px 0', borderRadius: 7, fontWeight: 700, fontSize: 11, cursor: 'pointer',
-                      border: `1px solid ${shape === s.key ? C.accent : C.border}`,
-                      background: shape === s.key ? C.accentLight : C.white,
-                      color: shape === s.key ? C.accent : C.muted }}>
-                    {s.key === 'plate' ? '▦' : '➖'} {s.label}
+                    {s.key === 'round' ? '⭕' : s.key === 'square' ? '⬛' : s.key === 'rect' ? '▭' : s.key === 'plate' ? '▦' : '➖'} {s.label}
                   </button>
                 ))}
               </div>

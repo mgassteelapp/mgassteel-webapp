@@ -729,6 +729,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
   const [codeSearch,      setCodeSearch]      = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [calcQty,         setCalcQty]         = useState("");
+  const [stockMap,        setStockMap]        = useState({}); // itemCode -> {qty,branches,as_of} | 'loading' | null
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, thinking]);
@@ -744,6 +745,40 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                (p.size||"").toLowerCase().includes(sl);
       })
     : [];
+
+  // ── Stock balance (SQL sync, live from CRM) — all staff, no permission
+  // gate. Fetched in small batches for the visible search results, and for
+  // whichever product is open in the calculator, so it doubles as the
+  // starting point for a future Cadangan PO. Branches: tanah_merah = HQ,
+  // pasir_puteh = PP.
+  const fetchStock = (codes) => {
+    const need = [...new Set(codes)].filter(c => c && !(c in stockMap));
+    if (!need.length) return;
+    setStockMap(m => { const n = { ...m }; need.forEach(c => { n[c] = 'loading'; }); return n; });
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'stock', codes: need } });
+        const results = data?.stock || [];
+        const byCode = {}; results.forEach(r => { byCode[r.code] = r; });
+        setStockMap(m => { const n = { ...m }; need.forEach(c => { n[c] = byCode[c] || null; }); return n; });
+      } catch {
+        setStockMap(m => { const n = { ...m }; need.forEach(c => { n[c] = null; }); return n; });
+      }
+    })();
+  };
+  useEffect(() => { fetchStock(codeResults.slice(0, 15).map(p => p.itemCode)); }, [codeResults]); // eslint-disable-line
+  useEffect(() => { if (selectedProduct?.itemCode) fetchStock([selectedProduct.itemCode]); }, [selectedProduct]); // eslint-disable-line
+
+  const BRANCH_LABEL = { tanah_merah: 'HQ', pasir_puteh: 'PP' };
+  const stockBadge = (code) => {
+    const s = stockMap[code];
+    if (s === 'loading') return <span style={{ color:C.muted }}>…</span>;
+    if (!s) return <span style={{ color:'#cbd5e1' }}>—</span>;
+    const parts = (s.branches||[]).map(b => `${BRANCH_LABEL[b.branch]||b.branch} ${b.qty}`).join(' · ');
+    return <span title={`as of ${s.as_of||'—'}`} style={{ fontWeight:700, color: s.qty>0 ? C.navy : C.red }}>
+      {s.qty}{parts ? <span style={{ fontWeight:500, color:C.muted, fontSize:10 }}> ({parts})</span> : null}
+    </span>;
+  };
 
   // ── Tier-based Pricing Engine (uses real Qty_min tiers from sheet) ─────────
   const calcResult = selectedProduct && parseFloat(calcQty) > 0 ? (() => {
@@ -813,14 +848,14 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
               ? <div style={{ color:C.muted, fontSize:12, padding:"8px 0" }}>Tiada produk dijumpai untuk "{codeSearch}"</div>
               : (
                 <div style={{ border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
-                    {["Kod","Produk","Harga", ...(session?.role==='owner' ? ["Kos"] : [])].map(h=>(
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1.3fr 1fr", background:C.navy, padding:"7px 12px", gap:8 }}>
+                    {["Kod","Produk","Harga","Stok", ...(session?.role==='owner' ? ["Kos"] : [])].map(h=>(
                       <div key={h} style={{ color:C.white, fontSize:10, fontWeight:700, textTransform:"uppercase" }}>{h}</div>
                     ))}
                   </div>
                   {codeResults.slice(0,15).map((p,i)=>(
                     <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); }}
-                      style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, cursor:"pointer" }}>
+                      style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1.3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
                       <div>
                         <div style={{ fontSize:12, fontWeight:700, color:C.navy }}>{p.product}</div>
@@ -829,6 +864,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       <div style={{ fontWeight:800, fontSize:12, color:(p.retailPrice||p.price)>0?C.accent:"#cbd5e1" }}>
                         {(p.retailPrice||p.price)>0?`RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}`:"—"}
                       </div>
+                      <div style={{ fontSize:11 }}>{stockBadge(p.itemCode)}</div>
                      {session?.role==='owner' && (
                       <div style={{ fontWeight:500, fontSize:12, color:C.navy }}>
                         {p.cost>0 ? `RM ${fmtPrice(p.cost)}` : "—"}
@@ -859,6 +895,23 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                 <div style={{ color:"#94a3b8", fontSize:12 }}>{selectedProduct.itemCode} | {selectedProduct.category}</div>
               </div>
               <button onClick={()=>setSelectedProduct(null)} style={{ background:"transparent", border:"none", color:"#94a3b8", fontSize:20, cursor:"pointer" }}>×</button>
+            </div>
+            <div style={{ padding:"10px 16px 0" }}>
+              {(() => {
+                const s = stockMap[selectedProduct.itemCode];
+                if (s === 'loading') return <div style={{ fontSize:11, color:C.muted }}>Menyemak stok…</div>;
+                if (!s) return <div style={{ fontSize:11, color:C.muted }}>Stok tiada data</div>;
+                const branchQty = (key) => (s.branches||[]).find(b=>b.branch===key)?.qty ?? 0;
+                return (
+                  <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", background:C.gray, border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 12px" }}>
+                    <span style={{ fontSize:10, fontWeight:700, color:C.muted, textTransform:"uppercase" }}>Stok</span>
+                    <span style={{ fontWeight:900, fontSize:16, color: s.qty>0 ? C.navy : C.red }}>{s.qty}</span>
+                    <span style={{ fontSize:11, color:C.muted }}>HQ <b style={{ color:C.text }}>{branchQty('tanah_merah')}</b> · PP <b style={{ color:C.text }}>{branchQty('pasir_puteh')}</b></span>
+                    {s.damaged_qty>0 && <span style={{ fontSize:10.5, color:C.red }}>({s.damaged_qty} rosak, tak dikira)</span>}
+                    {s.as_of && <span style={{ marginLeft:"auto", fontSize:10, color:"#94a3b8" }}>as of {s.as_of}</span>}
+                  </div>
+                );
+              })()}
             </div>
             <div style={{ padding:16 }}>
               <div style={{ marginBottom:12 }}>

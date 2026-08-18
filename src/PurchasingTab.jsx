@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from './supabase';
+import SSMonitor from './SSMonitor';
 
 // USD/MYR live rate. Note this is api.frankfurter.dev/v1 — the older
 // api.frankfurter.app URL 301s here WITHOUT CORS headers on the redirect,
@@ -479,6 +480,9 @@ export default function PurchasingTab({ prices = [], session }) {
               </div>
             </div>
           </div>
+
+          {/* SS Discount Monitor — collapsible, owner+manager (same gate as this tab) */}
+          <SSMonitor session={session} selected={selected} />
 
           <div style={{ textAlign:'center', fontSize:10, color:C.muted, marginTop:10 }}>
             Jualan, PO, penerimaan & stok dari CRM (SQL Accounting) melalui proxy selamat. Family matching sama dengan Semakan PO. Read-only.

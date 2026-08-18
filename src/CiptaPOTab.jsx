@@ -348,7 +348,7 @@ export default function CiptaPOTab({ prices = [], session }) {
     <div style={{ fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
       <div style={{ background:C.amberBg, color:C.amber, borderRadius:10, padding:'8px 14px',
                     fontSize:11.5, fontWeight:700, marginBottom:12 }}>
-        🧪 Tab ujian — Owner sahaja. Draf PO di sini TIDAK dihantar ke sistem perakaunan (SQL Accounting) —
+        🧪 Tab ujian — Owner & Manager. Draf PO di sini TIDAK dihantar ke sistem perakaunan (SQL Accounting) —
         ia hanya untuk rujukan dalaman & dihantar kepada supplier sebagai gambar.
       </div>
 

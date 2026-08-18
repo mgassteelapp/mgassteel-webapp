@@ -635,12 +635,12 @@ export default function App() {
     ] : []),
     ...(canAccessPurchasing(session) ? [
       { key:"purchasing", label:"Cadangan PO" },
+      { key:"ciptapo",    label:"🧾 Cipta PO (Uji)" },
     ] : []),
     ...(hasPerm(session, "queries") ? [
       { key:"queries", label:"❓ Pertanyaan Harga" },
     ] : []),
     ...(session.role==="owner" ? [
-      { key:"ciptapo",  label:"🧾 Cipta PO (Uji)" },
       { key:"activity", label:"📊 Aktiviti" },
       { key:"users",    label:"👥 Pengguna" },
     ] : []),
@@ -705,7 +705,7 @@ export default function App() {
         {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
         {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}
         {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
-        {tab==="ciptapo"   && session.role==="owner" && <CiptaPOTab prices={prices} session={session} />}
+        {tab==="ciptapo"   && canAccessPurchasing(session) && <CiptaPOTab prices={prices} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}

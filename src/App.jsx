@@ -8,43 +8,6 @@ import QuotationTab from './QuotationTab';
 import PurchasingTab from './PurchasingTab';
 
 
-// ── Google Sheets API ─────────────────────────────────────────────────────────
-// ── Deals & Scenarios — stored in Supabase (the old Google Apps Script
-// backend is dead; every feature now shares the same database) ──────────────
-async function loadDeals() {
-  const { data, error } = await supabase.from('deals')
-    .select('*').order('created_at', { ascending: false }).limit(300);
-  if (error) throw error;
-  return (data || []).map(r => ({
-    id: r.id,
-    date: r.deal_date || "",
-    invoiceNo: r.invoice_no || "",
-    product: r.product || "",
-    quantity: r.quantity || "",
-    unit: r.unit || "pcs",
-    originalPrice: r.original_price != null ? String(r.original_price) : "",
-    discountPct: r.discount_pct != null ? String(r.discount_pct) : "",
-    finalPrice: r.final_price != null ? String(r.final_price) : "",
-    reason: r.reason || "",
-    staff: r.staff || "",
-    photoRef: r.photo_ref || "",
-    notes: r.notes || "",
-  }));
-}
-
-async function loadScenarios() {
-  const { data, error } = await supabase.from('scenarios')
-    .select('*').order('id', { ascending: false });
-  if (error) throw error;
-  return (data || []).map(r => ({
-    id: r.id,
-    situation: r.situation || "",
-    keywords: r.keywords || "",
-    answer: r.answer || "",
-    addedAt: r.created_at ? new Date(r.created_at).toLocaleDateString("en-MY") : "",
-  }));
-}
-
 // ── Load functions (from Google Sheets, fallback to local) ────────────────────
 async function loadPrices() {
   try {
@@ -83,46 +46,8 @@ async function loadPrices() {
 }
 
 
-// ── Save functions (to Supabase) ─────────────────────────────────────────────
-async function saveDealToDb(deal, createdBy) {
-  const { error } = await supabase.from('deals').insert({
-    deal_date:      deal.date || null,
-    invoice_no:     deal.invoiceNo || "",
-    product:        deal.product || "",
-    quantity:       deal.quantity || "",
-    unit:           deal.unit || "pcs",
-    original_price: parseFloat(deal.originalPrice) || null,
-    discount_pct:   parseFloat(deal.discountPct) || null,
-    final_price:    parseFloat(deal.finalPrice) || null,
-    reason:         deal.reason || "",
-    staff:          deal.staff || "",
-    photo_ref:      deal.photoRef || "",
-    notes:          deal.notes || "",
-    created_by:     createdBy || "",
-  });
-  return { success: !error, error: error?.message };
-}
-async function saveScenarioToDb(scenario) {
-  const { data, error } = await supabase.from('scenarios')
-    .insert({ situation: scenario.situation, keywords: scenario.keywords || "", answer: scenario.answer })
-    .select('id').single();
-  return { success: !error, id: data?.id, error: error?.message };
-}
-async function updateScenarioInDb(scenario) {
-  const { error } = await supabase.from('scenarios')
-    .update({ situation: scenario.situation, keywords: scenario.keywords || "", answer: scenario.answer, updated_at: new Date().toISOString() })
-    .eq('id', scenario.id);
-  return { success: !error, error: error?.message };
-}
-async function deleteScenarioFromDb(id) {
-  const { error } = await supabase.from('scenarios').delete().eq('id', id);
-  return { success: !error, error: error?.message };
-}
-
 // ── Legacy local save (kept as fallback) ─────────────────────────────────────
-async function saveDeals(d)    { try { await window.storage.set("mgas_deals",     JSON.stringify(d)); } catch {} }
 async function savePrices(p)   { try { await window.storage.set("mgas_prices",    JSON.stringify(p)); } catch {} }
-async function saveScenarios(s){ try { await window.storage.set("mgas_scenarios", JSON.stringify(s)); } catch {} }
 
 // ── Sample prices ─────────────────────────────────────────────────────────────
 const SAMPLE_PRICES = [
@@ -243,8 +168,6 @@ async function logActivity(staff, action, detail="") {
 const CATEGORIES = ["Pipe","Hollow Section","Angle Bar","Plate","Round Bar","Sheet","Prezinc","Stainless Steel","Other"];
 const GRADES     = ["MS","SS304","SS316","GI","Galvanised","Other"];
 const UNITS      = ["length","kg","meter","sheet","pc"];
-const REASONS    = ["Hollow / Black Pipe - Kemek (Forklift)","Hollow / Black Pipe - Kemek (Kepala / Bekas Kayu)","Hollow / Black Pipe - Karat","Besi Belok","Salah Hantar","Angle Kemek","Lain-lain"];
-const STAFF_LIST = ["Izzati","Natasha","Mohd Iqbal","Syafiq","Azhar","Han KY","Puteri","Su","Weelee (Admin)","Looi (HQ)","Fei (Accounts)","Mira (Purchase)"];
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", blue:"#1e40af", blueLight:"#dbeafe", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
@@ -274,75 +197,6 @@ const Alert = ({ children, color="green" }) => {
   const s = m[color]||m.green;
   return <div style={{ background:s.bg, border:`1px solid ${s.border}`, borderRadius:10, padding:"11px 16px", marginBottom:12, color:s.text, fontWeight:600, fontSize:13 }}>{children}</div>;
 };
-function monthKey(d) { const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`; }
-function monthLabel(k) { const [y,m]=k.split("-"); return new Date(y,m-1,1).toLocaleString("en-MY",{month:"long",year:"numeric"}); }
-
-
-// ── Rules engine ──────────────────────────────────────────────────────────────
-function getRulesAnswer(text, prices=[], scenarios=[]) {
-  const t = text.toLowerCase();
-  const has = (...w) => w.some(x=>t.includes(x));
-  const getQty = () => { const m=t.match(/\b(\d+)\s*(btg|pcs|keping|biji|unit|batang|length|helai)/); return m?parseInt(m[1]):null; };
-  const getRm  = () => { const m=t.match(/rm\s?([\d,]+)/i); return m?parseFloat(m[1].replace(",","")):null; };
-
-  // 1. Check saved scenarios first
-  if (scenarios.length > 0) {
-    const words = t.split(/\s+/).filter(w=>w.length>2);
-    const match = scenarios.find(s => {
-      const sk = s.keywords.toLowerCase();
-      return words.filter(w=>sk.includes(w)).length >= 2;
-    });
-    if (match) return `**Berdasarkan senario yang disimpan:**\n\n${match.answer}\n\n_— Senario: "${match.situation}"_`;
-  }
-
-  // 2. Price lookup
-  const words = t.split(/\s+/).filter(w=>w.length>1);
-  const matched = prices.filter(p => p.price>0 && words.some(w =>
-    p.product.toLowerCase().includes(w) || p.size.toLowerCase().includes(w) || p.category.toLowerCase().includes(w)
-  ));
-  const priceInfo = matched.length>0
-    ? "\n\n**Harga semasa dalam senarai:**\n" + matched.slice(0,3).map(p=>`• ${p.product} ${p.size||""} (${p.grade}) — RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)} / ${p.unit}`).join("\n")
-    : "";
-
-  // 3. Rule-based decisions
-  if (has("potong","cut","cutting","drill","gerudi","fabri","bend","lentur")) {
-    return `**Apa yang perlu dibuat:**\nJangan bagi sebarang harga. Kumpul maklumat dahulu, kemudian hubungi boss.\n\n**Diskaun dibenarkan:** Tiada — jangan quote harga langsung\n\n**Perlu hubungi boss?** ✅ YA — WAJIB\n\n**Maklumat yang perlu dikumpul:**\n• Jenis produk & saiz semasa\n• Saiz potongan & bilangan potongan\n• Tarikh diperlukan\n• Nama & nombor pelanggan\n\n**Apa yang perlu dikatakan:**\n_"Boleh saya dapatkan maklumat lengkap dahulu? Saya akan semak dan maklumkan harga selepas ini."_`;
-  }
-  if (has("salah hantar","hantar salah","terima salah","barang salah","salah item","salah saiz")) {
-    return `**Apa yang perlu dibuat:**\nTawarkan diskaun 5% dahulu. Jika tolak, boleh naik ke 10%. Wajib maklumkan boss selepas.\n\n**Diskaun dibenarkan:** 5% → maksimum 10% (staf boleh luluskan, WAJIB maklum boss selepas)\n\n**Perlu hubungi boss?** ⚠️ Tidak perlu sebelum — WAJIB maklum selepas\n\n**Apa yang perlu dikatakan:**\n_"Maaf atas kesalahan penghantaran. Kami boleh tawarkan diskaun 5% jika bersetuju terima barang ini."_`;
-  }
-  if (has("stainless","ss304","ss316") && has("kemek","dent","rosak","cacat","damage")) {
-    return `**Apa yang perlu dibuat:**\nAmbil foto dahulu (WAJIB). Tawarkan 20%. Jika tolak, boleh naik ke 30%.\n\n**Diskaun dibenarkan:** 20% dahulu → maksimum 30% (staf boleh luluskan)\n\n**Perlu hubungi boss?** ✅ YA — hanya jika pelanggan tolak 30%\n\n**Apa yang perlu dikatakan:**\n_"Barang ini ada sedikit kemek tetapi masih boleh digunakan. Kami boleh tawarkan diskaun 20%."_`;
-  }
-  if (has("berkarat","karat","rust") || (has("mild","ms") && has("kemek","rosak","bengkok","damage","cacat"))) {
-    return `**Apa yang perlu dibuat:**\nAmbil foto dahulu (WAJIB). Tawarkan 20%. Jika tolak, boleh naik ke 30%.\n\n**Diskaun dibenarkan:** 20% → maksimum 30% (staf boleh luluskan). 40% hanya kelulusan boss.\n\n**Perlu hubungi boss?** ✅ YA — jika pelanggan masih tolak 30%\n\n**Apa yang perlu dikatakan:**\n_"Barang ini ada kerosakan/karat tetapi masih boleh digunakan. Kami boleh tawarkan diskaun 20%."_`;
-  }
-  const qty = getQty();
-  if (has("bundle","diskaun","discount","kurang","murah","harga special","harga khas","borong") || (qty!==null&&qty>=21)) {
-    if (qty!==null&&qty<21) {
-      return `**Apa yang perlu dibuat:**\nKuantiti ${qty} unit KURANG daripada 21. Tiada diskaun bundle. Guna harga standard.\n\n**Diskaun dibenarkan:** Tiada — minimum bundle adalah 21 unit\n\n**Perlu hubungi boss?** ❌ Tidak perlu${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Harga kami untuk kuantiti ini adalah harga standard. Diskaun bundle untuk 21 unit ke atas."_`;
-    }
-    return `**Apa yang perlu dibuat:**\nKuantiti ${qty||"21+"} unit layak diskaun bundle. Tawarkan 3–5%.\n\n**Diskaun dibenarkan:** 3% – 5% (staf boleh luluskan)\n\n**Perlu hubungi boss?** ✅ YA — hanya jika pelanggan minta lebih 5%${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Untuk pesanan ${qty||"21+"} unit, kami boleh berikan diskaun bundle 3–5%."_`;
-  }
-  if (has("stok habis","tiada stok","takde stok","saiz lain","ganti","substitute")) {
-    const rm=getRm();
-    if (rm&&rm>1000) return `**Apa yang perlu dibuat:**\nNilai pesanan > RM1,000. JANGAN tawarkan harga. Hubungi boss dahulu.\n\n**Diskaun dibenarkan:** Tiada — WAJIB hubungi boss\n\n**Perlu hubungi boss?** ✅ YA\n\n**Apa yang perlu dikatakan:**\n_"Saiz yang diminta tiada stok. Saya akan semak dan maklumkan tidak lama lagi."_`;
-    return `**Apa yang perlu dibuat:**\nTawarkan saiz gantian dengan diskaun 15% satu kali. Hanya untuk pesanan ≤ RM1,000.\n\n**Diskaun dibenarkan:** 15% khas (staf boleh luluskan jika ≤ RM1,000)${priceInfo}\n\n**Perlu hubungi boss?** ✅ YA — jika nilai > RM1,000\n\n**Apa yang perlu dikatakan:**\n_"Saiz diminta tiada stok. Ada saiz gantian dengan diskaun khas 15% — tawaran sekali sahaja."_`;
-  }
-  if (has("pelanggan lama","pelanggan setia","selalu beli","regular","loyal")) {
-    return `**Apa yang perlu dibuat:**\nPelanggan setia — jangan tolak terus. Maklumkan boss untuk keputusan.\n\n**Diskaun dibenarkan:** Tiada keputusan dari staf — boss yang tentukan\n\n**Perlu hubungi boss?** ✅ YA\n\n**Apa yang perlu dikatakan:**\n_"Terima kasih atas kesetiaan tuan/puan. Biar saya semak dengan pengurusan untuk harga terbaik."_`;
-  }
-  if (has("kredit","credit","tangguh bayar","payment term","hutang")) {
-    return `**Apa yang perlu dibuat:**\nJANGAN bersetuju dengan sebarang terma kredit. Rujuk boss serta-merta.\n\n**Diskaun dibenarkan:** Tidak berkaitan\n\n**Perlu hubungi boss?** ✅ YA — WAJIB\n\n**Apa yang perlu dikatakan:**\n_"Untuk urusan terma bayaran, saya perlu rujuk dengan pihak pengurusan dahulu."_`;
-  }
-  if (has("hantar","deliver","penghantaran","shipping")) {
-    return `**Apa yang perlu dibuat:**\nHarga penghantaran perlu disahkan boss. Jangan bagi anggaran tanpa pengesahan.${priceInfo}\n\n**Diskaun dibenarkan:** Tiada keputusan dari staf\n\n**Perlu hubungi boss?** ✅ YA\n\n**Apa yang perlu dikatakan:**\n_"Boleh saya dapatkan alamat lengkap? Saya akan semak kos penghantaran dan maklumkan."_`;
-  }
-  if (priceInfo) {
-    return `**Apa yang perlu dibuat:**\nSemak harga dalam senarai di bawah. Guna harga standard — tiada diskaun untuk pesanan biasa.\n\n**Diskaun dibenarkan:** Tiada (pesanan standard)\n\n**Perlu hubungi boss?** ❌ Tidak perlu${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Harga semasa untuk produk ini adalah RM [masukkan harga]. Adakah tuan/puan ingin meneruskan?"_`;
-  }
-  return `**Apa yang perlu dibuat:**\nSila nyatakan dengan lebih lanjut — jenis produk, kuantiti, dan situasi (diskaun, rosak, hantar, potong saiz, dll.)\n\n**Perlu hubungi boss?** ⚠️ Hubungi boss jika tidak pasti\n\n**Apa yang perlu dikatakan:**\n_"Biar saya semak dengan pihak kami dan maklumkan tidak lama lagi."_`;
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // MAIN APP
@@ -476,9 +330,7 @@ function LoginScreen({ onLogin, notice }) {
 export default function App() {
   const [session, setSession_] = useState(null);
   const [tab,       setTab]       = useState("assistant");
-  const [deals,     setDeals]     = useState([]);
   const [prices,    setPrices]    = useState([]);
-  const [scenarios, setScenarios] = useState([]);
   const [dcResults, setDcResults] = useState([]);
   const [rcResults, setRcResults] = useState(null);
   const [rcAlert,   setRcAlert]   = useState(null); // {count, runAt} — auto-reconcile discrepancy alert
@@ -515,10 +367,6 @@ export default function App() {
     // Load cached data immediately for instant display
     try {
       const cp = localStorage.getItem("mgas_prices");
-      const cd = localStorage.getItem("mgas_deals");
-      const cs = localStorage.getItem("mgas_scenarios");
-      if (cd) setDeals(JSON.parse(cd));
-      if (cs) setScenarios(JSON.parse(cs));
     } catch {}
 
     // Then refresh from Google Sheets in background
@@ -537,10 +385,6 @@ export default function App() {
       } else {
         setGsStatus("error");
       }
-
-      // deals/scenarios load separately, don't block prices
-      loadDeals().then(d => { setDeals(d); localStorage.setItem("mgas_deals", JSON.stringify(d)); }).catch(()=>{});
-      loadScenarios().then(s => { setScenarios(s); localStorage.setItem("mgas_scenarios", JSON.stringify(s)); }).catch(()=>{});
       } catch(e) {
         setGsStatus("error");
       }
@@ -608,9 +452,7 @@ export default function App() {
     document.body.style.background = '#f0f4f8';
   }
 
-  const persistDeals     = d => { setDeals(d);     saveDeals(d); };      // local backup
   const persistPrices    = p => { setPrices(p);    savePrices(p); };     // local backup
-  const persistScenarios = s => { setScenarios(s); saveScenarios(s); };  // local backup
 
 
   const TABS = [
@@ -623,9 +465,6 @@ export default function App() {
     ...(hasPerm(session, "prices") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
-    { key:"log",       label:"📋 Rekod Tawaran" },
-    { key:"scenarios", label:"🧠 Senario AI" },
-    { key:"summary",   label:"📊 Ringkasan" },
     ...(canAccessDaily(session) ? [
       { key:"daily", label:"📋 Check Daily Sales Price" },
     ] : []),
@@ -657,7 +496,7 @@ export default function App() {
             <div style={{ color:"#94a3b8", fontSize:15, letterSpacing:1  }}>SISTEM KEPUTUSAN HARGA</div>
             <div style={{ marginLeft:"auto", display:"flex", gap:6, alignItems:"center" }}>
               <span style={{ background:"rgba(255,255,255,0.1)", color:"#94a3b8", fontSize:11, padding:"3px 10px", borderRadius:20 }}>
-                {scenarios.length} senario • {prices.filter(p=>p.hasPrice||p.price>0).length} harga aktif
+                {prices.filter(p=>p.hasPrice||p.price>0).length} harga aktif
               </span>
             </div>
           </div>
@@ -695,14 +534,11 @@ export default function App() {
             ⚠️ Semakan PO auto (CRM) menemui {rcAlert.count} pengecualian — klik untuk lihat laporan.
           </div>
         )}
-        {tab==="assistant" && <AssistantTab prices={prices} scenarios={scenarios} gsStatus={gsStatus} session={session} />}
+        {tab==="assistant" && <AssistantTab prices={prices} gsStatus={gsStatus} session={session} />}
         {tab==="plate" && <PlateCalculator session={session} />}
         {tab==="katalog" && <KatalogTab session={session} />}
         {tab==="quote" && <QuotationTab session={session} prices={prices} />}
         {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
-        {tab==="log"       && <LogTab       deals={deals}   setDeals={persistDeals}   prices={prices} session={session} />}
-        {tab==="scenarios" && <ScenariosTab scenarios={scenarios} setScenarios={persistScenarios} session={session} />}
-        {tab==="summary"   && <SummaryTab   deals={deals} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
         {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
@@ -721,7 +557,7 @@ export default function App() {
 // ════════════════════════════════════════════════════════════════════════════
 // TAB 1 — PEMBANTU AI
 // ════════════════════════════════════════════════════════════════════════════
-function AssistantTab({ prices, scenarios, gsStatus, session }) {
+function AssistantTab({ prices, gsStatus, session }) {
   // ── All state hooks first ─────────────────────────────────────────────────
   const [messages,        setMessages]        = useState([]);
   const [input,           setInput]           = useState("");
@@ -832,14 +668,37 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
     return { qty, recPrice, tierLabel, totalPrice, cat, tiers, nextTier, unitType: p.unitType || "" };
   })() : null;
 
-  // ── Send message ──────────────────────────────────────────────────────────
+  // ── Send message (fully AI-driven — calls the ai-chat edge function,
+  // which holds the discount/escalation policy as a system prompt and
+  // calls Claude Haiku) ───────────────────────────────────────────────────
   const send = async () => {
     const text = input.trim(); if (!text || thinking) return;
     setInput("");
     const newMsgs = [...messages, { role:"user", content:text }];
     setMessages(newMsgs); setThinking(true);
-    await new Promise(r => setTimeout(r, 500));
-    setMessages([...newMsgs, { role:"assistant", content:getRulesAnswer(text, prices, scenarios) }]);
+    try {
+      // Lightweight price grounding: same word-match approach as before,
+      // top 5 matches sent as context so the AI doesn't invent prices.
+      const t = text.toLowerCase();
+      const words = t.split(/\s+/).filter(w=>w.length>1);
+      const priceContext = prices
+        .filter(p => p.price>0 && words.some(w =>
+          (p.product||"").toLowerCase().includes(w) || (p.size||"").toLowerCase().includes(w) || (p.category||"").toLowerCase().includes(w)
+        ))
+        .slice(0, 5)
+        .map(p => ({ product:p.product, size:p.size, grade:p.grade, unit:p.unit, price: fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price), p.category), p.category) }));
+
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { messages: newMsgs.map(m => ({ role:m.role, content:m.content })), priceContext },
+      });
+      if (error || !data || data.error) {
+        setMessages([...newMsgs, { role:"assistant", content: `⚠️ ${data?.error || error?.message || "Ralat menghubungi pembantu AI. Cuba lagi."}` }]);
+      } else {
+        setMessages([...newMsgs, { role:"assistant", content: data.reply }]);
+      }
+    } catch (e) {
+      setMessages([...newMsgs, { role:"assistant", content: "⚠️ Ralat menghubungi pembantu AI. Cuba lagi." }]);
+    }
     setThinking(false);
     if (session) logActivity(session, "Soalan AI", text.slice(0, 80));
   };
@@ -847,10 +706,6 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
-      {scenarios.length > 0 && (
-        <Alert color="orange">Pembantu AI telah dipelajari dengan {scenarios.length} senario tambahan.</Alert>
-      )}
-
       {/* Price Checker */}
       <Card style={{ marginBottom:12, padding:"14px 16px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
@@ -1176,443 +1031,6 @@ function PricesTab({ prices, setPrices }) {
     </div>
   );
 }
-
-// ════════════════════════════════════════════════════════════════════════════
-// TAB 3 — REKOD TAWARAN (with invoice number)
-// ════════════════════════════════════════════════════════════════════════════
-function LogTab({ deals, setDeals, prices=[], session }) {
-  const empty = { date:new Date().toISOString().slice(0,10), invoiceNo:"", product:"", quantity:"", unit:"pcs", originalPrice:"", discountPct:"", finalPrice:"", reason:REASONS[0], staff:session?.name||STAFF_LIST[0], photoRef:"", notes:"" };
-  const [form,        setForm]        = useState(empty);
-  const [errors,      setErrors]      = useState({});
-  const [saved,       setSaved]       = useState(false);
-  const [priceSearch, setPriceSearch] = useState("");
-
-  const priceMatches = priceSearch.length>1
-    ? prices.filter(p=>(p.hasPrice||p.price>0||p.retailPrice>0)&&[p.product,p.size||"",p.category,p.itemCode||""].some(v=>v?.toLowerCase().includes(priceSearch.toLowerCase())))
-    : [];
-
-  const set = (k,v) => setForm(f=>{
-    const u={...f,[k]:v};
-    if (k==="originalPrice"||k==="discountPct") {
-      const o=parseFloat(k==="originalPrice"?v:u.originalPrice)||0;
-      const d=parseFloat(k==="discountPct"?v:u.discountPct)||0;
-      if(o>0&&d>0) u.finalPrice=(o*(1-d/100)).toFixed(2);
-    }
-    return u;
-  });
-
-  const validate = () => {
-    const e={};
-    if (!form.product.trim())      e.product="Wajib diisi";
-    if (!form.quantity.trim())     e.quantity="Wajib diisi";
-    if (!form.originalPrice.trim())e.originalPrice="Wajib diisi";
-    if (!form.discountPct.trim())  e.discountPct="Wajib diisi";
-    setErrors(e); return Object.keys(e).length===0;
-  };
-
-  const [saving, setSaving] = useState(false);
-  const [syncStatus, setSyncStatus] = useState("");
-
-  const submit = async () => {
-    if (!validate()) return;
-    setSaving(true);
-    const deal = { ...form, id: Date.now() };
-    // Save to Supabase (shared across all devices)
-    const result = await saveDealToDb(deal, session?.name);
-    if (result.success) {
-      setSyncStatus("☁ Disimpan ke sistem");
-    } else {
-      setSyncStatus("⚠️ Simpan tempatan sahaja");
-    }
-    // Also update local state and backup
-    const updated = [deal, ...deals];
-    setDeals(updated);
-    saveDeals(updated);
-    setSaving(false); setSaved(true); setForm(empty); setPriceSearch("");
-    setTimeout(()=>{ setSaved(false); setSyncStatus(""); }, 4000);
-  };
-
-  const inp = (label,key,type="text",placeholder="") => (
-    <div style={{ marginBottom:10 }}>
-      <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>{label}</label>
-      <input type={type} value={form[key]} onChange={e=>set(key,e.target.value)} placeholder={placeholder}
-        style={{ width:"100%", padding:"8px 10px", borderRadius:8, border:`1.5px solid ${errors[key]?"#ef4444":C.border}`, fontSize:13, fontFamily:"inherit", boxSizing:"border-box" }} />
-      {errors[key]&&<div style={{ color:"#ef4444", fontSize:10, marginTop:2 }}>{errors[key]}</div>}
-    </div>
-  );
-  const sel = (label,key,options) => (
-    <div style={{ marginBottom:10 }}>
-      <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>{label}</label>
-      <select value={form[key]} onChange={e=>set(key,e.target.value)} style={{ width:"100%", padding:"8px 10px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, background:C.white, boxSizing:"border-box" }}>
-        {options.map(o=><option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-
-  return (
-    <div>
-      {saved && <Alert>✅ Rekod tawaran berjaya disimpan!</Alert>}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
-        <Card style={{ padding:16 }}>
-          <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:C.navy }}>📦 Butiran Produk & Tawaran</div>
-
-          {/* Invoice number — prominent */}
-          <div style={{ marginBottom:12, background:C.accentLight, border:`1.5px solid #fcd5a0`, borderRadius:8, padding:"10px 12px" }}>
-            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.accent, marginBottom:3, textTransform:"uppercase" }}>No. Invois / Jualan Tunai</label>
-            <input value={form.invoiceNo} onChange={e=>set("invoiceNo",e.target.value)} placeholder="cth. INV-0001 atau CS-0123"
-              style={{ width:"100%", padding:"8px 10px", borderRadius:7, border:`1.5px solid #fcd5a0`, fontSize:14, fontFamily:"inherit", fontWeight:700, boxSizing:"border-box", background:C.white }} />
-          </div>
-
-          {/* Price search */}
-          <div style={{ marginBottom:10 }}>
-            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Cari Harga Dari Senarai</label>
-            <input value={priceSearch} onChange={e=>setPriceSearch(e.target.value)} placeholder="Taip produk untuk cari harga..."
-              style={{ width:"100%", padding:"8px 10px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:"inherit", boxSizing:"border-box" }} />
-            {priceMatches.length>0 && (
-              <div style={{ border:`1px solid ${C.border}`, borderRadius:8, marginTop:2, background:C.white, boxShadow:"0 4px 12px rgba(0,0,0,0.1)", position:"relative", zIndex:10 }}>
-                {priceMatches.slice(0,5).map(p=>(
-                  <div key={p.id} style={{ padding:"8px 11px", borderBottom:`1px solid ${C.border}` }}>
-                    <div style={{ fontWeight:600, fontSize:12, marginBottom:4 }}>{p.product}{p.size?" — "+p.size:""} {p.itemCode?"("+p.itemCode+")":""}</div>
-                    <div style={{ fontSize:10, color:C.muted, marginBottom:6 }}>{p.grade} | per {p.unit} | {p.category}</div>
-                    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                      {(p.retailPrice||p.price)>0 && (
-                        <button onClick={()=>{set("product",p.product+(p.size?" "+p.size:""));set("originalPrice",String(p.retailPrice||p.price));setPriceSearch("");}}
-                          style={{ padding:"3px 10px", background:C.accentLight, color:C.accent, border:"1px solid #fcd5a0", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-                          Retail: RM {fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)}
-                        </button>
-                      )}
-                      {p.bulkPrice>0 && (
-                        <button onClick={()=>{set("product",p.product+(p.size?" "+p.size:""));set("originalPrice",String(p.bulkPrice));setPriceSearch("");}}
-                          style={{ padding:"3px 10px", background:C.greenLight, color:C.green, border:"1px solid #86efac", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-                          Kuantiti: RM {fmtPrice(roundPrice(parseFloat(p.bulkPrice),p.category),p.category)}
-                        </button>
-                      )}
-                      {p.creditPrice>0 && (
-                        <button onClick={()=>{set("product",p.product+(p.size?" "+p.size:""));set("originalPrice",String(p.creditPrice));setPriceSearch("");}}
-                          style={{ padding:"3px 10px", background:"#ede9fe", color:"#6d28d9", border:"1px solid #c4b5fd", borderRadius:6, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-                          Kredit: RM {fmtPrice(roundPrice(parseFloat(p.creditPrice),p.category),p.category)}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {inp("Tarikh","date","date")}
-          {inp("Produk","product","text","Nama & saiz produk")}
-          <div style={{ display:"flex", gap:8 }}>
-            <div style={{ flex:2 }}>{inp("Kuantiti","quantity","text","cth. 25")}</div>
-            <div style={{ flex:1 }}>
-              <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Unit</label>
-              <select value={form.unit} onChange={e=>set("unit",e.target.value)} style={{ width:"100%", padding:"8px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:12, background:C.white }}>
-                {["pcs","lengths","kg","sheets","lots"].map(u=><option key={u}>{u}</option>)}
-              </select>
-            </div>
-          </div>
-          {inp("Harga Asal (RM)","originalPrice","number","cth. 1500.00")}
-          {inp("Diskaun Diberi (%)","discountPct","number","cth. 5")}
-          <div style={{ marginBottom:10 }}>
-            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Harga Akhir (RM)</label>
-            <input readOnly value={form.finalPrice?`RM ${form.finalPrice}`:""}  placeholder="Dikira automatik"
-              style={{ width:"100%", padding:"8px 10px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, background:"#f8fafc", fontWeight:700, color:C.green, boxSizing:"border-box" }} />
-          </div>
-        </Card>
-
-        <Card style={{ padding:16 }}>
-          <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:C.navy }}>📝 Kelulusan & Nota</div>
-          {sel("Sebab Diskaun","reason",REASONS)}
-          {sel("Staf Yang Luluskan","staff",STAFF_LIST)}
-          {inp("Rujukan Foto / Nota","photoRef","text","cth. Foto WhatsApp dihantar")}
-          <div style={{ marginBottom:10 }}>
-            <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Nota Tambahan</label>
-            <textarea value={form.notes} onChange={e=>set("notes",e.target.value)} rows={4} placeholder="Sebarang maklumat tambahan..."
-              style={{ width:"100%", padding:"8px 10px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:"inherit", resize:"vertical", boxSizing:"border-box" }} />
-          </div>
-          <button onClick={submit} disabled={saving} style={{ width:"100%", padding:"11px", background:saving?C.muted:C.navy, color:C.white, border:"none", borderRadius:10, fontWeight:700, fontSize:14, cursor:saving?"not-allowed":"pointer" }}>
-            {saving ? "Menyimpan..." : "💾 Simpan Rekod Tawaran"}
-          </button>
-          {syncStatus && <div style={{ fontSize:11, color:C.muted, textAlign:"center", marginTop:6 }}>{syncStatus}</div>}
-        </Card>
-      </div>
-
-      {deals.length>0 && (
-        <Card style={{ marginTop:14, padding:16 }}>
-          <div style={{ fontWeight:700, fontSize:13, marginBottom:10, color:C.navy }}>Rekod Terbaru (5 terakhir)</div>
-          <div style={{ overflowX:"auto" }}>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-              <thead><tr style={{ background:C.navy }}>
-                {["No. Invois","Tarikh","Produk","Kuantiti","Harga Asal","Diskaun","Harga Akhir","Sebab","Staf"].map(h=>(
-                  <th key={h} style={{ padding:"7px 9px", color:C.white, textAlign:"left", fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {deals.slice(0,5).map((d,i)=>(
-                  <tr key={d.id} style={{ background:i%2===0?C.white:C.gray }}>
-                    <td style={{ padding:"7px 9px", fontWeight:700, color:C.accent }}>{d.invoiceNo||"—"}</td>
-                    <td style={{ padding:"7px 9px", whiteSpace:"nowrap" }}>{d.date}</td>
-                    <td style={{ padding:"7px 9px" }}>{d.product}</td>
-                    <td style={{ padding:"7px 9px" }}>{d.quantity} {d.unit}</td>
-                    <td style={{ padding:"7px 9px" }}>{d.originalPrice}</td>
-                    <td style={{ padding:"7px 9px" }}><Badge color="orange">{d.discountPct}%</Badge></td>
-                    <td style={{ padding:"7px 9px", fontWeight:700, color:C.green }}>{d.finalPrice}</td>
-                    <td style={{ padding:"7px 9px", fontSize:11 }}>{d.reason}</td>
-                    <td style={{ padding:"7px 9px" }}>{d.staff}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// TAB 4 — SENARIO AI (Boss only)
-// ════════════════════════════════════════════════════════════════════════════
-function ScenariosTab({ scenarios, setScenarios, session }) {
-  // Unlocked by role — the old hardcoded PIN is gone (it was visible in the
-  // shipped JS bundle, which defeats the purpose of a PIN).
-  const unlocked = session?.role === "owner";
-  const [form,     setForm]     = useState({ situation:"", keywords:"", answer:"" });
-  const [saved,    setSaved]    = useState(false);
-  const [editing,  setEditing]  = useState(null);
-
-  const saveScenario = async () => {
-    if (!form.situation.trim()||!form.answer.trim()) return;
-    const item = { ...form, id: editing!==null ? editing : Date.now(), addedAt: new Date().toLocaleDateString("en-MY") };
-    let result;
-    if (editing!==null) {
-      result = await updateScenarioInDb(item);
-      setScenarios(scenarios.map(s=>String(s.id)===String(item.id)?item:s));
-    } else {
-      result = await saveScenarioToDb(item);
-      // use server-assigned id if available
-      if (result.success && result.id) item.id = result.id;
-      setScenarios([item,...scenarios]);
-    }
-    saveScenarios(editing!==null ? scenarios.map(s=>String(s.id)===String(item.id)?item:s) : [item,...scenarios]);
-    setForm({ situation:"", keywords:"", answer:"" }); setEditing(null);
-    setSaved(true); setTimeout(()=>setSaved(false),2500);
-  };
-  const del = async id => {
-    if (!window.confirm("Padam senario ini?")) return;
-    await deleteScenarioFromDb(id);
-    const updated = scenarios.filter(s=>String(s.id)!==String(id));
-    setScenarios(updated); saveScenarios(updated);
-  };
-  const startEdit = s => { setEditing(s.id); setForm({ situation:s.situation, keywords:s.keywords, answer:s.answer }); };
-
-  return (
-    <div>
-      <Card style={{ marginBottom:14, padding:"12px 14px", background:"#f0f9ff", border:"1px solid #bae6fd" }}>
-        <div style={{ fontWeight:700, fontSize:13, color:"#0369a1", marginBottom:4 }}>🧠 Apa itu Senario AI?</div>
-        <div style={{ fontSize:12, color:"#0369a1", lineHeight:1.6 }}>
-          Weelee boleh tambah senario nyata yang berlaku — terangkan situasi dan jawapan yang betul. AI akan semak senario ini dahulu sebelum jawab soalan staf, supaya jawapan lebih tepat mengikut pengalaman sebenar perniagaan.
-        </div>
-      </Card>
-
-      {!unlocked ? (
-        <Card style={{ padding:40, textAlign:"center" }}>
-          <div style={{ fontSize:32, marginBottom:10 }}>🔒</div>
-          <div style={{ fontWeight:700, fontSize:15, color:C.navy, marginBottom:6 }}>Tab ini hanya untuk owner</div>
-          <div style={{ fontSize:12, color:C.muted, marginBottom:20 }}>Log masuk sebagai owner untuk tambah atau kemaskini senario AI.</div>
-          {scenarios.length>0 && (
-            <div style={{ marginTop:20, fontSize:13, color:C.muted }}>{scenarios.length} senario telah disimpan dan digunakan oleh AI.</div>
-          )}
-        </Card>
-      ) : (
-        <>
-          {saved && <Alert>✅ Senario berjaya disimpan! AI akan gunakan ini untuk soalan yang serupa.</Alert>}
-
-          {/* Add/edit form */}
-          <Card style={{ padding:16, marginBottom:14, border:`2px solid ${C.accent}` }}>
-            <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:12 }}>{editing!==null?"✏️ Kemaskini Senario":"➕ Tambah Senario Baru"}</div>
-            <div style={{ marginBottom:10 }}>
-              <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Situasi (terangkan kejadian sebenar)</label>
-              <input value={form.situation} onChange={e=>setForm(f=>({...f,situation:e.target.value}))} placeholder="cth. Pelanggan lama minta diskaun 8% untuk 30 batang hollow section 2x3"
-                style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:"inherit", boxSizing:"border-box" }} />
-            </div>
-            <div style={{ marginBottom:10 }}>
-              <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Kata kunci (untuk AI kenalpasti situasi serupa)</label>
-              <input value={form.keywords} onChange={e=>setForm(f=>({...f,keywords:e.target.value}))} placeholder="cth. pelanggan lama hollow diskaun 8% 30 batang"
-                style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:"inherit", boxSizing:"border-box" }} />
-              <div style={{ fontSize:10, color:C.muted, marginTop:2 }}>Pisahkan dengan ruang. Lebih banyak kata kunci = lebih tepat.</div>
-            </div>
-            <div style={{ marginBottom:12 }}>
-              <label style={{ display:"block", fontSize:10, fontWeight:700, color:C.muted, marginBottom:3, textTransform:"uppercase" }}>Jawapan / Tindakan yang betul</label>
-              <textarea value={form.answer} onChange={e=>setForm(f=>({...f,answer:e.target.value}))} rows={4}
-                placeholder="cth. Pelanggan ini memang pelanggan lama yang selalu beli banyak. Boleh bagi 5% dahulu. Jika minta lebih, hubungi Weelee untuk kelulusan. Jangan bagi lebih 8% tanpa kelulusan."
-                style={{ width:"100%", padding:"9px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:"inherit", resize:"vertical", boxSizing:"border-box" }} />
-            </div>
-            <div style={{ display:"flex", gap:8 }}>
-              <button onClick={saveScenario} style={{ padding:"9px 20px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:700, cursor:"pointer", fontSize:13 }}>💾 Simpan Senario</button>
-              {editing!==null && <button onClick={()=>{setEditing(null);setForm({situation:"",keywords:"",answer:"" });}} style={{ padding:"9px 14px", background:"#e2e8f0", color:C.muted, border:"none", borderRadius:8, fontWeight:600, cursor:"pointer", fontSize:13 }}>Batal</button>}
-            </div>
-          </Card>
-
-          {/* Saved scenarios list */}
-          {scenarios.length===0
-            ? <Card style={{ padding:30, textAlign:"center" }}><div style={{ color:C.muted, fontSize:13 }}>Belum ada senario disimpan. Tambah senario pertama di atas.</div></Card>
-            : scenarios.map(s=>(
-                <Card key={s.id} style={{ marginBottom:10, padding:14 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:4 }}>{s.situation}</div>
-                      <div style={{ fontSize:11, color:C.muted, marginBottom:6 }}>🏷 Kata kunci: {s.keywords||"—"}</div>
-                      <div style={{ fontSize:12, color:C.text, background:C.gray, borderRadius:8, padding:"8px 10px", lineHeight:1.6 }}>{s.answer}</div>
-                      <div style={{ fontSize:10, color:C.muted, marginTop:6 }}>Ditambah: {s.addedAt||"—"}</div>
-                    </div>
-                    <div style={{ display:"flex", gap:6, flexShrink:0 }}>
-                      <button onClick={()=>startEdit(s)} style={{ padding:"4px 10px", background:C.accentLight, color:C.accent, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>Edit</button>
-                      <button onClick={()=>del(s.id)} style={{ padding:"4px 8px", background:C.redLight, color:C.red, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>Padam</button>
-                    </div>
-                  </div>
-                </Card>
-              ))
-          }
-        </>
-      )}
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// TAB 5 — RINGKASAN BULANAN
-// ════════════════════════════════════════════════════════════════════════════
-function SummaryTab({ deals }) {
-  const months = [...new Set(deals.map(d=>monthKey(d.date)))].sort().reverse();
-  const [sel, setSel] = useState(months[0]||"");
-  useEffect(()=>{ if(months.length&&!sel) setSel(months[0]); },[months]);
-
-  const md = deals.filter(d=>monthKey(d.date)===sel);
-  const totalOrig  = md.reduce((s,d)=>s+(parseFloat(d.originalPrice)||0),0);
-  const totalFinal = md.reduce((s,d)=>s+(parseFloat(d.finalPrice)||0),0);
-  const totalDisc  = totalOrig-totalFinal;
-  const avgDisc    = md.length?md.reduce((s,d)=>s+(parseFloat(d.discountPct)||0),0)/md.length:0;
-
-  const byReason={}, byStaff={};
-  md.forEach(d=>{
-    byReason[d.reason]=byReason[d.reason]||{count:0,disc:0};
-    byReason[d.reason].count++; byReason[d.reason].disc+=(parseFloat(d.originalPrice)||0)-(parseFloat(d.finalPrice)||0);
-    byStaff[d.staff]=byStaff[d.staff]||{count:0,disc:0};
-    byStaff[d.staff].count++; byStaff[d.staff].disc+=(parseFloat(d.originalPrice)||0)-(parseFloat(d.finalPrice)||0);
-  });
-
-  const downloadCSV = () => {
-    const headers=["No. Invois","Tarikh","Produk","Kuantiti","Unit","Harga Asal (RM)","Diskaun (%)","Harga Akhir (RM)","Sebab","Staf","Rujukan Foto","Nota"];
-    const rows=md.map(d=>[d.invoiceNo||"",d.date,d.product,d.quantity,d.unit,d.originalPrice,d.discountPct,d.finalPrice,d.reason,d.staff,d.photoRef,d.notes]);
-    const csv=[headers,...rows].map(r=>r.map(c=>`"${(c||"").toString().replace(/"/g,'""')}"`).join(",")).join("\n");
-    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-    a.download=`MGasSteel_${sel}.csv`; a.click();
-  };
-
-  const Stat=({label,value,sub,color=C.navy})=>(
-    <Card style={{ padding:"14px 16px", flex:1 }}>
-      <div style={{ fontSize:10, fontWeight:700, color:C.muted, textTransform:"uppercase", letterSpacing:0.5, marginBottom:4 }}>{label}</div>
-      <div style={{ fontSize:22, fontWeight:800, color, marginBottom:2 }}>{value}</div>
-      {sub&&<div style={{ fontSize:10, color:C.muted }}>{sub}</div>}
-    </Card>
-  );
-
-  return (
-    <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:8 }}>
-        <div>
-          <div style={{ fontWeight:800, fontSize:16, color:C.navy }}>Ringkasan Tawaran Bulanan</div>
-          <div style={{ fontSize:11, color:C.muted }}>Untuk semakan Weelee, Miss Looi & staf kanan</div>
-        </div>
-        <div style={{ display:"flex", gap:8 }}>
-          <select value={sel} onChange={e=>setSel(e.target.value)} style={{ padding:"7px 11px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:12, background:C.white, fontWeight:600 }}>
-            {months.length===0&&<option value="">Tiada data lagi</option>}
-            {months.map(m=><option key={m} value={m}>{monthLabel(m)}</option>)}
-          </select>
-          {md.length>0&&<button onClick={downloadCSV} style={{ padding:"7px 13px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:700, fontSize:12, cursor:"pointer" }}>⬇ Muat Turun CSV</button>}
-        </div>
-      </div>
-
-      {md.length===0
-        ? <Card style={{ padding:50, textAlign:"center" }}><div style={{ fontSize:34, marginBottom:8 }}>📋</div><div style={{ color:C.muted, fontSize:13 }}>Tiada tawaran direkodkan untuk bulan ini.</div></Card>
-        : <>
-            <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap" }}>
-              <Stat label="Jumlah Tawaran" value={md.length} sub={monthLabel(sel)} />
-              <Stat label="Nilai Asal" value={`RM ${totalOrig.toLocaleString("en-MY",{minimumFractionDigits:2})}`} sub="Sebelum diskaun" />
-              <Stat label="Jumlah Diskaun" value={`RM ${totalDisc.toLocaleString("en-MY",{minimumFractionDigits:2})}`} sub={`Purata ${avgDisc.toFixed(1)}%`} color={C.red} />
-              <Stat label="Hasil Akhir" value={`RM ${totalFinal.toLocaleString("en-MY",{minimumFractionDigits:2})}`} sub="Selepas diskaun" color={C.green} />
-            </div>
-
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
-              {[["Mengikut Sebab Diskaun", byReason, "reason"], ["Mengikut Staf", byStaff, "staff"]].map(([title, data, key])=>(
-                <Card key={title} style={{ padding:14 }}>
-                  <div style={{ fontWeight:700, fontSize:12, marginBottom:10, color:C.navy }}>{title}</div>
-                  <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
-                    <thead><tr style={{ borderBottom:`2px solid ${C.border}` }}>
-                      <th style={{ textAlign:"left", padding:"4px 0", color:C.muted, fontWeight:600 }}>{key==="reason"?"Sebab":"Staf"}</th>
-                      <th style={{ textAlign:"right", padding:"4px 0", color:C.muted, fontWeight:600 }}>Bil</th>
-                      <th style={{ textAlign:"right", padding:"4px 0", color:C.muted, fontWeight:600 }}>Diskaun (RM)</th>
-                    </tr></thead>
-                    <tbody>
-                      {Object.entries(data).sort((a,b)=>b[1].disc-a[1].disc).map(([k,v])=>(
-                        <tr key={k} style={{ borderBottom:`1px solid ${C.border}` }}>
-                          <td style={{ padding:"6px 0", fontSize:10 }}>{k}</td>
-                          <td style={{ padding:"6px 0", textAlign:"right", fontWeight:600 }}>{v.count}</td>
-                          <td style={{ padding:"6px 0", textAlign:"right", color:C.red, fontWeight:700 }}>RM {v.disc.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Card>
-              ))}
-            </div>
-
-            <Card style={{ padding:14 }}>
-              <div style={{ fontWeight:700, fontSize:13, marginBottom:10, color:C.navy }}>Semua Tawaran — {monthLabel(sel)}</div>
-              <div style={{ overflowX:"auto" }}>
-                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
-                  <thead><tr style={{ background:C.navy }}>
-                    {["No. Invois","Tarikh","Produk","Kuantiti","Harga Asal","Disk%","Harga Akhir","Jimat","Sebab","Staf"].map(h=>(
-                      <th key={h} style={{ padding:"7px 8px", color:C.white, textAlign:"left", fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
-                    ))}
-                  </tr></thead>
-                  <tbody>
-                    {md.map((d,i)=>{
-                      const jimat=(parseFloat(d.originalPrice)||0)-(parseFloat(d.finalPrice)||0);
-                      return (
-                        <tr key={d.id} style={{ background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}` }}>
-                          <td style={{ padding:"6px 8px", fontWeight:700, color:C.accent }}>{d.invoiceNo||"—"}</td>
-                          <td style={{ padding:"6px 8px", whiteSpace:"nowrap" }}>{d.date}</td>
-                          <td style={{ padding:"6px 8px" }}>{d.product}</td>
-                          <td style={{ padding:"6px 8px", whiteSpace:"nowrap" }}>{d.quantity} {d.unit}</td>
-                          <td style={{ padding:"6px 8px" }}>{d.originalPrice}</td>
-                          <td style={{ padding:"6px 8px" }}><Badge color="orange">{d.discountPct}%</Badge></td>
-                          <td style={{ padding:"6px 8px", fontWeight:700, color:C.green }}>{d.finalPrice}</td>
-                          <td style={{ padding:"6px 8px", color:C.red, fontWeight:600 }}>-{jimat.toFixed(2)}</td>
-                          <td style={{ padding:"6px 8px", fontSize:10 }}>{d.reason}</td>
-                          <td style={{ padding:"6px 8px" }}>{d.staff}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot><tr style={{ background:C.navy }}>
-                    <td colSpan={4} style={{ padding:"8px 8px", color:C.white, fontWeight:700 }}>JUMLAH ({md.length} tawaran)</td>
-                    <td style={{ padding:"8px 8px", color:C.white, fontWeight:700 }}>{totalOrig.toFixed(2)}</td>
-                    <td style={{ padding:"8px 8px", color:"#fcd34d", fontWeight:700 }}>{avgDisc.toFixed(1)}%</td>
-                    <td style={{ padding:"8px 8px", color:"#86efac", fontWeight:700 }}>{totalFinal.toFixed(2)}</td>
-                    <td style={{ padding:"8px 8px", color:"#fca5a5", fontWeight:700 }}>-{totalDisc.toFixed(2)}</td>
-                    <td colSpan={2} />
-                  </tr></tfoot>
-                </table>
-              </div>
-            </Card>
-          </>
-      }
-    </div>
-  );
-}
-
 
 // ════════════════════════════════════════════════════════════════════════════
 // USERS & PIN MANAGEMENT TAB

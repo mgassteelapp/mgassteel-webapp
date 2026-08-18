@@ -42,6 +42,36 @@ const GI_COIL_FACTOR = 1.15;
 const GI_CONV_RM_M   = 0.36;
 const GI_BAND        = 0.05;
 
+// ── Actual-vs-nominal wall thickness ────────────────────────────────────────
+// Hollow/pipe sections are sold by a NOMINAL gauge but rolled thinner — the
+// "tolerance" the mill keeps. Confirmed from Wylee's real trade practice
+// (chat 2026-08-18): CQ hollow tolerance runs 15–35% (thinner gauges cheat
+// more); BS is spec-tight (1–2%); black pipe runs ~30% under; plate/flat bar
+// varies 3–4% by supplier. Weight (and therefore implied coil cost) MUST use
+// actual thickness, not the nominal label, or the fair-price model over-
+// estimates weight and makes every offer look artificially cheap.
+const CQ_TABLE = [ [1.0, 0.65], [1.2, 0.865], [1.6, 1.265], [1.9, 1.475], [2.3, 1.875], [3.0, 2.55] ];
+function cqActualMm(nom) {
+  if (!(nom > 0)) return 0;
+  if (nom <= CQ_TABLE[0][0]) return r2(nom * (CQ_TABLE[0][1] / CQ_TABLE[0][0]));
+  for (let i = 0; i < CQ_TABLE.length - 1; i++) {
+    const [n0, a0] = CQ_TABLE[i], [n1, a1] = CQ_TABLE[i + 1];
+    if (nom >= n0 && nom <= n1) return r2(a0 + (nom - n0) / (n1 - n0) * (a1 - a0));
+  }
+  const [nl, al] = CQ_TABLE[CQ_TABLE.length - 1];
+  return r2(nom * (al / nl));
+}
+const FINISHES = [
+  { key: 'cq',        label: 'CQ hollow',      calc: cqActualMm,               note: '15–35% under nominal — thinner gauges cheat more' },
+  { key: 'bs',         label: 'BS hollow',      calc: (n) => r2(n * 0.985),     note: 'spec-tight, ~1–2% tolerance' },
+  { key: 'blackpipe',  label: 'Black pipe',     calc: (n) => r2(n * 0.70),      note: '~30% under nominal' },
+  { key: 'plate',      label: 'Plate/Flat bar', calc: (n) => r2(n * 0.965),     note: '3–4% tolerance (supplier dependent)' },
+];
+function finishActualMm(finishKey, nom) {
+  const f = FINISHES.find(x => x.key === finishKey) || FINISHES[0];
+  return f.calc(Number(nom) || 0);
+}
+
 const MATERIALS = [
   { key: 'ss304', label: 'SS 304',       density: 7.93, driver: 'nickel' },
   { key: 'ms',    label: 'Mild Steel',   density: 7.85, driver: 'hrc' },
@@ -143,9 +173,10 @@ export default function SSMonitor({ session, selected }) {
   const [d3, setD3] = useState('0');
   const [hrc, setHrc] = useState(592);              // USD/t — shared weekly (market_state.hrc)
   const [shape, setShape] = useState('round');
+  const [finish, setFinish] = useState('cq'); // wall-tolerance basis (MS/GI only)
   const [od, setOd] = useState('50');       // OD / side / width, per shape
   const [dimB, setDimB] = useState('');     // height (rect only)
-  const [wall, setWall] = useState('1.0');
+  const [wall, setWall] = useState('1.0');  // NOMINAL wall as quoted/labelled
   const [lengthM, setLengthM] = useState('6');
   const [kgOverride, setKgOverride] = useState('');
   // result + history
@@ -185,11 +216,17 @@ export default function SSMonitor({ session, selected }) {
   };
 
   const mat = MATERIALS.find(m => m.key === material) || MATERIALS[0];
+  // SS304 pipe is made to spec — nominal ≈ actual. MS/GI hollow/pipe is sold
+  // on a nominal gauge but rolled thinner per the finish's real tolerance.
+  const wallActual = useMemo(() => {
+    if (material === 'ss304') return Number(wall) || 0;
+    return finishActualMm(finish, wall);
+  }, [material, finish, wall]);
   const kg = useMemo(() => {
     const o = Number(kgOverride);
     if (o > 0) return o;
-    return sectionKg(shape, Number(od), Number(dimB), Number(wall), Number(lengthM), mat.density);
-  }, [shape, od, dimB, wall, lengthM, kgOverride, mat.density]);
+    return sectionKg(shape, Number(od), Number(dimB), wallActual, Number(lengthM), mat.density);
+  }, [shape, od, dimB, wallActual, lengthM, kgOverride, mat.density]);
 
   const canEval = Number(list) > 0 && kg > 0 && !!nickel; // discounts optional (blank = 0)
 
@@ -208,6 +245,7 @@ export default function SSMonitor({ session, selected }) {
         weight_kg: kg, nickel_usd: nickel.usd, usd_myr: fx, coil_rm_kg: result.coilRmKg,
         mill_cost: result.millCost, fair_low: result.fairLow, fair_high: result.fairHigh,
         verdict: result.verdict, proposed_disc1: result.pd1, proposed_disc2: result.pd3, proposed_nett: result.pnett,
+        finish: material === 'ss304' ? null : finish, wall_nominal: Number(wall) || null, wall_actual: material === 'ss304' ? null : wallActual,
       });
       setSaveMsg(error ? 'Save failed: ' + error.message : 'Saved to negotiation history ✓');
       if (!error) loadHistory();
@@ -326,6 +364,20 @@ export default function SSMonitor({ session, selected }) {
                   </button>
                 ))}
               </div>
+              {material !== 'ss304' && (
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  {FINISHES.map(f => (
+                    <button key={f.key} onClick={() => setKgOverride('') || setFinish(f.key)}
+                      title={f.note}
+                      style={{ flex: 1, padding: '5px 0', borderRadius: 7, fontWeight: 700, fontSize: 10.5, cursor: 'pointer',
+                        border: `1px solid ${finish === f.key ? C.navy : C.border}`,
+                        background: finish === f.key ? C.navy : C.white,
+                        color: finish === f.key ? C.white : C.muted }}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: shape === 'rect' ? '1fr 1fr 1fr 1fr 1.1fr' : '1fr 1fr 1fr 1.2fr', gap: 8 }}>
                 <div><label style={flbl}>{SHAPES.find(s => s.key === shape).dimA}</label>
                   <input style={fld} inputMode="decimal" value={od} onChange={e => { setOd(e.target.value); setKgOverride(''); }} /></div>
@@ -333,7 +385,7 @@ export default function SSMonitor({ session, selected }) {
                   <div><label style={flbl}>Height (mm)</label>
                     <input style={fld} inputMode="decimal" value={dimB} onChange={e => { setDimB(e.target.value); setKgOverride(''); }} placeholder="25" /></div>
                 )}
-                <div><label style={flbl}>Wall (mm)</label>
+                <div><label style={flbl}>Wall (mm) — nominal</label>
                   <input style={fld} inputMode="decimal" value={wall} onChange={e => { setWall(e.target.value); setKgOverride(''); }} /></div>
                 <div><label style={flbl}>Length (m)</label>
                   <input style={fld} inputMode="decimal" value={lengthM} onChange={e => { setLengthM(e.target.value); setKgOverride(''); }} /></div>
@@ -341,6 +393,11 @@ export default function SSMonitor({ session, selected }) {
                   <input style={{ ...fld, background: C.gray }} inputMode="decimal" value={kgOverride || (kg || '')}
                     onChange={e => setKgOverride(e.target.value)} placeholder="auto" /></div>
               </div>
+              {material !== 'ss304' && Number(wall) > 0 && !kgOverride && (
+                <div style={{ fontSize: 10.5, color: C.accent, marginTop: 4, fontWeight: 700 }}>
+                  Actual wall used for weight: {wallActual.toFixed(3)}mm ({Math.round((1 - wallActual / Number(wall)) * 100)}% under nominal, {FINISHES.find(f => f.key === finish).label} basis)
+                </div>
+              )}
               <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>
                 {Number(list) > 0
                   ? (() => { const n = r2(Number(list) * (1 - (Number(d1) || 0) / 100) * (1 - (Number(d2) || 0) / 100) * (1 - (Number(d3) || 0) / 100));

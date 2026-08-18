@@ -33,10 +33,28 @@ const MARGIN_HIGH   = 1.20;
 
 const r2 = (n) => Math.round(n * 100) / 100;
 
-function pipeKg(od, wall, lengthM) {
-  const areaMm2 = Math.PI * (od - wall) * wall;
-  return r2(areaMm2 * DENSITY / 1000 * lengthM);
+// Steel cross-section area (mm2) per shape, then kg = area × density × length.
+//   round:  π(OD − t)t
+//   square: a² − (a−2t)²  = 4t(a − t)
+//   rect:   ab − (a−2t)(b−2t) = 2t(a + b − 2t)
+function sectionAreaMm2(shape, a, b, t) {
+  if (shape === 'round') return Math.PI * (a - t) * t;
+  if (shape === 'square') return 4 * t * (a - t);
+  return 2 * t * (a + b - 2 * t); // rect
 }
+function sectionKg(shape, a, b, t, lengthM) {
+  if (!(a > 0 && t > 0 && lengthM > 0)) return 0;
+  if (shape === 'round' && t >= a) return 0;
+  if (shape === 'square' && 2 * t >= a) return 0;
+  if (shape === 'rect' && !(b > 0 && 2 * t < a && 2 * t < b)) return 0;
+  return r2(sectionAreaMm2(shape, a, b, t) * DENSITY / 1000 * lengthM);
+}
+
+const SHAPES = [
+  { key: 'round',  label: 'Round pipe',  dimA: 'OD (mm)',    dimB: null },
+  { key: 'square', label: 'Square hollow', dimA: 'Side (mm)', dimB: null },
+  { key: 'rect',   label: 'Rect. hollow', dimA: 'Width (mm)', dimB: 'Height (mm)' },
+];
 
 function evaluate({ list, d1, d2, kg, nickel, fx }) {
   const nett = r2(list * (1 - d1 / 100) * (1 - d2 / 100));
@@ -85,7 +103,9 @@ export default function SSMonitor({ session, selected }) {
   const [list, setList] = useState('');
   const [d1, setD1] = useState('');
   const [d2, setD2] = useState('0');
-  const [od, setOd] = useState('50');
+  const [shape, setShape] = useState('round');
+  const [od, setOd] = useState('50');       // OD / side / width, per shape
+  const [dimB, setDimB] = useState('');     // height (rect only)
   const [wall, setWall] = useState('1.0');
   const [lengthM, setLengthM] = useState('6');
   const [kgOverride, setKgOverride] = useState('');
@@ -127,10 +147,8 @@ export default function SSMonitor({ session, selected }) {
   const kg = useMemo(() => {
     const o = Number(kgOverride);
     if (o > 0) return o;
-    const odN = Number(od), wN = Number(wall), lN = Number(lengthM);
-    if (odN > 0 && wN > 0 && wN < odN && lN > 0) return pipeKg(odN, wN, lN);
-    return 0;
-  }, [od, wall, lengthM, kgOverride]);
+    return sectionKg(shape, Number(od), Number(dimB), Number(wall), Number(lengthM));
+  }, [shape, od, dimB, wall, lengthM, kgOverride]);
 
   const canEval = Number(list) > 0 && Number(d1) > 0 && kg > 0 && nickel;
 
@@ -238,9 +256,24 @@ export default function SSMonitor({ session, selected }) {
                 <div><label style={flbl}>+ Discount 2 (%)</label>
                   <input style={fld} inputMode="decimal" value={d2} onChange={e => setD2(e.target.value)} placeholder="3" /></div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.2fr', gap: 8 }}>
-                <div><label style={flbl}>OD (mm)</label>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                {SHAPES.map(s => (
+                  <button key={s.key} onClick={() => { setShape(s.key); setKgOverride(''); }}
+                    style={{ flex: 1, padding: '6px 0', borderRadius: 7, fontWeight: 700, fontSize: 11, cursor: 'pointer',
+                      border: `1px solid ${shape === s.key ? C.accent : C.border}`,
+                      background: shape === s.key ? C.accentLight : C.white,
+                      color: shape === s.key ? C.accent : C.muted }}>
+                    {s.key === 'round' ? '⭕' : s.key === 'square' ? '⬛' : '▭'} {s.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: shape === 'rect' ? '1fr 1fr 1fr 1fr 1.1fr' : '1fr 1fr 1fr 1.2fr', gap: 8 }}>
+                <div><label style={flbl}>{SHAPES.find(s => s.key === shape).dimA}</label>
                   <input style={fld} inputMode="decimal" value={od} onChange={e => { setOd(e.target.value); setKgOverride(''); }} /></div>
+                {shape === 'rect' && (
+                  <div><label style={flbl}>Height (mm)</label>
+                    <input style={fld} inputMode="decimal" value={dimB} onChange={e => { setDimB(e.target.value); setKgOverride(''); }} placeholder="25" /></div>
+                )}
                 <div><label style={flbl}>Wall (mm)</label>
                   <input style={fld} inputMode="decimal" value={wall} onChange={e => { setWall(e.target.value); setKgOverride(''); }} /></div>
                 <div><label style={flbl}>Length (m)</label>

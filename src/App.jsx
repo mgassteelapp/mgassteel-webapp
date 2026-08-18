@@ -960,7 +960,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                       {cell("Anggaran Stok (+PO)", d.projected, C.green)}
                     </div>
                     <div style={{ fontSize:10, color:"#92702a", marginTop:8, lineHeight:1.5 }}>
-                      Anggaran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir). Stok Sebenar = Stok − DO ({d.do_30d} unit, {d.window_days} hari terakhir) — DO mungkin belum dipotong dalam SQL sehingga invois dikeluarkan. Anggaran (+PO) = Anggaran Jualan + PO belum sampai ({d.outstanding_po} unit).
+                      Anggaran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir), minimum 0. Stok Sebenar = Stok − DO ({d.do_30d} unit, {d.window_days} hari terakhir), minimum 0 — DO mungkin belum dipotong dalam SQL sehingga invois dikeluarkan. Anggaran (+PO) = Anggaran Jualan + PO belum sampai ({d.outstanding_po} unit, {d.po_window_months} bulan terakhir sahaja — PO lebih lama dianggap void, tidak dikira).
                       <br /><b>{d.scope_note}</b>
                     </div>
                   </div>

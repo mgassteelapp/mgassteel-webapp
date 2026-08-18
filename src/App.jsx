@@ -944,7 +944,7 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                   branch-split Actual Stock above. */}
               {(() => {
                 const d = stockDetail;
-                if (d === 'loading') return <div style={{ fontSize:11, color:C.muted, marginTop:8 }}>Mengira unjuran stok…</div>;
+                if (d === 'loading') return <div style={{ fontSize:11, color:C.muted, marginTop:8 }}>Mengira anggaran stok…</div>;
                 if (!d) return null;
                 const cell = (label, val, color) => (
                   <div style={{ flex:"1 1 120px", minWidth:110 }}>
@@ -955,12 +955,12 @@ function AssistantTab({ prices, scenarios, gsStatus, session }) {
                 return (
                   <div style={{ marginTop:8, background:"#fffbea", border:"1px solid #fde68a", borderRadius:8, padding:"10px 12px" }}>
                     <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
-                      {cell("Unjuran Stok utk Jualan", d.projected_for_sale, C.navy)}
+                      {cell("Anggaran Stok utk Jualan", d.projected_for_sale, C.navy)}
                       {cell("Stok Sebenar utk Jualan (Sebenar)", d.true_actual_for_sale, C.navy)}
-                      {cell("Unjuran Stok (+PO)", d.projected, C.green)}
+                      {cell("Anggaran Stok (+PO)", d.projected, C.green)}
                     </div>
                     <div style={{ fontSize:10, color:"#92702a", marginTop:8, lineHeight:1.5 }}>
-                      Unjuran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir). Stok Sebenar = Stok − DO ({d.do_30d} unit, {d.window_days} hari terakhir) — DO mungkin belum dipotong dalam SQL sehingga invois dikeluarkan. Unjuran (+PO) = Unjuran Jualan + PO belum sampai ({d.outstanding_po} unit).
+                      Anggaran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir). Stok Sebenar = Stok − DO ({d.do_30d} unit, {d.window_days} hari terakhir) — DO mungkin belum dipotong dalam SQL sehingga invois dikeluarkan. Anggaran (+PO) = Anggaran Jualan + PO belum sampai ({d.outstanding_po} unit).
                       <br /><b>{d.scope_note}</b>
                     </div>
                   </div>

@@ -647,6 +647,7 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Segoe UI',system-ui,sans-serif", color:C.text }}>
       <AgentQueryPopup session={session} />
+      <BroadcastPopup session={session} />
       {session.role === "manager" && <DailyCheckReminder session={session} goCheck={() => setTab("reconcile")} />}
       <div style={{ background:C.navy }}>
         <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 0" }}>
@@ -1558,12 +1559,86 @@ function UsersTab({ session }) {
     flash(`✅ Kebenaran ${u.name} dikembalikan ke default peranan.`);
   };
 
+  // ── Broadcast composer + acknowledgement tracker ──
+  const [bcMsg, setBcMsg] = useState("");
+  const [bcSending, setBcSending] = useState(false);
+  const [bcList, setBcList] = useState([]);
+  const loadBroadcasts = async () => {
+    try {
+      const { data: bs } = await supabase.from('broadcasts')
+        .select('*').order('created_at', { ascending: false }).limit(8);
+      if (!bs?.length) { setBcList([]); return; }
+      const { data: acks } = await supabase.from('broadcast_acks')
+        .select('*').in('broadcast_id', bs.map(b => b.id));
+      setBcList(bs.map(b => ({ ...b, acks: (acks || []).filter(a => a.broadcast_id === b.id) })));
+    } catch { /* table absent */ }
+  };
+  useEffect(() => { loadBroadcasts(); }, []);
+  const sendBroadcast = async () => {
+    const msg = bcMsg.trim();
+    if (!msg || bcSending) return;
+    setBcSending(true);
+    const { error } = await supabase.from('broadcasts')
+      .insert({ created_by: session.name, message: msg });
+    setBcSending(false);
+    if (error) { flash("⚠️ Gagal hantar: " + error.message); return; }
+    setBcMsg("");
+    flash("📣 Pengumuman dihantar — pop-up muncul serta-merta pada semua yang sedang log masuk.");
+    loadBroadcasts();
+  };
+
   if (loading) return <Card style={{ padding:40, textAlign:"center" }}><div style={{ color:C.muted }}>Memuatkan...</div></Card>;
+
+  const activeCount = users.filter(u => u.active !== false && u.name !== session.name).length;
 
   return (
     <div>
-      {saved && <Alert color={saved.startsWith("✅") ? "green" : "orange"}>{saved}</Alert>}
+      {saved && <Alert color={saved.startsWith("✅") || saved.startsWith("📣") ? "green" : "orange"}>{saved}</Alert>}
       {errMsg && <Alert color="orange">{errMsg}</Alert>}
+
+      {/* ── Broadcast — live announcement to everyone ── */}
+      <Card style={{ padding:16, marginBottom:14 }}>
+        <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:4 }}>📣 Pengumuman Live (Broadcast)</div>
+        <div style={{ fontSize:11.5, color:C.muted, marginBottom:10 }}>
+          Taip dan hantar — pop-up muncul serta-merta pada skrin semua yang sedang log masuk (dengan bunyi),
+          dan semasa log masuk untuk yang belum online. Setiap orang mesti tekan ✓ Terima; balasan mereka dipapar di bawah.
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <textarea value={bcMsg} onChange={e => setBcMsg(e.target.value)} rows={2}
+            placeholder="cth: Semua staf, sila semak stok hollow sebelum 5 petang hari ini."
+            style={{ flex:1, border:`1.5px solid ${C.border}`, borderRadius:8, padding:"9px 11px", fontSize:13, fontFamily:"inherit", resize:"vertical" }} />
+          <button onClick={sendBroadcast} disabled={!bcMsg.trim() || bcSending}
+            style={{ padding:"0 22px", background:!bcMsg.trim()||bcSending ? C.border : C.accent, color:!bcMsg.trim()||bcSending ? C.muted : C.white,
+                     border:"none", borderRadius:10, fontWeight:800, fontSize:14, cursor:!bcMsg.trim()||bcSending ? "not-allowed" : "pointer" }}>
+            {bcSending ? "…" : "📣 Hantar"}
+          </button>
+        </div>
+
+        {bcList.length > 0 && (
+          <div style={{ marginTop:14 }}>
+            {bcList.map(b => (
+              <div key={b.id} style={{ borderTop:`1px solid ${C.border}`, padding:"10px 0" }}>
+                <div style={{ display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap" }}>
+                  <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>
+                    {new Date(b.created_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" })} · {b.created_by}
+                  </span>
+                  <span style={{ fontSize:12.5, flex:1, minWidth:200 }}>{b.message}</span>
+                  <Badge color={b.acks.length >= activeCount ? "green" : "orange"}>
+                    ✓ {b.acks.length}/{activeCount} terima
+                  </Badge>
+                </div>
+                {b.acks.some(a => a.reply) && (
+                  <div style={{ marginTop:6, fontSize:11.5, color:C.muted, lineHeight:1.6 }}>
+                    {b.acks.filter(a => a.reply).map(a => (
+                      <div key={a.id}>💬 <b style={{ color:C.text }}>{a.user_name}</b>: {a.reply}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <Card style={{ padding:"12px 14px", marginBottom:14, background:"#f0f9ff", border:"1px solid #bae6fd" }}>
         <div style={{ fontWeight:700, fontSize:13, color:"#0369a1", marginBottom:4 }}>👥 Pengurusan Pengguna</div>
@@ -2456,6 +2531,105 @@ function pqBeep() {
     o.frequency.value = 880; g.gain.value = 0.15;
     o.start(); o.stop(ctx.currentTime + 0.45);
   } catch { /* audio blocked — popup still shows */ }
+}
+
+/// ── Broadcast popup: owner announcements that EVERY user must acknowledge ──
+// Live via realtime INSERT on broadcasts; catch-up at login covers anyone who
+// was offline (unacknowledged messages from the last 14 days). The modal
+// blocks the app until ✓ Terima is pressed; a reply is optional.
+function BroadcastPopup({ session }) {
+  const [queue,  setQueue]  = useState([]);
+  const [reply,  setReply]  = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Catch-up on login / mount
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const since = new Date(Date.now() - 14 * 86400 * 1000).toISOString();
+        const { data: bs } = await supabase.from('broadcasts')
+          .select('*').gte('created_at', since).order('created_at');
+        if (!alive || !bs?.length) return;
+        const { data: acks } = await supabase.from('broadcast_acks')
+          .select('broadcast_id').eq('user_name', session.name);
+        if (!alive) return;
+        const acked = new Set((acks || []).map(a => a.broadcast_id));
+        const open = bs.filter(b => !acked.has(b.id) && b.created_by !== session.name);
+        if (open.length) { setQueue(open); pqBeep(); }
+      } catch { /* table absent in older deploys — stay silent */ }
+    })();
+    return () => { alive = false; };
+  }, [session.name]);
+
+  // Live — fires the moment an owner presses Hantar
+  useEffect(() => {
+    const ch = supabase.channel('bc-live')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'broadcasts' },
+        (payload) => {
+          const row = payload.new;
+          if (row && row.created_by !== session.name) {
+            setQueue(q => q.some(x => x.id === row.id) ? q : [...q, row]);
+            pqBeep();
+          }
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [session.name]);
+
+  const cur = queue[0];
+  if (!cur) return null;
+
+  const accept = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await supabase.from('broadcast_acks').insert({
+        broadcast_id: cur.id, user_name: session.name, reply: reply.trim() || null,
+      });
+    } catch { /* duplicate ack etc. — still dismiss */ }
+    setSaving(false);
+    setReply("");
+    setQueue(q => q.slice(1));
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(15,39,68,0.55)", zIndex:9999,
+                  display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+      <div style={{ background:C.white, borderRadius:14, maxWidth:460, width:"100%",
+                    boxShadow:"0 20px 60px rgba(0,0,0,0.35)", overflow:"hidden" }}>
+        <div style={{ background:C.navy, color:C.white, padding:"12px 18px",
+                      display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:18 }}>📣</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:800, fontSize:14 }}>Pengumuman daripada {cur.created_by}</div>
+            <div style={{ fontSize:11, opacity:.8 }}>{new Date(cur.created_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" })}</div>
+          </div>
+          {queue.length > 1 && (
+            <span style={{ background:C.accent, borderRadius:12, fontSize:11, fontWeight:800, padding:"2px 10px" }}>
+              1/{queue.length}
+            </span>
+          )}
+        </div>
+        <div style={{ padding:18 }}>
+          <div style={{ fontSize:14, lineHeight:1.65, whiteSpace:"pre-wrap", marginBottom:14 }}>{cur.message}</div>
+          <textarea value={reply} onChange={e => setReply(e.target.value)} rows={2}
+            placeholder="Balasan (pilihan)…"
+            style={{ width:"100%", boxSizing:"border-box", border:`1.5px solid ${C.border}`,
+                     borderRadius:8, padding:"8px 10px", fontSize:13, fontFamily:"inherit", resize:"vertical" }} />
+          <button onClick={accept} disabled={saving}
+            style={{ width:"100%", marginTop:10, padding:"11px", background:saving?C.muted:C.green,
+                     color:C.white, border:"none", borderRadius:10, fontWeight:800, fontSize:14, cursor:saving?"wait":"pointer" }}>
+            {saving ? "Menyimpan…" : "✓ Terima"}
+          </button>
+          <div style={{ fontSize:10.5, color:C.muted, marginTop:6, textAlign:"center" }}>
+            Anda mesti tekan Terima untuk teruskan. Balasan anda dapat dilihat oleh owner.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Global popup: subscribes to realtime inserts on price_queries. If a new

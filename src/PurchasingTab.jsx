@@ -221,6 +221,7 @@ export default function PurchasingTab({ prices = [], session }) {
     const avgSold = (velocity && Number(velocity.qty_6mo) > 0)
       ? Math.round(Number(velocity.qty_6mo) / Math.max(velocity.active_months || 6, 1)) : null;
     const cost = Number(selected.cost) || 0;
+    const sqlCost = Number(selected.sqlCost) || 0;
     const retail = Number(selected.retailPrice) || 0;
     // Supply already secured = outstanding PO qty (ordered − received) + stock on hand
     const onOrder = openPOs.reduce((a, b) => a + (Number(b.outstanding) || 0), 0);
@@ -244,7 +245,7 @@ export default function PurchasingTab({ prices = [], session }) {
       else { offerNote = `Berpatutan — dalam ${vs.toFixed(1)}% dari kos.${mtxt}`; dealTone = 'flat'; }
     }
     const staleDays = (Date.now() - new Date(market.asOf)) / 86400000;
-    return { avgSold, cost, retail, onOrder, stockQty, avail, coverQty, proposed, offerNote, dealTone, stale: staleDays > 7 };
+    return { avgSold, cost, sqlCost, retail, onOrder, stockQty, avail, coverQty, proposed, offerNote, dealTone, stale: staleDays > 7 };
   }, [selected, velocity, openPOs, stockInfo, cover, offer, mk.mult, mk.tone, market.asOf, weighted]);
 
   const maxBar = monthly.length ? Math.max(...monthly.map(m => Number(m.qty))) : 1;
@@ -289,10 +290,23 @@ export default function PurchasingTab({ prices = [], session }) {
             <div style={{ ...box, padding:12 }}>
               <div style={{ fontSize:16, fontWeight:800, color:C.navy, lineHeight:1.2 }}>{selected.itemCode}</div>
               <div style={{ fontSize:11.5, color:C.muted, marginBottom:6 }}>{selected.product}</div>
-              <div style={{ display:'flex', gap:10, fontSize:12, color:C.muted, marginBottom:8 }}>
-                <span>Kos <b style={{ color:C.text }}>RM{calc.cost.toFixed(2)}</b></span>
+              <div style={{ display:'flex', gap:10, fontSize:12, color:C.muted, marginBottom:4, flexWrap:'wrap' }}>
+                <span>Kos Pasaran <b style={{ color:C.text }}>RM{calc.cost.toFixed(2)}</b></span>
                 <span>Retail <b style={{ color:C.text }}>RM{calc.retail.toFixed(2)}</b></span>
               </div>
+              {calc.sqlCost > 0 && (
+                <div style={{ fontSize:11.5, color:C.muted, marginBottom:8 }}>
+                  Kos SQL Account <b style={{ color:C.text }}>RM{calc.sqlCost.toFixed(2)}</b>
+                  {calc.cost > 0 && (() => {
+                    const diffPct = ((calc.cost - calc.sqlCost) / calc.sqlCost) * 100;
+                    if (Math.abs(diffPct) < 0.5) return <span style={{ marginLeft:6, color:C.muted }}>(sama)</span>;
+                    const up = diffPct > 0;
+                    return <span style={{ marginLeft:6, fontWeight:700, color: up ? C.red : C.green }}>
+                      {up ? '↑' : '↓'} pasaran {Math.abs(diffPct).toFixed(1)}% {up ? 'atas' : 'bawah'} SQL
+                    </span>;
+                  })()}
+                </div>
+              )}
               <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
                 <div style={lbl}>Stok Di Tangan (SQL)</div>
                 {loading ? <div style={{ fontSize:12, color:C.muted }}>Memuat…</div>

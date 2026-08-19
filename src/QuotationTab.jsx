@@ -217,6 +217,11 @@ export default function QuotationTab({ session, prices }) {
     if (isOwner) (prices || []).forEach(p => { if (p.itemCode && Number(p.cost) > 0) m.set(p.itemCode, Number(p.cost)); });
     return m;
   }, [prices, isOwner]);
+  const sqlCostByCode = useMemo(() => {
+    const m = new Map();
+    if (isOwner) (prices || []).forEach(p => { if (p.itemCode && Number(p.sqlCost) > 0) m.set(p.itemCode, Number(p.sqlCost)); });
+    return m;
+  }, [prices, isOwner]);
   const marginPct = (sell, cost) => sell > 0 && cost > 0 ? ((sell - cost) / sell) * 100 : null;
   // Margin for a saved quote row — only if every line has a known cost
   const quoteMargin = (row) => {
@@ -433,8 +438,23 @@ export default function QuotationTab({ session, prices }) {
           </div>
           {isOwner && picked && Number(price) > 0 && costByCode.get(picked.itemCode) > 0 && (
             <div style={{ fontSize:11, color:'#7c3aed', fontWeight:700, marginTop:4 }}>
-              Kos: RM {fmt(costByCode.get(picked.itemCode))} · Margin pada harga ini:{' '}
+              Kos Pasaran: RM {fmt(costByCode.get(picked.itemCode))} · Margin pada harga ini:{' '}
               {marginPct(Number(price), costByCode.get(picked.itemCode)).toFixed(1)}%
+              {sqlCostByCode.get(picked.itemCode) > 0 && (() => {
+                const sc = sqlCostByCode.get(picked.itemCode);
+                const mc = costByCode.get(picked.itemCode);
+                const diffPct = ((mc - sc) / sc) * 100;
+                return (
+                  <span style={{ marginLeft:8, color:C.muted, fontWeight:600 }}>
+                    · Kos SQL: RM {fmt(sc)}
+                    {Math.abs(diffPct) >= 0.5 && (
+                      <span style={{ marginLeft:4, fontWeight:700, color: diffPct > 0 ? C.red : C.green }}>
+                        ({diffPct > 0 ? '↑' : '↓'} {Math.abs(diffPct).toFixed(1)}%)
+                      </span>
+                    )}
+                  </span>
+                );
+              })()}
             </div>
           )}
         </div>

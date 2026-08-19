@@ -35,10 +35,10 @@ async function loadPrices() {
   }
 }async function loadCosts() {
   try {
-    const { data, error } = await supabase.from('costs').select('item_code, cost');
+    const { data, error } = await supabase.from('costs').select('item_code, cost, sql_cost');
     if (error) throw error;
     const map = {};
-    (data || []).forEach(r => { map[r.item_code] = r.cost; });
+    (data || []).forEach(r => { map[r.item_code] = { cost: r.cost, sqlCost: r.sql_cost }; });
     return map;
   } catch (e) {
     return {};
@@ -377,8 +377,10 @@ export default function App() {
         if (session?.role === 'owner') {
           const costMap = await loadCosts();
           p.forEach(item => {
-            item.cost = costMap[item.itemCode] || 0;
+            const c = costMap[item.itemCode];
+            item.cost = c?.cost || 0;
             item.costFloor = item.cost;
+            item.sqlCost = c?.sqlCost || 0; // SQL Account book cost, for comparison vs market cost — owner only
           });
         }
         setPrices(p); setGsStatus("ok");

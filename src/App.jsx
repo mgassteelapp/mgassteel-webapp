@@ -1102,6 +1102,7 @@ function UsersTab({ session }) {
   const [bcMsg, setBcMsg] = useState("");
   const [bcSending, setBcSending] = useState(false);
   const [bcList, setBcList] = useState([]);
+  const [bcExpanded, setBcExpanded] = useState(null); // broadcast id currently showing who saw/didn't
   const loadBroadcasts = async () => {
     try {
       const { data: bs } = await supabase.from('broadcasts')
@@ -1155,26 +1156,62 @@ function UsersTab({ session }) {
 
         {bcList.length > 0 && (
           <div style={{ marginTop:14 }}>
-            {bcList.map(b => (
-              <div key={b.id} style={{ borderTop:`1px solid ${C.border}`, padding:"10px 0" }}>
-                <div style={{ display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap" }}>
-                  <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>
-                    {new Date(b.created_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" })} · {b.created_by}
-                  </span>
-                  <span style={{ fontSize:12.5, flex:1, minWidth:200 }}>{b.message}</span>
-                  <Badge color={b.acks.length >= activeCount ? "green" : "orange"}>
-                    ✓ {b.acks.length}/{activeCount} terima
-                  </Badge>
-                </div>
-                {b.acks.some(a => a.reply) && (
-                  <div style={{ marginTop:6, fontSize:11.5, color:C.muted, lineHeight:1.6 }}>
-                    {b.acks.filter(a => a.reply).map(a => (
-                      <div key={a.id}>💬 <b style={{ color:C.text }}>{a.user_name}</b>: {a.reply}</div>
-                    ))}
+            {bcList.map(b => {
+              const ackedNames = new Set(b.acks.map(a => a.user_name));
+              const notYet = users.filter(u => u.active !== false && u.name !== b.created_by && !ackedNames.has(u.name));
+              const isOpen = bcExpanded === b.id;
+              return (
+                <div key={b.id} style={{ borderTop:`1px solid ${C.border}`, padding:"10px 0" }}>
+                  <div style={{ display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap" }}>
+                    <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>
+                      {new Date(b.created_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" })} · {b.created_by}
+                    </span>
+                    <span style={{ fontSize:12.5, flex:1, minWidth:200 }}>{b.message}</span>
+                    <button onClick={() => setBcExpanded(isOpen ? null : b.id)}
+                      style={{ border:"none", background:"none", padding:0, cursor:"pointer" }}
+                      title="Klik untuk lihat senarai siapa dah/belum terima">
+                      <Badge color={b.acks.length >= activeCount ? "green" : "orange"}>
+                        ✓ {b.acks.length}/{activeCount} terima {isOpen ? "▲" : "▼"}
+                      </Badge>
+                    </button>
                   </div>
-                )}
-              </div>
-            ))}
+                  {b.acks.some(a => a.reply) && (
+                    <div style={{ marginTop:6, fontSize:11.5, color:C.muted, lineHeight:1.6 }}>
+                      {b.acks.filter(a => a.reply).map(a => (
+                        <div key={a.id}>💬 <b style={{ color:C.text }}>{a.user_name}</b>: {a.reply}</div>
+                      ))}
+                    </div>
+                  )}
+                  {isOpen && (
+                    <div style={{ marginTop:8, display:"flex", gap:16, flexWrap:"wrap", background:C.gray, borderRadius:8, padding:"10px 12px" }}>
+                      <div style={{ minWidth:160 }}>
+                        <div style={{ fontSize:10.5, fontWeight:700, color:C.green, textTransform:"uppercase", letterSpacing:.4, marginBottom:5 }}>
+                          Dah Terima ({b.acks.length})
+                        </div>
+                        {b.acks.length === 0
+                          ? <div style={{ fontSize:11.5, color:C.muted }}>— tiada lagi —</div>
+                          : [...b.acks].sort((x, y) => new Date(x.acked_at) - new Date(y.acked_at)).map(a => (
+                              <div key={a.id} style={{ fontSize:11.5, color:C.text, marginBottom:2 }}>
+                                {a.user_name}
+                                <span style={{ color:C.muted }}> — {new Date(a.acked_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })}</span>
+                              </div>
+                            ))}
+                      </div>
+                      <div style={{ minWidth:160 }}>
+                        <div style={{ fontSize:10.5, fontWeight:700, color:C.red, textTransform:"uppercase", letterSpacing:.4, marginBottom:5 }}>
+                          Belum Terima ({notYet.length})
+                        </div>
+                        {notYet.length === 0
+                          ? <div style={{ fontSize:11.5, color:C.muted }}>— semua dah terima —</div>
+                          : notYet.map(u => (
+                              <div key={u.id} style={{ fontSize:11.5, color:C.text, marginBottom:2 }}>{u.name}</div>
+                            ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>

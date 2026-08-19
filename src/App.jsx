@@ -774,7 +774,7 @@ function AssistantTab({ prices, gsStatus, session }) {
             <div style={{ background:C.navy, padding:"10px 14px", borderRadius:"12px 12px 0 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <div>
                 <div style={{ color:C.white, fontWeight:700, fontSize:15 }}>
-                  Kalkulator — {selectedProduct.product}
+                  {selectedProduct.product}
                   {selectedProduct.listPrice > 0 && <span style={{ marginLeft:28 }}>RRP MYR {fmtPrice(selectedProduct.listPrice)}</span>}
                 </div>
                 <div style={{ color:"#94a3b8", fontSize:12 }}>{selectedProduct.itemCode} | {selectedProduct.category}</div>

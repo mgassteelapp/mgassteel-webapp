@@ -86,6 +86,13 @@ function printInvoiceHTML(rowRaw) {
   .total { text-align:right; font-size:17px; font-weight:800; color:#0f2744;
            border-top:2px solid #0f2744; padding-top:10px; margin-top:6px; }
   .notes { font-size:12px; color:#475569; margin-top:14px; }
+  .paid { font-size:13px; font-weight:700; color:#0f2744; margin-top:18px; }
+  .paid span { display:inline-block; min-width:160px; border-bottom:1px solid #64748b; padding-bottom:2px; margin-left:6px; }
+  .sign { display:flex; gap:40px; margin-top:44px; }
+  .sign .box { flex:1; }
+  .sign .line { border-top:1px solid #1e2d3d; padding-top:6px; }
+  .sign .lbl { font-size:11px; font-weight:700; color:#475569; }
+  .sign .sub { font-size:10px; color:#94a3b8; margin-top:2px; }
   .foot { font-size:10.5px; color:#94a3b8; margin-top:26px; line-height:1.6; }
   @media print { .noprint { display:none; } body { padding:0; } }
 </style></head><body>
@@ -123,6 +130,23 @@ function printInvoiceHTML(rowRaw) {
   <div class="total">JUMLAH: ${fmtRM(row.total)}</div>
 
   ${row.notes ? `<div class="notes"><b>Catatan:</b> ${esc(row.notes)}</div>` : ''}
+
+  <div class="paid">JUMLAH DIBAYAR: <span>&nbsp;</span></div>
+
+  <div class="sign">
+    <div class="box">
+      <div class="line">
+        <div class="lbl">Tandatangan Pelanggan</div>
+        <div class="sub">Nama &amp; tarikh</div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="line">
+        <div class="lbl">Tandatangan Salesperson</div>
+        <div class="sub">Nama &amp; tarikh</div>
+      </div>
+    </div>
+  </div>
 
   <div class="foot">
     Dokumen ini dijana oleh sistem dalaman M Gas Steel Sdn Bhd sebagai rekod sementara sahaja.<br/>

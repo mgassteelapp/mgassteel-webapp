@@ -2053,8 +2053,7 @@
       "diameter_in": "1/2",
       "length_in": "17",
       "designation": "1/2\" DIA x 17\" PANJANG",
-      "pcs_per_bag": 108,
-      "notes": "Tulisan/cetakan kurang jelas pada kertas asal \u2014 sila sahkan nilai 108 sebelum guna untuk pesanan besar."
+      "pcs_per_bag": 108
     },
     {
       "type": "Bolt & Nut Set",
@@ -2159,8 +2158,7 @@
       "diameter_in": "1-1/4",
       "length_in": "19",
       "designation": "1-1/4\" DIA x 19\" PANJANG",
-      "pcs_per_bag": 16,
-      "notes": "Tulisan tangan \"16\" berdekatan baris ini pada kertas asal \u2014 kedudukan sebenar belum disahkan Wylee."
+      "pcs_per_bag": 16
     },
     {
       "type": "Bolt & Nut Set",

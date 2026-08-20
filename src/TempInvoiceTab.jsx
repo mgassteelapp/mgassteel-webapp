@@ -140,19 +140,35 @@ function openInvoicePrint(row) {
   w.document.close();
 }
 
+// ── Draft autosave — the form otherwise unmounts (and loses everything)
+//    whenever staff switch tabs, e.g. to check something and come back.
+//    Kept in localStorage, per-browser, cleared once the invoice is saved. ──
+const DRAFT_KEY = 'mgas_temp_invoice_draft';
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch {}
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 export default function TempInvoiceTab({ session, prices }) {
   const isManager = ['owner','senior','manager'].includes(session?.role);
 
-  // ── form state ──
-  const [custName,    setCustName]    = useState('');
-  const [custPhone,   setCustPhone]   = useState('');
-  const [custAddress, setCustAddress] = useState('');
-  const [custCode,    setCustCode]    = useState(null);
+  // ── form state — seeded from any saved draft, so switching tabs mid-entry
+  //    doesn't wipe out work in progress ──
+  const draft0 = useMemo(() => loadDraft(), []);
+  const [custName,    setCustName]    = useState(draft0?.custName || '');
+  const [custPhone,   setCustPhone]   = useState(draft0?.custPhone || '');
+  const [custAddress, setCustAddress] = useState(draft0?.custAddress || '');
+  const [custCode,    setCustCode]    = useState(draft0?.custCode || null);
   const [custMatches, setCustMatches] = useState([]);
   const [custSearching, setCustSearching] = useState(false);
-  const [notes,     setNotes]     = useState('');
-  const [lines,     setLines]     = useState([]);
+  const [notes,     setNotes]     = useState(draft0?.notes || '');
+  const [lines,     setLines]     = useState(draft0?.lines || []);
   const [search,    setSearch]    = useState('');
   const [qty,       setQty]       = useState('');
   const [picked,    setPicked]    = useState(null);
@@ -178,6 +194,16 @@ export default function TempInvoiceTab({ session, prices }) {
   useEffect(() => {
     if (picked && qty > 0) setPrice((Number(tierPrice(picked, Number(qty))) || 0).toFixed(2));
   }, [picked, qty]);
+
+  // Autosave the draft on every change — cheap, synchronous, survives a tab
+  // switch or an accidental reload. Skipped while empty so we don't leave a
+  // stale draft key around after a successful save clears the form.
+  useEffect(() => {
+    if (!custName && !custPhone && !custAddress && !notes && lines.length === 0) { clearDraft(); return; }
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ custName, custPhone, custAddress, custCode, notes, lines }));
+    } catch {}
+  }, [custName, custPhone, custAddress, custCode, notes, lines]);
 
   // Customer typeahead — same CRM search as Sebut Harga
   useEffect(() => {
@@ -251,6 +277,7 @@ export default function TempInvoiceTab({ session, prices }) {
       if (e2) throw e2;
       setSavedRow(ins);
       setLines([]); setCustName(''); setCustPhone(''); setCustAddress(''); setCustCode(null); setNotes('');
+      clearDraft();
       load();
       openInvoicePrint(ins);
     } catch (e) {

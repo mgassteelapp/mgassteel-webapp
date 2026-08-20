@@ -2214,13 +2214,194 @@ function BroadcastPopup({ session }) {
   );
 }
 
+// KPI panel: how many times each staff member picked each preset reason
+// when answering a price query, plus average response speed. Pulled fresh
+// (not filtered by the Aktif/Semua toggle above) so it always reflects the
+// full history for evaluation purposes.
+function QueryKPIPanel() {
+  const [stats, setStats] = useState(null); // null = loading
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase.from('price_queries')
+        .select('responded_by,reason_label,created_at,responded_at')
+        .not('responded_by', 'is', null)
+        .limit(3000);
+      if (!alive) return;
+      const byStaff = new Map();
+      (data || []).forEach(r => {
+        const name = r.responded_by || 'Tidak diketahui';
+        if (!byStaff.has(name)) byStaff.set(name, { total: 0, reasons: new Map(), minutesSum: 0, minutesN: 0 });
+        const s = byStaff.get(name);
+        s.total += 1;
+        const rl = r.reason_label || '(sebelum ciri sebab pratetap)';
+        s.reasons.set(rl, (s.reasons.get(rl) || 0) + 1);
+        if (r.created_at && r.responded_at) {
+          const mins = (new Date(r.responded_at) - new Date(r.created_at)) / 60000;
+          if (mins >= 0) { s.minutesSum += mins; s.minutesN += 1; }
+        }
+      });
+      const list = [...byStaff.entries()]
+        .map(([name, s]) => ({
+          name, total: s.total,
+          avgMins: s.minutesN ? s.minutesSum / s.minutesN : null,
+          reasons: [...s.reasons.entries()].sort((a, b) => b[1] - a[1]),
+        }))
+        .sort((a, b) => b.total - a.total);
+      if (alive) setStats(list);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  return (
+    <Card style={{ padding:16, marginBottom:12 }}>
+      <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:10 }}>
+        📊 KPI — Pecahan Sebab Jawapan ikut Staff
+      </div>
+      {stats === null ? (
+        <div style={{ color:C.muted, fontSize:12.5 }}>Memuatkan...</div>
+      ) : stats.length === 0 ? (
+        <div style={{ color:C.muted, fontSize:12.5 }}>Tiada jawapan direkod lagi.</div>
+      ) : (
+        <div style={{ display:'grid', gap:10 }}>
+          {stats.map(s => (
+            <div key={s.name} style={{ border:'1px solid #e2e8f0', borderRadius:10, padding:'10px 14px' }}>
+              <div style={{ display:'flex', alignItems:'baseline', gap:10, marginBottom:8, flexWrap:'wrap' }}>
+                <b style={{ fontSize:13.5, color:C.navy }}>{s.name}</b>
+                <span style={{ fontSize:12, color:C.muted }}>{s.total} jawapan</span>
+                {s.avgMins != null && (
+                  <span style={{ fontSize:12, color:C.muted }}>
+                    · purata masa jawab: {s.avgMins < 60 ? `${Math.round(s.avgMins)} min` : `${(s.avgMins/60).toFixed(1)} jam`}
+                  </span>
+                )}
+              </div>
+              <div style={{ display:'grid', gap:4 }}>
+                {s.reasons.map(([label, n]) => (
+                  <div key={label} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ width:170, flexShrink:0, fontSize:11.5, color:'#334155',
+                                  whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={label}>
+                      {label}
+                    </div>
+                    <div style={{ flex:1, background:'#f1f5f9', borderRadius:5, height:14, position:'relative' }}>
+                      <div style={{ width:`${Math.min(100, (n / s.total) * 100)}%`, background:'#e8780a',
+                                    height:'100%', borderRadius:5 }} />
+                    </div>
+                    <div style={{ width:24, textAlign:'right', fontSize:11.5, fontWeight:700, color:'#334155' }}>{n}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// Admin panel (owner/manager): add, rename, or retire preset reasons.
+// Reasons are never hard-deleted — retiring keeps historical KPI stats
+// intact while removing the option from the staff answer picker.
+function ReasonManagerPanel({ session }) {
+  const [reasons, setReasons] = useState(null);
+  const [newLabel, setNewLabel] = useState("");
+  const [editing, setEditing] = useState({}); // id -> draft label
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from('price_query_reasons').select('*').order('sort_order');
+    setReasons(data || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const slugify = (s) => s.toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'sebab';
+
+  const addReason = async () => {
+    const label = newLabel.trim();
+    if (!label || saving) return;
+    setSaving(true);
+    const base = slugify(label);
+    const code = `${base}_${Date.now().toString(36)}`;
+    const nextOrder = reasons && reasons.length ? Math.max(...reasons.map(r => r.sort_order || 0)) + 1 : 1;
+    const { error } = await supabase.from('price_query_reasons')
+      .insert({ code, label, sort_order: nextOrder, created_by: session.name });
+    setSaving(false);
+    if (error) { alert('Gagal tambah: ' + error.message); return; }
+    setNewLabel("");
+    load();
+  };
+
+  const toggleActive = async (r) => {
+    await supabase.from('price_query_reasons').update({ active: !r.active }).eq('id', r.id);
+    load();
+  };
+
+  const saveLabel = async (r) => {
+    const draft = (editing[r.id] ?? r.label).trim();
+    if (!draft || draft === r.label) { setEditing(e => ({ ...e, [r.id]: undefined })); return; }
+    await supabase.from('price_query_reasons').update({ label: draft }).eq('id', r.id);
+    setEditing(e => ({ ...e, [r.id]: undefined }));
+    load();
+  };
+
+  return (
+    <Card style={{ padding:16, marginBottom:12 }}>
+      <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:10 }}>
+        ⚙️ Urus Senarai Sebab Pratetap
+      </div>
+      <div style={{ fontSize:11.5, color:C.muted, marginBottom:12 }}>
+        Sebab yang dinyahaktifkan tidak akan dipaparkan kepada staff lagi, tetapi jawapan lama yang
+        sudah guna sebab itu kekal tidak berubah dalam KPI.
+      </div>
+      {reasons === null ? (
+        <div style={{ color:C.muted, fontSize:12.5 }}>Memuatkan...</div>
+      ) : (
+        <div style={{ display:'grid', gap:6, marginBottom:14 }}>
+          {reasons.map(r => (
+            <div key={r.id} style={{ display:'flex', alignItems:'center', gap:8,
+                                      opacity: r.active ? 1 : 0.5 }}>
+              <input value={editing[r.id] ?? r.label}
+                onChange={e => setEditing(ed => ({ ...ed, [r.id]: e.target.value }))}
+                onBlur={() => saveLabel(r)}
+                onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                style={{ flex:1, boxSizing:'border-box', padding:'7px 10px', borderRadius:7,
+                         border:'1.5px solid #e2e8f0', fontSize:12.5, fontFamily:'inherit' }} />
+              <button onClick={() => toggleActive(r)} style={{
+                padding:'6px 12px', border:'none', borderRadius:7, cursor:'pointer', fontSize:11.5, fontWeight:700,
+                background: r.active ? '#dcfce7' : '#f1f5f9', color: r.active ? '#166534' : '#94a3b8' }}>
+                {r.active ? 'Aktif' : 'Tidak Aktif'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display:'flex', gap:8 }}>
+        <input value={newLabel} onChange={e => setNewLabel(e.target.value)}
+          placeholder="Tambah sebab baru..."
+          onKeyDown={e => { if (e.key === 'Enter') addReason(); }}
+          style={{ flex:1, boxSizing:'border-box', padding:'8px 10px', borderRadius:7,
+                   border:'1.5px solid #e2e8f0', fontSize:12.5, fontFamily:'inherit' }} />
+        <button onClick={addReason} disabled={!newLabel.trim() || saving}
+          style={{ padding:'8px 16px', border:'none', borderRadius:7, fontWeight:700, fontSize:12.5,
+                   cursor: (!newLabel.trim()||saving) ? 'not-allowed' : 'pointer',
+                   background: (!newLabel.trim()||saving) ? '#94a3b8' : '#0f2744', color:'#fff' }}>
+          + Tambah
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 // Global popup: subscribes to realtime inserts on price_queries. If a new
 // query is addressed to the logged-in user's agent code, it pops up
 // immediately and demands a reason before it can be dismissed.
 function AgentQueryPopup({ session }) {
   const [myCodes, setMyCodes] = useState(null);
   const [queue,   setQueue]   = useState([]);
-  const [reply,   setReply]   = useState("");
+  const [reasons, setReasons] = useState([]);
+  const [reasonCode, setReasonCode] = useState(null);
+  const [reply,   setReply]   = useState(""); // optional note, alongside the preset reason
   const [saving,  setSaving]  = useState(false);
 
   // Which agent codes belong to me? + catch up on any open queries
@@ -2244,6 +2425,19 @@ function AgentQueryPopup({ session }) {
     return () => { alive = false; };
   }, [session.name]);
 
+  // Preset reason list, for the KPI-friendly answer picker below.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from('price_query_reasons')
+          .select('code,label').eq('active', true).order('sort_order');
+        if (alive) setReasons(data || []);
+      } catch { /* table may not exist yet in older deploys */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
   // Live subscription — fires the moment a manager presses Tanya
   useEffect(() => {
     if (!myCodes || myCodes.length === 0) return;
@@ -2265,10 +2459,13 @@ function AgentQueryPopup({ session }) {
   if (!cur) return null;
 
   const submit = async () => {
-    if (!reply.trim() || saving) return;
+    if (!reasonCode || saving) return;
+    const reasonLabel = (reasons.find(r => r.code === reasonCode) || {}).label || reasonCode;
     setSaving(true);
     const { error } = await supabase.from('price_queries').update({
-      response: reply.trim(),
+      reason_code: reasonCode,
+      reason_label: reasonLabel,
+      response: reply.trim() || null,
       responded_by: session.name,
       responded_at: new Date().toISOString(),
       state: 'answered',
@@ -2276,6 +2473,7 @@ function AgentQueryPopup({ session }) {
     setSaving(false);
     if (error) { alert('Gagal hantar jawapan: ' + error.message); return; }
     setQueue(q => q.slice(1));
+    setReasonCode(null);
     setReply("");
   };
 
@@ -2310,15 +2508,39 @@ function AgentQueryPopup({ session }) {
                         padding:'10px 14px', fontSize:13, marginBottom:14 }}>
             {cur.question}
           </div>
+
+          <div style={{ fontSize:12, fontWeight:700, color:C.muted, marginBottom:6 }}>
+            Pilih sebab (wajib):
+          </div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
+            {reasons.length === 0 && (
+              <span style={{ fontSize:12, color:'#94a3b8', fontStyle:'italic' }}>Memuatkan senarai sebab...</span>
+            )}
+            {reasons.map(r => {
+              const active = reasonCode === r.code;
+              return (
+                <button key={r.code} type="button" onClick={() => setReasonCode(r.code)}
+                  style={{ padding:'8px 12px', borderRadius:8, cursor:'pointer', fontSize:12.5,
+                           fontWeight:700, fontFamily:'inherit', textAlign:'left',
+                           border: active ? '1.5px solid #0f2744' : '1.5px solid #e2e8f0',
+                           background: active ? '#0f2744' : '#fff',
+                           color: active ? '#fff' : '#334155' }}>
+                  {active ? '✓ ' : ''}{r.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>Nota tambahan (pilihan):</div>
           <textarea value={reply} onChange={e => setReply(e.target.value)}
-            placeholder="Taip sebab anda di sini... (wajib)"
-            rows={3} autoFocus
+            placeholder="Sila nyatakan jika pilih 'Lain-lain', atau tambah butiran lain..."
+            rows={2}
             style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:10,
                      border:'1.5px solid #cbd5e1', fontSize:13, fontFamily:'inherit', resize:'vertical' }} />
-          <button onClick={submit} disabled={!reply.trim() || saving}
+          <button onClick={submit} disabled={!reasonCode || saving}
             style={{ marginTop:12, width:'100%', padding:'12px', border:'none', borderRadius:10,
-                     fontWeight:800, fontSize:14, cursor: (!reply.trim()||saving) ? 'not-allowed' : 'pointer',
-                     background: (!reply.trim()||saving) ? '#94a3b8' : '#0f2744', color:'#fff' }}>
+                     fontWeight:800, fontSize:14, cursor: (!reasonCode||saving) ? 'not-allowed' : 'pointer',
+                     background: (!reasonCode||saving) ? '#94a3b8' : '#0f2744', color:'#fff' }}>
             {saving ? 'Menghantar...' : '✔ Hantar Jawapan'}
           </button>
         </div>
@@ -2332,6 +2554,9 @@ function QueriesTab({ session }) {
   const [rows, setRows] = useState([]);
   const [stateFilter, setStateFilter] = useState('active'); // active | all
   const [loading, setLoading] = useState(true);
+  const [showKPI, setShowKPI] = useState(false);
+  const [showManage, setShowManage] = useState(false);
+  const isAdmin = ["owner","manager"].includes(session.role);
 
   const load = async () => {
     setLoading(true);
@@ -2367,7 +2592,21 @@ function QueriesTab({ session }) {
     <div>
       <Card style={{ padding:'12px 16px', marginBottom:12, display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
         <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>❓ Pertanyaan Harga kepada Agen</div>
-        <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
+        <div style={{ marginLeft:'auto', display:'flex', gap:6, flexWrap:'wrap' }}>
+          {isAdmin && (
+            <button onClick={() => setShowKPI(v => !v)} style={{
+              padding:'6px 14px', border:'none', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600,
+              background: showKPI ? '#e8780a' : '#f1f5f9', color: showKPI ? '#fff' : C.muted }}>
+              📊 KPI Staff
+            </button>
+          )}
+          {isAdmin && (
+            <button onClick={() => setShowManage(v => !v)} style={{
+              padding:'6px 14px', border:'none', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600,
+              background: showManage ? '#e8780a' : '#f1f5f9', color: showManage ? '#fff' : C.muted }}>
+              ⚙️ Urus Sebab Pratetap
+            </button>
+          )}
           {[['active','Aktif'],['all','Semua']].map(([k, l]) => (
             <button key={k} onClick={() => setStateFilter(k)} style={{
               padding:'6px 14px', border:'none', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600,
@@ -2377,6 +2616,8 @@ function QueriesTab({ session }) {
           ))}
         </div>
       </Card>
+      {showKPI && isAdmin && <QueryKPIPanel />}
+      {showManage && isAdmin && <ReasonManagerPanel session={session} />}
       {loading ? (
         <Card style={{ padding:32, textAlign:'center', color:C.muted }}>Memuatkan...</Card>
       ) : rows.length === 0 ? (
@@ -2399,10 +2640,15 @@ function QueriesTab({ session }) {
               {' '}· Ditanya oleh {r.asked_by || '—'}
             </div>
             <div style={{ fontSize:13, marginBottom:6 }}>❓ {r.question}</div>
-            {r.response ? (
+            {r.reason_label || r.response ? (
               <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:8,
                             padding:'8px 12px', fontSize:13 }}>
-                💬 <b>{r.responded_by}</b> ({fmtT(r.responded_at)}): {r.response}
+                💬 <b>{r.responded_by}</b> ({fmtT(r.responded_at)})
+                {r.reason_label && (
+                  <span style={{ marginLeft:8, background:'#166534', color:'#fff', borderRadius:12,
+                                 padding:'2px 9px', fontSize:11, fontWeight:700 }}>{r.reason_label}</span>
+                )}
+                {r.response && <div style={{ marginTop:4 }}>{r.response}</div>}
               </div>
             ) : (
               <div style={{ fontSize:12, color:'#dc2626', fontStyle:'italic' }}>Belum dijawab.</div>

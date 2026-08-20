@@ -193,6 +193,10 @@ export default function TempInvoiceTab({ session, prices }) {
   const [custSearching, setCustSearching] = useState(false);
   const [notes,     setNotes]     = useState(draft0?.notes || '');
   const [lines,     setLines]     = useState(draft0?.lines || []);
+  // Set while editing an already-saved invoice (holds its id + invoice_no) —
+  // null means "creating a new one". Only pending (not-yet-reissued) rows
+  // can be edited; see the Edit button in the history table below.
+  const [editing,   setEditing]   = useState(draft0?.editing || null);
   const [search,    setSearch]    = useState('');
   const [qty,       setQty]       = useState('');
   const [picked,    setPicked]    = useState(null);
@@ -223,11 +227,11 @@ export default function TempInvoiceTab({ session, prices }) {
   // switch or an accidental reload. Skipped while empty so we don't leave a
   // stale draft key around after a successful save clears the form.
   useEffect(() => {
-    if (!custName && !custPhone && !custAddress && !notes && lines.length === 0) { clearDraft(); return; }
+    if (!custName && !custPhone && !custAddress && !notes && lines.length === 0 && !editing) { clearDraft(); return; }
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ custName, custPhone, custAddress, custCode, notes, lines }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ custName, custPhone, custAddress, custCode, notes, lines, editing }));
     } catch {}
-  }, [custName, custPhone, custAddress, custCode, notes, lines]);
+  }, [custName, custPhone, custAddress, custCode, notes, lines, editing]);
 
   // Customer typeahead — same CRM search as Sebut Harga
   useEffect(() => {
@@ -278,17 +282,44 @@ export default function TempInvoiceTab({ session, prices }) {
 
   const total = lines.reduce((s, l) => s + l.lineTotal, 0);
 
+  const resetForm = () => {
+    setLines([]); setCustName(''); setCustPhone(''); setCustAddress(''); setCustCode(null); setNotes(''); setEditing(null);
+    clearDraft();
+  };
+
+  // Load an existing pending invoice back into the form for correction.
+  // Only offered (see the history table) for rows still 'pending' — once
+  // marked reissued, the real e-Invoice already reflects this record, so it
+  // stays frozen.
+  const startEdit = (row) => {
+    setCustName(row.customer_name || '');
+    setCustPhone(row.customer_phone || '');
+    setCustAddress(row.customer_address || '');
+    setCustCode(row.customer_code || null);
+    setNotes(row.notes || '');
+    setLines(row.items || []);
+    setEditing({ id: row.id, invoice_no: row.invoice_no });
+    setError(''); setSavedRow(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const cancelEdit = () => resetForm();
+
   const saveInvoice = async () => {
     setError('');
     if (!custName.trim()) { setError('Sila isi nama pelanggan.'); return; }
     if (!lines.length)    { setError('Sila tambah sekurang-kurangnya satu barang.'); return; }
+    // Defensive re-check — the Edit button is hidden once a row is reissued,
+    // but guard here too in case it changed status in another tab meanwhile.
+    if (editing) {
+      const live = rows.find(r => r.id === editing.id);
+      if (live && live.status !== 'pending') {
+        setError('Invois ini sudah ditanda "Dikeluarkan Semula" — tidak boleh diedit lagi.');
+        return;
+      }
+    }
     setSaving(true);
     try {
-      const { data: no, error: e1 } = await supabase.rpc('next_temp_invoice_no');
-      if (e1) throw e1;
-      const row = {
-        invoice_no: no,
-        created_by: session.name,
+      const customerFields = {
         customer_name: custName.trim(),
         customer_code: custCode || null,
         customer_phone: custPhone.trim() || null,
@@ -297,13 +328,24 @@ export default function TempInvoiceTab({ session, prices }) {
         total: Math.round(total * 100) / 100,
         notes: notes.trim() || null,
       };
-      const { data: ins, error: e2 } = await supabase.from('temp_invoices').insert(row).select('*').single();
-      if (e2) throw e2;
-      setSavedRow(ins);
-      setLines([]); setCustName(''); setCustPhone(''); setCustAddress(''); setCustCode(null); setNotes('');
-      clearDraft();
+      let saved;
+      if (editing) {
+        const { data: upd, error: eU } = await supabase.from('temp_invoices')
+          .update(customerFields).eq('id', editing.id).select('*').single();
+        if (eU) throw eU;
+        saved = upd;
+      } else {
+        const { data: no, error: e1 } = await supabase.rpc('next_temp_invoice_no');
+        if (e1) throw e1;
+        const { data: ins, error: e2 } = await supabase.from('temp_invoices')
+          .insert({ invoice_no: no, created_by: session.name, ...customerFields }).select('*').single();
+        if (e2) throw e2;
+        saved = ins;
+      }
+      setSavedRow(saved);
+      resetForm();
       load();
-      openInvoicePrint(ins);
+      openInvoicePrint(saved);
     } catch (e) {
       setError('Gagal simpan: ' + String(e?.message || e));
     }
@@ -334,10 +376,19 @@ export default function TempInvoiceTab({ session, prices }) {
         "Dikeluarkan Semula" di bawah selepas itu dibuat).
       </div>
 
-      {/* ── Create temp invoice ── */}
+      {/* ── Create / edit temp invoice ── */}
       <div style={card}>
-        <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:12 }}>
-          🧾 Invois Sementara Baru
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+          <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
+            {editing ? `✏️ Mengedit ${editing.invoice_no}` : '🧾 Invois Sementara Baru'}
+          </div>
+          {editing && (
+            <button onClick={cancelEdit}
+              style={{ padding:'5px 12px', background:C.gray, color:C.muted, border:`1px solid ${C.border}`,
+                       borderRadius:6, fontWeight:600, fontSize:11.5, cursor:'pointer' }}>
+              Batal Edit
+            </button>
+          )}
         </div>
 
         <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:10 }}>
@@ -426,7 +477,7 @@ export default function TempInvoiceTab({ session, prices }) {
           <button onClick={saveInvoice} disabled={saving}
             style={{ padding:'10px 24px', background:saving ? C.border : C.navy, color:C.white,
                      border:'none', borderRadius:10, fontWeight:800, fontSize:13.5, cursor:saving ? 'not-allowed' : 'pointer' }}>
-            {saving ? 'Menyimpan…' : '🧾 Simpan & Cetak Invois Sementara'}
+            {saving ? 'Menyimpan…' : editing ? `✏️ Kemaskini & Cetak ${editing.invoice_no}` : '🧾 Simpan & Cetak Invois Sementara'}
           </button>
         </div>
         {error && <div style={{ marginTop:8, color:C.red, fontSize:12.5, fontWeight:600 }}>{error}</div>}
@@ -434,7 +485,7 @@ export default function TempInvoiceTab({ session, prices }) {
           <div style={{ marginTop:10, background:C.greenBg, color:C.green, borderRadius:8,
                         padding:'8px 12px', fontSize:12.5, fontWeight:600, display:'flex',
                         justifyContent:'space-between', alignItems:'center' }}>
-            ✓ {savedRow.invoice_no} disimpan. Tetingkap cetak sepatutnya terbuka — jika tersekat pop-up, tekan butang cetak di senarai bawah.
+            ✓ {savedRow.invoice_no} dikemaskini/disimpan. Tetingkap cetak sepatutnya terbuka — jika tersekat pop-up, tekan butang cetak di senarai bawah.
             <button onClick={() => openInvoicePrint(savedRow)}
               style={{ padding:'5px 12px', background:C.green, color:C.white, border:'none',
                        borderRadius:6, fontWeight:700, fontSize:11.5, cursor:'pointer' }}>
@@ -500,6 +551,13 @@ export default function TempInvoiceTab({ session, prices }) {
                                    borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', marginRight:6 }}>
                           🖨️ Cetak
                         </button>
+                        {r.status === 'pending' && (r.created_by === session.name || isManager) && (
+                          <button onClick={() => startEdit(r)}
+                            style={{ padding:'4px 9px', background:C.gray, color:C.text, border:`1px solid ${C.border}`,
+                                     borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', marginRight:6 }}>
+                            ✏️ Edit
+                          </button>
+                        )}
                         {isManager && r.status === 'pending' && (
                           <button onClick={() => setStatus(r, 'reissued')}
                             style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',

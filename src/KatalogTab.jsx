@@ -12,17 +12,22 @@ import coldRolledData   from "./data/katalog/cold-rolled-sheets.json";
 import galvSheetData    from "./data/katalog/galvanised-sheet.json";
 import chequeredData    from "./data/katalog/chequered-plates.json";
 import apiPipeData      from "./data/katalog/api-pipes.json";
+import boltNutData      from "./data/katalog/bolt-nut-bsw.json";
 
 // ── M Gas Steel — Katalog & Kira Berat ─────────────────────────────
 // Reference catalogue (dimensions + mass) for structural steel products,
 // with a built-in weight calculator. Data extracted from official spec
 // PDFs supplied by Wylee.
 //
-// Two calculator shapes, per category `calcType`:
+// Three calculator shapes, per category `calcType`:
 //   "linear" (default) — sold by length. massOf() returns kg/m.
 //                          Calculator: panjang (m) × kuantiti (batang).
 //   "area"              — sold by sheet/thickness. massOf() returns kg/m².
 //                          Calculator: panjang (mm) × lebar (mm) × kuantiti (keping).
+//   "bagcount"          — sold by piece count per 50kg bag (bolt & nut sets).
+//                          massOf() returns pcs/bag. Calculator: masukkan
+//                          berat (kg) ATAU bilangan (pcs) diperlukan, yang
+//                          satu lagi dikira secara automatik.
 //
 // `hasMarketAdjust` (CQ/BS grade toggle) is opt-in per category — only
 // CHS/SHS/RHS have it today, per Wylee: real hollow-section stock commonly
@@ -197,6 +202,19 @@ const CATEGORIES = [
       it.schedule || null,
     ].filter(Boolean).join(" · "),
   },
+  {
+    key: "boltnut", icon: "🔗", label: "Bolt & Nut BSW (Mild Steel)",
+    data: boltNutData.items,
+    calcType: "bagcount",
+    desig: (it) => it.designation,
+    massOf: (it) => Number(it.pcs_per_bag) || 0,
+    massUnit: "pcs/bag(50kg)",
+    dims: (it) => [
+      it.type,
+      `⌀ ${it.diameter_in}"`,
+      it.length_in != null ? `Panjang ${it.length_in}"` : null,
+    ].filter(Boolean).join(" · "),
+  },
 ];
 
 // Generic search index — stringify every scalar field on the item so search
@@ -253,9 +271,13 @@ export default function KatalogTab({ session }) {
   const [grade, setGrade] = useState("katalog"); // "katalog" | "cq" | "bs"
   const [cqPct, setCqPct] = useState(20);
   const [bsPct, setBsPct] = useState(5);
+  const [bagMode, setBagMode] = useState("kg"); // "kg" | "pcs" — which field staff is keying in
+  const [bagKg, setBagKg] = useState("");
+  const [bagPcs, setBagPcs] = useState("");
 
   const cat = CATEGORIES.find(c => c.key === catKey);
   const isArea = cat.calcType === "area";
+  const isBagCount = cat.calcType === "bagcount";
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -269,6 +291,9 @@ export default function KatalogTab({ session }) {
     setPieceLenMm("");
     setPieceWidMm("");
     setQty(1);
+    setBagMode("kg");
+    setBagKg("");
+    setBagPcs("");
   };
 
   const clampPct = v => Math.min(90, Math.max(0, parseFloat(v) || 0));
@@ -295,7 +320,16 @@ export default function KatalogTab({ session }) {
 
   const weightPerPiece = isArea ? weightPerPieceArea : weightPerPieceLinear;
   const totalWeight = weightPerPiece * q;
-  const readyToCalc = isArea ? (pLenM > 0 && pWidM > 0) : len > 0;
+  const readyToCalc = isBagCount ? true : (isArea ? (pLenM > 0 && pWidM > 0) : len > 0);
+
+  // bagcount calc — refMass here is pcs per 50kg bag
+  const pcsPerBag = refMass;
+  const kgPerPc = pcsPerBag > 0 ? 50 / pcsPerBag : 0;
+  const bagKgNum = parseFloat(bagKg) || 0;
+  const bagPcsNum = parseFloat(bagPcs) || 0;
+  const bagResultPcs = bagMode === "kg" ? bagKgNum * pcsPerBag / 50 : bagPcsNum;
+  const bagResultKg = bagMode === "pcs" ? bagPcsNum * kgPerPc : bagKgNum;
+  const bagsNeeded = bagResultKg / 50;
 
   return (
     <div style={K.page}>
@@ -393,7 +427,7 @@ export default function KatalogTab({ session }) {
                     <div style={K.rowDims}>{cat.dims(it)}</div>
                   </div>
                   <div style={K.rowMass}>
-                    {mass > 0 ? `${mass} ${cat.massUnit}` : "—"}
+                    {mass > 0 ? `${cat.calcType === "bagcount" ? mass.toLocaleString() : mass} ${cat.massUnit}` : "—"}
                   </div>
                 </div>
               );
@@ -421,11 +455,17 @@ export default function KatalogTab({ session }) {
                 <div style={K.selDims}>{selected.cat.dims(selected.item)}</div>
                 {selected.item.notes && <div style={K.selNotes}>ℹ️ {selected.item.notes}</div>}
                 <div style={K.selMassRow}>
-                  <span style={K.selMassLbl}>Berat katalog (rasmi)</span>
+                  <span style={K.selMassLbl}>{isBagCount ? "Bilangan pcs / bag (50kg)" : "Berat katalog (rasmi)"}</span>
                   <span style={{ ...K.selMassVal, ...(activeGrade !== "katalog" ? K.selMassValStrike : {}) }}>
-                    {refMass.toFixed(3)} {massUnit}
+                    {isBagCount ? `${refMass.toLocaleString()} pcs` : `${refMass.toFixed(3)} ${massUnit}`}
                   </span>
                 </div>
+                {isBagCount && pcsPerBag > 0 && (
+                  <div style={{ ...K.selMassRow, marginTop: 0, paddingTop: 0, borderTop: "none" }}>
+                    <span style={K.selMassLbl}>Berat sebiji (set/pc)</span>
+                    <span style={K.selMassValSecondary}>{kgPerPc.toFixed(4)} kg/pc</span>
+                  </div>
+                )}
                 {secondaryMass != null && (
                   <div style={{ ...K.selMassRow, marginTop: 0, paddingTop: 0, borderTop: "none" }}>
                     <span style={K.selMassLbl}>Unit asal (Imperial)</span>
@@ -484,7 +524,33 @@ export default function KatalogTab({ session }) {
                 )}
               </div>
 
-              {isArea ? (
+              {isBagCount ? (
+                <>
+                  <div style={K.gradeBar}>
+                    <button type="button" style={{ ...K.gradeBtn, flex: 1,
+                        background: bagMode === "kg" ? "#e8780a" : "#f1f5f9",
+                        color: bagMode === "kg" ? "#fff" : "#334155" }}
+                      onClick={() => setBagMode("kg")}>Saya ada Berat (kg)</button>
+                    <button type="button" style={{ ...K.gradeBtn, flex: 1,
+                        background: bagMode === "pcs" ? "#e8780a" : "#f1f5f9",
+                        color: bagMode === "pcs" ? "#fff" : "#334155" }}
+                      onClick={() => setBagMode("pcs")}>Saya ada Bilangan (pcs)</button>
+                  </div>
+                  {bagMode === "kg" ? (
+                    <Field label="Berat diperlukan (kg)">
+                      <input type="number" step="0.1" value={bagKg}
+                        onChange={e => setBagKg(e.target.value)} placeholder="cth. 25"
+                        style={K.input} />
+                    </Field>
+                  ) : (
+                    <Field label="Bilangan diperlukan (pcs)">
+                      <input type="number" step="1" value={bagPcs}
+                        onChange={e => setBagPcs(e.target.value)} placeholder="cth. 500"
+                        style={K.input} />
+                    </Field>
+                  )}
+                </>
+              ) : isArea ? (
                 <>
                   <div className="kat-lenwid">
                     <Field label="Panjang (mm)">
@@ -519,30 +585,60 @@ export default function KatalogTab({ session }) {
                 </>
               )}
 
-              <div style={K.calcBox}>
-                <div style={K.calcLine}>
-                  <span style={K.calcLbl}>Berat sekeping/sebatang{activeGrade !== "katalog" ? ` (${grade === "cq" ? "CQ" : "BS"})` : ""}</span>
-                  <span style={K.calcVal}>{weightPerPiece.toFixed(2)} kg</span>
-                </div>
-                <div style={K.calcFormula}>
-                  {isArea
-                    ? `${effMass.toFixed(3)} kg/m² × ${(pLenM || 0).toFixed(3)}m × ${(pWidM || 0).toFixed(3)}m`
-                    : `${effMass.toFixed(3)} kg/m × ${len || 0}m`}
-                </div>
-              </div>
+              {isBagCount ? (
+                <>
+                  <div style={K.calcBox}>
+                    <div style={K.calcLine}>
+                      <span style={K.calcLbl}>{bagMode === "kg" ? "Bersamaan bilangan" : "Bersamaan berat"}</span>
+                      <span style={K.calcVal}>
+                        {bagMode === "kg" ? `${Math.round(bagResultPcs).toLocaleString()} pcs` : `${bagResultKg.toFixed(2)} kg`}
+                      </span>
+                    </div>
+                    <div style={K.calcFormula}>
+                      {bagMode === "kg"
+                        ? `${bagKgNum || 0} kg × (${pcsPerBag} pcs ÷ 50 kg)`
+                        : `${bagPcsNum || 0} pcs × (50 kg ÷ ${pcsPerBag} pcs)`}
+                    </div>
+                  </div>
+                  <div style={K.grandBox}>
+                    <div>
+                      <div style={K.grandLbl}>BILANGAN BAG (50KG) DIPERLUKAN</div>
+                      <div style={K.grandPer}>{bagResultKg.toFixed(2)} kg ÷ 50 kg</div>
+                    </div>
+                    <div style={K.grandVal}>{bagsNeeded.toFixed(2)}</div>
+                  </div>
+                  {pcsPerBag === 0 && (
+                    <div style={K.hint}>Tiada data pcs/bag untuk saiz ini.</div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div style={K.calcBox}>
+                    <div style={K.calcLine}>
+                      <span style={K.calcLbl}>Berat sekeping/sebatang{activeGrade !== "katalog" ? ` (${grade === "cq" ? "CQ" : "BS"})` : ""}</span>
+                      <span style={K.calcVal}>{weightPerPiece.toFixed(2)} kg</span>
+                    </div>
+                    <div style={K.calcFormula}>
+                      {isArea
+                        ? `${effMass.toFixed(3)} kg/m² × ${(pLenM || 0).toFixed(3)}m × ${(pWidM || 0).toFixed(3)}m`
+                        : `${effMass.toFixed(3)} kg/m × ${len || 0}m`}
+                    </div>
+                  </div>
 
-              <div style={K.grandBox}>
-                <div>
-                  <div style={K.grandLbl}>JUMLAH BERAT</div>
-                  <div style={K.grandPer}>{weightPerPiece.toFixed(2)} kg × {q || 0} {isArea ? "keping" : "batang"}</div>
-                </div>
-                <div style={K.grandVal}>{totalWeight.toFixed(2)} kg</div>
-              </div>
+                  <div style={K.grandBox}>
+                    <div>
+                      <div style={K.grandLbl}>JUMLAH BERAT</div>
+                      <div style={K.grandPer}>{weightPerPiece.toFixed(2)} kg × {q || 0} {isArea ? "keping" : "batang"}</div>
+                    </div>
+                    <div style={K.grandVal}>{totalWeight.toFixed(2)} kg</div>
+                  </div>
 
-              {!readyToCalc && (
-                <div style={K.hint}>
-                  {isArea ? "Masukkan panjang & lebar untuk dapatkan berat." : "Masukkan panjang untuk dapatkan berat."}
-                </div>
+                  {!readyToCalc && (
+                    <div style={K.hint}>
+                      {isArea ? "Masukkan panjang & lebar untuk dapatkan berat." : "Masukkan panjang untuk dapatkan berat."}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -557,6 +653,9 @@ export default function KatalogTab({ session }) {
         — kedua-dua % boleh laras ikut batch/pembekal semasa. Untuk plat/
         kepingan, berat dikira ikut saiz sebenar (panjang × lebar) yang
         dimasukkan — guna saiz piawai yang tertera atau saiz tempahan khas.
+        Untuk Bolt &amp; Nut BSW, bilangan pcs/bag ditranskripsi daripada
+        carta rujukan pembekal — sila semak nota (ℹ️) pada saiz yang ditanda
+        untuk butiran yang masih perlu disahkan.
       </footer>
     </div>
   );

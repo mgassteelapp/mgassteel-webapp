@@ -1,0 +1,2425 @@
+{
+  "category": "Bolt & Nut BSW (Mild Steel)",
+  "unit_note": "pcs (set bolt+nut, atau nut sahaja) per bag 50kg",
+  "source_note": "Ditranskripsi daripada carta rujukan Metric Marketing Sdn Bhd (Co. No: 343182-H), disahkan oleh Wylee. Sila hubungi pembekal untuk saiz/panjang yang tiada dalam carta ini.",
+  "items": [
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "5/8",
+      "designation": "5/16\" DIA x 5/8\" PANJANG",
+      "pcs_per_bag": 3144,
+      "notes": "Disahkan oleh Wylee (5/8\" x 5/16\" = 3,144). Saiz diameter lain untuk panjang 5/8\" belum ada data."
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "3/4",
+      "designation": "1/4\" DIA x 3/4\" PANJANG",
+      "pcs_per_bag": 5068
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "3/4",
+      "designation": "5/16\" DIA x 3/4\" PANJANG",
+      "pcs_per_bag": 3140
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "3/4",
+      "designation": "3/8\" DIA x 3/4\" PANJANG",
+      "pcs_per_bag": 2140
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "3/4",
+      "designation": "1/2\" DIA x 3/4\" PANJANG",
+      "pcs_per_bag": 930
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "1",
+      "designation": "1/4\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 4141
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "1",
+      "designation": "5/16\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 2553
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "1",
+      "designation": "3/8\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 1686
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "1",
+      "designation": "1/2\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 752
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "9/16",
+      "length_in": "1",
+      "designation": "9/16\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 644
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "1",
+      "designation": "5/8\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 490
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "1",
+      "designation": "3/4\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 303
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "1",
+      "designation": "7/8\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 197
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "1",
+      "designation": "1\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 138
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "1",
+      "designation": "1-1/8\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 99
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "1",
+      "designation": "1-1/4\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 74
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "1",
+      "designation": "1-1/2\" DIA x 1\" PANJANG",
+      "pcs_per_bag": 56
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "1-1/4",
+      "designation": "1/4\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 3658
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "1-1/4",
+      "designation": "5/16\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 2268
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "1-1/4",
+      "designation": "3/8\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 1505
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "1-1/4",
+      "designation": "1/2\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 687
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "9/16",
+      "length_in": "1-1/4",
+      "designation": "9/16\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 595
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "1-1/4",
+      "designation": "5/8\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 380
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "1-1/4",
+      "designation": "3/4\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 282
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "1-1/4",
+      "designation": "7/8\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 185
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "1-1/4",
+      "designation": "1\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 130
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "1-1/4",
+      "designation": "1-1/8\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 94
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "1-1/4",
+      "designation": "1-1/4\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 70
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "1-1/4",
+      "designation": "1-1/2\" DIA x 1-1/4\" PANJANG",
+      "pcs_per_bag": 54
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "1-1/2",
+      "designation": "1/4\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 3286
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "1-1/2",
+      "designation": "5/16\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 2040
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "1-1/2",
+      "designation": "3/8\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 1360
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "1-1/2",
+      "designation": "1/2\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 632
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "9/16",
+      "length_in": "1-1/2",
+      "designation": "9/16\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 551
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "1-1/2",
+      "designation": "5/8\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 354
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "1-1/2",
+      "designation": "3/4\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 221
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "1-1/2",
+      "designation": "7/8\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 175
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "1-1/2",
+      "designation": "1\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 123
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "1-1/2",
+      "designation": "1-1/8\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 89
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "1-1/2",
+      "designation": "1-1/4\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 67
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "1-1/2",
+      "designation": "1-1/2\" DIA x 1-1/2\" PANJANG",
+      "pcs_per_bag": 51
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "1-3/4",
+      "designation": "1/4\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 3144
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "1-3/4",
+      "designation": "5/16\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 1986
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "1-3/4",
+      "designation": "3/8\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 1274
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "1-3/4",
+      "designation": "1/2\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 559
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "9/16",
+      "length_in": "1-3/4",
+      "designation": "9/16\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 507
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "1-3/4",
+      "designation": "5/8\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 322
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "1-3/4",
+      "designation": "3/4\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 215
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "1-3/4",
+      "designation": "7/8\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 165
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "1-3/4",
+      "designation": "1\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 117
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "1-3/4",
+      "designation": "1-1/8\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 85
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "1-3/4",
+      "designation": "1-1/4\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 64
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "1-3/4",
+      "designation": "1-1/2\" DIA x 1-3/4\" PANJANG",
+      "pcs_per_bag": 49
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "2",
+      "designation": "1/4\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 2723
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "2",
+      "designation": "5/16\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 1699
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "2",
+      "designation": "3/8\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 1140
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "2",
+      "designation": "1/2\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 545
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "9/16",
+      "length_in": "2",
+      "designation": "9/16\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 469
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "2",
+      "designation": "5/8\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 310
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "2",
+      "designation": "3/4\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 196
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "2",
+      "designation": "7/8\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 149
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "2",
+      "designation": "1\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 106
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "2",
+      "designation": "1-1/8\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 82
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "2",
+      "designation": "1-1/4\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 61
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "2",
+      "designation": "1-1/2\" DIA x 2\" PANJANG",
+      "pcs_per_bag": 47
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "2-1/4",
+      "designation": "1/4\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 2506
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "2-1/4",
+      "designation": "5/16\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 1568
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "2-1/4",
+      "designation": "3/8\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 1054
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "2-1/4",
+      "designation": "1/2\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 510
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "2-1/4",
+      "designation": "5/8\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 293
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "2-1/4",
+      "designation": "3/4\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 186
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "2-1/4",
+      "designation": "7/8\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 141
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "2-1/4",
+      "designation": "1\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 100
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "2-1/4",
+      "designation": "1-1/8\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 78
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "2-1/4",
+      "designation": "1-1/4\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 59
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "2-1/4",
+      "designation": "1-1/2\" DIA x 2-1/4\" PANJANG",
+      "pcs_per_bag": 46
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "2-1/2",
+      "designation": "1/4\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 2326
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "2-1/2",
+      "designation": "5/16\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 1455
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "2-1/2",
+      "designation": "3/8\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 981
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "2-1/2",
+      "designation": "1/2\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 479
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "2-1/2",
+      "designation": "5/8\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 276
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "2-1/2",
+      "designation": "3/4\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 176
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "2-1/2",
+      "designation": "7/8\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 133
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "2-1/2",
+      "designation": "1\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 95
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "2-1/2",
+      "designation": "1-1/8\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 75
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "2-1/2",
+      "designation": "1-1/4\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 57
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "2-1/2",
+      "designation": "1-1/2\" DIA x 2-1/2\" PANJANG",
+      "pcs_per_bag": 44
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "2-3/4",
+      "designation": "1/4\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 2165
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "2-3/4",
+      "designation": "5/16\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 1358
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "2-3/4",
+      "designation": "3/8\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 917
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "2-3/4",
+      "designation": "1/2\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 452
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "2-3/4",
+      "designation": "5/8\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 263
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "2-3/4",
+      "designation": "3/4\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 169
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "2-3/4",
+      "designation": "7/8\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 127
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "2-3/4",
+      "designation": "1\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 91
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "2-3/4",
+      "designation": "1-1/8\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 72
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "2-3/4",
+      "designation": "1-1/4\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 54
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "2-3/4",
+      "designation": "1-1/2\" DIA x 2-3/4\" PANJANG",
+      "pcs_per_bag": 42
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "3",
+      "designation": "1/4\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 2029
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "3",
+      "designation": "5/16\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 1273
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "3",
+      "designation": "3/8\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 860
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "3",
+      "designation": "1/2\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 427
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "3",
+      "designation": "5/8\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 250
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "3",
+      "designation": "3/4\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 161
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "3",
+      "designation": "7/8\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 122
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "3",
+      "designation": "1\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 86
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "3",
+      "designation": "1-1/8\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 69
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "3",
+      "designation": "1-1/4\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 52
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "3",
+      "designation": "1-1/2\" DIA x 3\" PANJANG",
+      "pcs_per_bag": 41
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "3-1/2",
+      "designation": "1/4\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 1799
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "3-1/2",
+      "designation": "5/16\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 1132
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "3-1/2",
+      "designation": "3/8\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 767
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "3-1/2",
+      "designation": "1/2\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 386
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "3-1/2",
+      "designation": "5/8\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 227
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "3-1/2",
+      "designation": "3/4\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 147
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "3-1/2",
+      "designation": "7/8\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 111
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "3-1/2",
+      "designation": "1\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 79
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "3-1/2",
+      "designation": "1-1/8\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 63
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "3-1/2",
+      "designation": "1-1/4\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 48
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "3-1/2",
+      "designation": "1-1/2\" DIA x 3-1/2\" PANJANG",
+      "pcs_per_bag": 38
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "4",
+      "designation": "1/4\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 1616
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "4",
+      "designation": "5/16\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 1018
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "4",
+      "designation": "3/8\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 692
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "4",
+      "designation": "1/2\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 352
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "4",
+      "designation": "5/8\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 209
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "4",
+      "designation": "3/4\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 135
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "4",
+      "designation": "7/8\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 102
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "4",
+      "designation": "1\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 74
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "4",
+      "designation": "1-1/8\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 58
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "4",
+      "designation": "1-1/4\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 45
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "4",
+      "designation": "1-1/2\" DIA x 4\" PANJANG",
+      "pcs_per_bag": 35
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "4-1/2",
+      "designation": "1/4\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 1467
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "4-1/2",
+      "designation": "5/16\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 925
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "4-1/2",
+      "designation": "3/8\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 630
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "4-1/2",
+      "designation": "1/2\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 323
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "4-1/2",
+      "designation": "5/8\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 194
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "4-1/2",
+      "designation": "3/4\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 127
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "4-1/2",
+      "designation": "7/8\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 96
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "4-1/2",
+      "designation": "1\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 70
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "4-1/2",
+      "designation": "1-1/8\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 54
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "4-1/2",
+      "designation": "1-1/4\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 42
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "4-1/2",
+      "designation": "1-1/2\" DIA x 4-1/2\" PANJANG",
+      "pcs_per_bag": 33
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "5",
+      "designation": "1/4\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 1344
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "5",
+      "designation": "5/16\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 849
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "5",
+      "designation": "3/8\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 578
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "5",
+      "designation": "1/2\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 299
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "5",
+      "designation": "5/8\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 180
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "5",
+      "designation": "3/4\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 121
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "5",
+      "designation": "7/8\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 89
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "5",
+      "designation": "1\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 65
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "5",
+      "designation": "1-1/8\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 51
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "5",
+      "designation": "1-1/4\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 39
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "5",
+      "designation": "1-1/2\" DIA x 5\" PANJANG",
+      "pcs_per_bag": 31
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "5-1/2",
+      "designation": "1/4\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 1238
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "5-1/2",
+      "designation": "5/16\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 783
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "5-1/2",
+      "designation": "3/8\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 534
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "5-1/2",
+      "designation": "1/2\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 277
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "5-1/2",
+      "designation": "5/8\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 172
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "5-1/2",
+      "designation": "3/4\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 111
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "5-1/2",
+      "designation": "7/8\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 83
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "5-1/2",
+      "designation": "1\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 61
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "5-1/2",
+      "designation": "1-1/8\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 47
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "5-1/2",
+      "designation": "1-1/4\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 37
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "5-1/2",
+      "designation": "1-1/2\" DIA x 5-1/2\" PANJANG",
+      "pcs_per_bag": 29
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/4",
+      "length_in": "6",
+      "designation": "1/4\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 1149
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "6",
+      "designation": "5/16\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 727
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "6",
+      "designation": "3/8\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 497
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "6",
+      "designation": "1/2\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 260
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "6",
+      "designation": "5/8\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 158
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "6",
+      "designation": "3/4\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 105
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "6",
+      "designation": "7/8\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 78
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "6",
+      "designation": "1\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 57
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "6",
+      "designation": "1-1/8\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 45
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "6",
+      "designation": "1-1/4\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 35
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "6",
+      "designation": "1-1/2\" DIA x 6\" PANJANG",
+      "pcs_per_bag": 28
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "6-1/2",
+      "designation": "5/16\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 706
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "6-1/2",
+      "designation": "3/8\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 464
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "6-1/2",
+      "designation": "1/2\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 244
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "6-1/2",
+      "designation": "5/8\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 149
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "6-1/2",
+      "designation": "3/4\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 99
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "6-1/2",
+      "designation": "7/8\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 74
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "6-1/2",
+      "designation": "1\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 54
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "6-1/2",
+      "designation": "1-1/8\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 42
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "6-1/2",
+      "designation": "1-1/4\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 33
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "6-1/2",
+      "designation": "1-1/2\" DIA x 6-1/2\" PANJANG",
+      "pcs_per_bag": 26
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "7",
+      "designation": "5/16\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 660
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "7",
+      "designation": "3/8\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 435
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "7",
+      "designation": "1/2\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 229
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "7",
+      "designation": "5/8\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 140
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "7",
+      "designation": "3/4\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 93
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "7",
+      "designation": "7/8\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 70
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "7",
+      "designation": "1\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 51
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "7",
+      "designation": "1-1/8\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 40
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "7",
+      "designation": "1-1/4\" DIA x 7\" PANJANG",
+      "pcs_per_bag": 31
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "7-1/2",
+      "designation": "5/16\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 622
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "7-1/2",
+      "designation": "3/8\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 410
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "7-1/2",
+      "designation": "1/2\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 217
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "7-1/2",
+      "designation": "5/8\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 133
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "7-1/2",
+      "designation": "3/4\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 89
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "7-1/2",
+      "designation": "7/8\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 67
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "7-1/2",
+      "designation": "1\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 49
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "7-1/2",
+      "designation": "1-1/8\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 38
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "7-1/2",
+      "designation": "1-1/4\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 30
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "7-1/2",
+      "designation": "1-1/2\" DIA x 7-1/2\" PANJANG",
+      "pcs_per_bag": 18
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/16",
+      "length_in": "8",
+      "designation": "5/16\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 586
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "8",
+      "designation": "3/8\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 387
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "8",
+      "designation": "1/2\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 206
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "8",
+      "designation": "5/8\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 126
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "8",
+      "designation": "3/4\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 84
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "8",
+      "designation": "7/8\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 63
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "8",
+      "designation": "1\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 46
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "8",
+      "designation": "1-1/8\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 36
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "8",
+      "designation": "1-1/4\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 28
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/2",
+      "length_in": "8",
+      "designation": "1-1/2\" DIA x 8\" PANJANG",
+      "pcs_per_bag": 17
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "8-1/2",
+      "designation": "3/8\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 385
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "8-1/2",
+      "designation": "1/2\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 197
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "8-1/2",
+      "designation": "5/8\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 121
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "8-1/2",
+      "designation": "3/4\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 80
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "8-1/2",
+      "designation": "7/8\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 61
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "8-1/2",
+      "designation": "1\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 45
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "8-1/2",
+      "designation": "1-1/8\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 35
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "8-1/2",
+      "designation": "1-1/4\" DIA x 8-1/2\" PANJANG",
+      "pcs_per_bag": 27
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "9",
+      "designation": "3/8\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 366
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "9",
+      "designation": "1/2\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 187
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "9",
+      "designation": "5/8\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 116
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "9",
+      "designation": "3/4\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 77
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "9",
+      "designation": "7/8\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 58
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "9",
+      "designation": "1\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 43
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "9",
+      "designation": "1-1/8\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 33
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "9",
+      "designation": "1-1/4\" DIA x 9\" PANJANG",
+      "pcs_per_bag": 26
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "9-1/2",
+      "designation": "3/8\" DIA x 9-1/2\" PANJANG",
+      "pcs_per_bag": 347
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "9-1/2",
+      "designation": "1/2\" DIA x 9-1/2\" PANJANG",
+      "pcs_per_bag": 178
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "9-1/2",
+      "designation": "5/8\" DIA x 9-1/2\" PANJANG",
+      "pcs_per_bag": 111
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "9-1/2",
+      "designation": "3/4\" DIA x 9-1/2\" PANJANG",
+      "pcs_per_bag": 74
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "9-1/2",
+      "designation": "7/8\" DIA x 9-1/2\" PANJANG",
+      "pcs_per_bag": 56
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "9-1/2",
+      "designation": "1\" DIA x 9-1/2\" PANJANG",
+      "pcs_per_bag": 41
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "10",
+      "designation": "3/8\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 332
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "10",
+      "designation": "1/2\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 171
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "10",
+      "designation": "5/8\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 106
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "10",
+      "designation": "3/4\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 72
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "10",
+      "designation": "7/8\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 53
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "10",
+      "designation": "1\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 39
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "10",
+      "designation": "1-1/8\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 31
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "10",
+      "designation": "1-1/4\" DIA x 10\" PANJANG",
+      "pcs_per_bag": 24
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "10-1/2",
+      "designation": "3/8\" DIA x 10-1/2\" PANJANG",
+      "pcs_per_bag": 317
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "10-1/2",
+      "designation": "1/2\" DIA x 10-1/2\" PANJANG",
+      "pcs_per_bag": 164
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "10-1/2",
+      "designation": "5/8\" DIA x 10-1/2\" PANJANG",
+      "pcs_per_bag": 102
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "10-1/2",
+      "designation": "3/4\" DIA x 10-1/2\" PANJANG",
+      "pcs_per_bag": 69
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "10-1/2",
+      "designation": "7/8\" DIA x 10-1/2\" PANJANG",
+      "pcs_per_bag": 51
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "10-1/2",
+      "designation": "1\" DIA x 10-1/2\" PANJANG",
+      "pcs_per_bag": 38
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "11",
+      "designation": "3/8\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 304
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "11",
+      "designation": "1/2\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 158
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "11",
+      "designation": "5/8\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 98
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "11",
+      "designation": "3/4\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 66
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "11",
+      "designation": "7/8\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 49
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "11",
+      "designation": "1\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 36
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "11",
+      "designation": "1-1/8\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 28
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "11",
+      "designation": "1-1/4\" DIA x 11\" PANJANG",
+      "pcs_per_bag": 22
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "11-1/2",
+      "designation": "3/8\" DIA x 11-1/2\" PANJANG",
+      "pcs_per_bag": 292
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "11-1/2",
+      "designation": "1/2\" DIA x 11-1/2\" PANJANG",
+      "pcs_per_bag": 152
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "11-1/2",
+      "designation": "5/8\" DIA x 11-1/2\" PANJANG",
+      "pcs_per_bag": 94
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "11-1/2",
+      "designation": "3/4\" DIA x 11-1/2\" PANJANG",
+      "pcs_per_bag": 64
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "11-1/2",
+      "designation": "7/8\" DIA x 11-1/2\" PANJANG",
+      "pcs_per_bag": 47
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "11-1/2",
+      "designation": "1\" DIA x 11-1/2\" PANJANG",
+      "pcs_per_bag": 35
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/8",
+      "length_in": "12",
+      "designation": "3/8\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 281
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "12",
+      "designation": "1/2\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 146
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "12",
+      "designation": "5/8\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 91
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "12",
+      "designation": "3/4\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 62
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "12",
+      "designation": "7/8\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 45
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "12",
+      "designation": "1\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 34
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/8",
+      "length_in": "12",
+      "designation": "1-1/8\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 26
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "12",
+      "designation": "1-1/4\" DIA x 12\" PANJANG",
+      "pcs_per_bag": 21
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "13",
+      "designation": "1/2\" DIA x 13\" PANJANG",
+      "pcs_per_bag": 133
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "13",
+      "designation": "5/8\" DIA x 13\" PANJANG",
+      "pcs_per_bag": 84
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "13",
+      "designation": "3/4\" DIA x 13\" PANJANG",
+      "pcs_per_bag": 57
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "13",
+      "designation": "7/8\" DIA x 13\" PANJANG",
+      "pcs_per_bag": 43
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "13",
+      "designation": "1\" DIA x 13\" PANJANG",
+      "pcs_per_bag": 32
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "14",
+      "designation": "1/2\" DIA x 14\" PANJANG",
+      "pcs_per_bag": 127
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "14",
+      "designation": "5/8\" DIA x 14\" PANJANG",
+      "pcs_per_bag": 80
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "14",
+      "designation": "3/4\" DIA x 14\" PANJANG",
+      "pcs_per_bag": 53
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "14",
+      "designation": "7/8\" DIA x 14\" PANJANG",
+      "pcs_per_bag": 40
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "14",
+      "designation": "1\" DIA x 14\" PANJANG",
+      "pcs_per_bag": 30
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "15",
+      "designation": "1/2\" DIA x 15\" PANJANG",
+      "pcs_per_bag": 122
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "15",
+      "designation": "5/8\" DIA x 15\" PANJANG",
+      "pcs_per_bag": 73
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "15",
+      "designation": "3/4\" DIA x 15\" PANJANG",
+      "pcs_per_bag": 50
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "15",
+      "designation": "7/8\" DIA x 15\" PANJANG",
+      "pcs_per_bag": 38
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "15",
+      "designation": "1\" DIA x 15\" PANJANG",
+      "pcs_per_bag": 29
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "16",
+      "designation": "1/2\" DIA x 16\" PANJANG",
+      "pcs_per_bag": 116
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "16",
+      "designation": "5/8\" DIA x 16\" PANJANG",
+      "pcs_per_bag": 70
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "16",
+      "designation": "3/4\" DIA x 16\" PANJANG",
+      "pcs_per_bag": 49
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "16",
+      "designation": "7/8\" DIA x 16\" PANJANG",
+      "pcs_per_bag": 36
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "16",
+      "designation": "1\" DIA x 16\" PANJANG",
+      "pcs_per_bag": 28
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "17",
+      "designation": "1/2\" DIA x 17\" PANJANG",
+      "pcs_per_bag": 108,
+      "notes": "Tulisan/cetakan kurang jelas pada kertas asal \u2014 sila sahkan nilai 108 sebelum guna untuk pesanan besar."
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "17",
+      "designation": "5/8\" DIA x 17\" PANJANG",
+      "pcs_per_bag": 67
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "17",
+      "designation": "3/4\" DIA x 17\" PANJANG",
+      "pcs_per_bag": 46
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "17",
+      "designation": "7/8\" DIA x 17\" PANJANG",
+      "pcs_per_bag": 34
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "17",
+      "designation": "1\" DIA x 17\" PANJANG",
+      "pcs_per_bag": 26
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "18",
+      "designation": "1/2\" DIA x 18\" PANJANG",
+      "pcs_per_bag": 101
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "18",
+      "designation": "5/8\" DIA x 18\" PANJANG",
+      "pcs_per_bag": 64
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "18",
+      "designation": "3/4\" DIA x 18\" PANJANG",
+      "pcs_per_bag": 43
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "18",
+      "designation": "7/8\" DIA x 18\" PANJANG",
+      "pcs_per_bag": 32
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "18",
+      "designation": "1\" DIA x 18\" PANJANG",
+      "pcs_per_bag": 24
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "19",
+      "designation": "1/2\" DIA x 19\" PANJANG",
+      "pcs_per_bag": 97
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "19",
+      "designation": "5/8\" DIA x 19\" PANJANG",
+      "pcs_per_bag": 59
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "19",
+      "designation": "3/4\" DIA x 19\" PANJANG",
+      "pcs_per_bag": 42
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "19",
+      "designation": "7/8\" DIA x 19\" PANJANG",
+      "pcs_per_bag": 31
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "19",
+      "designation": "1\" DIA x 19\" PANJANG",
+      "pcs_per_bag": 23
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1-1/4",
+      "length_in": "19",
+      "designation": "1-1/4\" DIA x 19\" PANJANG",
+      "pcs_per_bag": 16,
+      "notes": "Tulisan tangan \"16\" berdekatan baris ini pada kertas asal \u2014 kedudukan sebenar belum disahkan Wylee."
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "20",
+      "designation": "1/2\" DIA x 20\" PANJANG",
+      "pcs_per_bag": 94
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "20",
+      "designation": "5/8\" DIA x 20\" PANJANG",
+      "pcs_per_bag": 54
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "20",
+      "designation": "3/4\" DIA x 20\" PANJANG",
+      "pcs_per_bag": 40
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "20",
+      "designation": "7/8\" DIA x 20\" PANJANG",
+      "pcs_per_bag": 30
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "20",
+      "designation": "1\" DIA x 20\" PANJANG",
+      "pcs_per_bag": 22
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "21",
+      "designation": "1/2\" DIA x 21\" PANJANG",
+      "pcs_per_bag": 89
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "21",
+      "designation": "5/8\" DIA x 21\" PANJANG",
+      "pcs_per_bag": 52
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "21",
+      "designation": "3/4\" DIA x 21\" PANJANG",
+      "pcs_per_bag": 38
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "21",
+      "designation": "7/8\" DIA x 21\" PANJANG",
+      "pcs_per_bag": 29
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "21",
+      "designation": "1\" DIA x 21\" PANJANG",
+      "pcs_per_bag": 21
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "22",
+      "designation": "1/2\" DIA x 22\" PANJANG",
+      "pcs_per_bag": 83
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "22",
+      "designation": "5/8\" DIA x 22\" PANJANG",
+      "pcs_per_bag": 50
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "22",
+      "designation": "3/4\" DIA x 22\" PANJANG",
+      "pcs_per_bag": 37
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "22",
+      "designation": "7/8\" DIA x 22\" PANJANG",
+      "pcs_per_bag": 27
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "22",
+      "designation": "1\" DIA x 22\" PANJANG",
+      "pcs_per_bag": 20
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "23",
+      "designation": "1/2\" DIA x 23\" PANJANG",
+      "pcs_per_bag": 80
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "23",
+      "designation": "5/8\" DIA x 23\" PANJANG",
+      "pcs_per_bag": 49
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "23",
+      "designation": "3/4\" DIA x 23\" PANJANG",
+      "pcs_per_bag": 35
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "23",
+      "designation": "7/8\" DIA x 23\" PANJANG",
+      "pcs_per_bag": 25
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "23",
+      "designation": "1\" DIA x 23\" PANJANG",
+      "pcs_per_bag": 19
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1/2",
+      "length_in": "24",
+      "designation": "1/2\" DIA x 24\" PANJANG",
+      "pcs_per_bag": 77
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "5/8",
+      "length_in": "24",
+      "designation": "5/8\" DIA x 24\" PANJANG",
+      "pcs_per_bag": 48
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "3/4",
+      "length_in": "24",
+      "designation": "3/4\" DIA x 24\" PANJANG",
+      "pcs_per_bag": 34
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "7/8",
+      "length_in": "24",
+      "designation": "7/8\" DIA x 24\" PANJANG",
+      "pcs_per_bag": 24
+    },
+    {
+      "type": "Bolt & Nut Set",
+      "diameter_in": "1",
+      "length_in": "24",
+      "designation": "1\" DIA x 24\" PANJANG",
+      "pcs_per_bag": 18
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "1/4",
+      "length_in": null,
+      "designation": "NUT SAHAJA 1/4\" DIA",
+      "pcs_per_bag": 17240
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "5/16",
+      "length_in": null,
+      "designation": "NUT SAHAJA 5/16\" DIA",
+      "pcs_per_bag": 9310
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "3/8",
+      "length_in": null,
+      "designation": "NUT SAHAJA 3/8\" DIA",
+      "pcs_per_bag": 6250
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "1/2",
+      "length_in": null,
+      "designation": "NUT SAHAJA 1/2\" DIA",
+      "pcs_per_bag": 2285
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "9/16",
+      "length_in": null,
+      "designation": "NUT SAHAJA 9/16\" DIA",
+      "pcs_per_bag": 1890
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "5/8",
+      "length_in": null,
+      "designation": "NUT SAHAJA 5/8\" DIA",
+      "pcs_per_bag": 1213
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "3/4",
+      "length_in": null,
+      "designation": "NUT SAHAJA 3/4\" DIA",
+      "pcs_per_bag": 697
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "7/8",
+      "length_in": null,
+      "designation": "NUT SAHAJA 7/8\" DIA",
+      "pcs_per_bag": 612
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "1",
+      "length_in": null,
+      "designation": "NUT SAHAJA 1\" DIA",
+      "pcs_per_bag": 419
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "1-1/8",
+      "length_in": null,
+      "designation": "NUT SAHAJA 1-1/8\" DIA",
+      "pcs_per_bag": 270
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "1-1/4",
+      "length_in": null,
+      "designation": "NUT SAHAJA 1-1/4\" DIA",
+      "pcs_per_bag": 200
+    },
+    {
+      "type": "Nut Sahaja",
+      "diameter_in": "1-1/2",
+      "length_in": null,
+      "designation": "NUT SAHAJA 1-1/2\" DIA",
+      "pcs_per_bag": 115
+    }
+  ]
+}

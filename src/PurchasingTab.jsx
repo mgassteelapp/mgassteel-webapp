@@ -124,6 +124,103 @@ function isWeighted(product = '') {
   return /\/mt|kg\/m|\bkg\b|rebar|coil|hrc|plate|\bbar\b/i.test(product);
 }
 
+// ── Stok Rendah — reorder alert (Wylee 2026-08-25) ──────────────────────────
+// reorder_level = (purata jualan bulanan ÷ 4 minggu) × 2 minggu, dikira
+// bertentangan dengan medan "reorder level" SQL Account (Wylee: tidak tepat).
+// "Rendah" = (stok di tangan + kuantiti PO terbuka) < paras reorder — sudah
+// dikira & disimpan oleh cron 3x sehari (pagi/lepas makan tengahari/4petang);
+// panel ini hanya memaparkan snapshot terkini, tiada pengiraan client-side.
+function LowStockPanel({ session, onPickCode }) {
+  const [data, setData] = useState(null); // { items, count, computed_at }
+  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: res, error } = await supabase.functions.invoke('reconcile-proxy', {
+          body: { action: 'lowStock' },
+        });
+        if (error || !res || res.error) throw new Error(res?.error || error?.message || 'gagal');
+        if (!cancelled) setData(res);
+      } catch {
+        if (!cancelled) setData(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) return null;
+  if (!data || !data.count) {
+    return (
+      <div style={{ background:C.greenLight, border:`1px solid #86efac`, borderRadius:10,
+                    padding:'9px 14px', marginBottom:14, fontSize:12.5, color:C.green, fontWeight:600 }}>
+        ✅ Tiada item di bawah paras reorder buat masa ini.
+      </div>
+    );
+  }
+
+  const fmtT = ts => ts ? new Date(ts).toLocaleString('en-MY', { timeZone:'Asia/Kuala_Lumpur',
+    day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+
+  return (
+    <div style={{ background:C.redLight, border:`1px solid #fca5a5`, borderRadius:10,
+                  marginBottom:14, overflow:'hidden' }}>
+      <button onClick={() => setExpanded(v => !v)} style={{
+        width:'100%', display:'flex', alignItems:'center', gap:8, justifyContent:'space-between',
+        background:'none', border:'none', cursor:'pointer', padding:'10px 14px', textAlign:'left',
+        fontFamily:'inherit' }}>
+        <span style={{ fontSize:12.5, fontWeight:700, color:C.red }}>
+          ⚠️ {data.count} item di bawah paras reorder
+        </span>
+        <span style={{ fontSize:11, color:C.red, fontWeight:600 }}>
+          {expanded ? '▲ Tutup' : '▼ Lihat senarai'}
+        </span>
+      </button>
+      {expanded && (
+        <div style={{ borderTop:'1px solid #fca5a5', maxHeight:360, overflowY:'auto' }}>
+          <div style={{ fontSize:10.5, color:C.red, padding:'6px 14px', opacity:0.8 }}>
+            Dikira setakat {fmtT(data.computed_at)} — paras reorder = (purata jualan bulanan ÷ 4) × 2
+          </div>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11.5 }}>
+            <thead>
+              <tr style={{ textAlign:'left', color:C.muted, fontSize:10.5, textTransform:'uppercase' }}>
+                <th style={{ padding:'4px 14px' }}>Kod / Nama</th>
+                <th style={{ padding:'4px 8px', textAlign:'right' }}>Purata/Bln</th>
+                <th style={{ padding:'4px 8px', textAlign:'right' }}>Paras Reorder</th>
+                <th style={{ padding:'4px 8px', textAlign:'right' }}>Stok</th>
+                <th style={{ padding:'4px 8px', textAlign:'right' }}>PO Terbuka</th>
+                <th style={{ padding:'4px 14px', textAlign:'right' }}>Jumlah Ada</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((it, i) => (
+                <tr key={it.item_code + i} onClick={() => onPickCode && onPickCode(it.item_code)}
+                  style={{ cursor: onPickCode ? 'pointer' : 'default',
+                            background: i % 2 === 0 ? 'rgba(255,255,255,0.4)' : 'transparent',
+                            borderTop:'1px solid rgba(252,165,165,0.5)' }}>
+                  <td style={{ padding:'6px 14px' }}>
+                    <div style={{ fontWeight:700, color:C.navy }}>{it.item_code}</div>
+                    {it.item_name && <div style={{ fontSize:10.5, color:C.muted }}>{it.item_name}</div>}
+                  </td>
+                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.avg_monthly_qty}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'right', fontWeight:700 }}>{it.reorder_level}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.actual_stock}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.open_po_qty}</td>
+                  <td style={{ padding:'6px 14px', textAlign:'right', fontWeight:800, color:C.red }}>{it.netted_available}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PurchasingTab({ prices = [], session }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);   // the chosen price row
@@ -256,6 +353,8 @@ export default function PurchasingTab({ prices = [], session }) {
     <div>
       <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:4 }}>Cadangan PO — Keputusan Pembelian</div>
       <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>Cari produk → lihat jualan & harga → cadangan kuantiti order</div>
+
+      <LowStockPanel session={session} onPickCode={setQuery} />
 
       {/* Search */}
       <div style={{ ...box, marginBottom:14, padding:12 }}>

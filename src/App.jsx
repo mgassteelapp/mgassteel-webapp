@@ -184,6 +184,16 @@ function fmtPrice(price, category) {
   const n = Number(price);
   return isNaN(n) ? "0.00" : n.toFixed(2);
 }
+// RRP unit lives inline in the product description (e.g. "...1.022/mt 138pcs/bdl")
+// since the sheet's RRP column mixes flat RM, per-MT, and per-KG figures with no
+// separate unit column. Detect the "/mt" or "/kg" tag Wylee appends per row and
+// label + format the RRP accordingly instead of assuming flat RM.
+function fmtRrp(listPrice, product) {
+  const n = Number(listPrice) || 0;
+  const m = String(product || "").match(/\/(mt|kg)\b/i);
+  if (!m) return fmtPrice(n); // no unit tag → flat RM, unchanged behaviour
+  return `${n.toFixed(3)}/${m[1].toUpperCase()}`;
+}
 function normCode(v) {
   return String(v ?? "").trim().replace(/\.0+$/, "").toLowerCase();
 }
@@ -781,7 +791,7 @@ function AssistantTab({ prices, gsStatus, session }) {
               <div>
                 <div style={{ color:C.white, fontWeight:700, fontSize:15 }}>
                   {selectedProduct.product}
-                  {selectedProduct.listPrice > 0 && <span style={{ marginLeft:28 }}>RRP MYR {fmtPrice(selectedProduct.listPrice)}</span>}
+                  {selectedProduct.listPrice > 0 && <span style={{ marginLeft:28 }}>RRP MYR {fmtRrp(selectedProduct.listPrice, selectedProduct.product)}</span>}
                 </div>
                 <div style={{ color:"#94a3b8", fontSize:12 }}>{selectedProduct.itemCode} | {selectedProduct.category}</div>
               </div>

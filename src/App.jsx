@@ -210,6 +210,64 @@ const Alert = ({ children, color="green" }) => {
   return <div style={{ background:s.bg, border:`1px solid ${s.border}`, borderRadius:10, padding:"11px 16px", marginBottom:12, color:s.text, fontWeight:600, fontSize:13 }}>{children}</div>;
 };
 
+// Top-of-page SQL Account sync health badge — RED/GREEN, visible to every
+// logged-in user (Wylee 2026-08-26). `status` is the raw syncStatus() payload
+// from run-reconcile, or null while the first check is still in flight (in
+// which case nothing renders — never flash red before we actually know).
+const SyncStatusBadge = ({ status }) => {
+  const [open, setOpen] = useState(false);
+  if (!status) return null;
+  const isRed = status.status === "red";
+  const dotColor = isRed ? "#ef4444" : "#22c55e";
+  const label = isRed ? `Sync Bermasalah (${status.problems.length})` : "Sync OK";
+  return (
+    <div style={{ position:"relative" }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display:"flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)",
+        border:"none", borderRadius:20, padding:"4px 12px 4px 9px", cursor:"pointer",
+        fontSize:11, fontWeight:700, color: isRed ? "#fca5a5" : "#86efac",
+      }} title="Status sync SQL Account — klik untuk butiran">
+        <span style={{
+          width:8, height:8, borderRadius:"50%", background:dotColor, flexShrink:0,
+          boxShadow: isRed ? "0 0 0 3px rgba(239,68,68,0.25)" : "0 0 0 3px rgba(34,197,94,0.2)",
+        }} />
+        {label}
+      </button>
+      {open && (
+        <div style={{
+          position:"absolute", top:"calc(100% + 6px)", right:0, background:C.white, color:C.text,
+          border:`1px solid ${C.border}`, borderRadius:10, boxShadow:"0 8px 24px rgba(0,0,0,0.18)",
+          padding:12, width:290, zIndex:50, fontSize:12,
+        }}>
+          <div style={{ fontWeight:700, marginBottom:8 }}>Status Sync SQL Account</div>
+          {isRed ? (
+            <>
+              <div style={{ color:C.red, fontWeight:600, marginBottom:6 }}>
+                {status.problems.length} jadual bermasalah:
+              </div>
+              {status.problems.map(p => (
+                <div key={p.table} style={{ marginBottom:6, paddingBottom:6, borderBottom:`1px solid ${C.border}` }}>
+                  <div style={{ fontWeight:600 }}>{p.table}</div>
+                  <div style={{ color:C.muted }}>
+                    {p.status === "error" ? (p.error || "Ralat sync") : `Tiada kemaskini sejak ${p.age_minutes} minit lalu`}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div style={{ color:C.green }}>
+              Semua {status.tables.length} jadual segar (kemaskini &le;{status.stale_minutes_threshold} minit lalu).
+            </div>
+          )}
+          <div style={{ color:C.muted, marginTop:8, fontSize:10 }}>
+            Disemak: {new Date(status.checked_at).toLocaleTimeString("ms-MY")}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ════════════════════════════════════════════════════════════════════════════
 // MAIN APP
 // ════════════════════════════════════════════════════════════════════════════
@@ -346,6 +404,7 @@ export default function App() {
   const [dcResults, setDcResults] = useState([]);
   const [rcResults, setRcResults] = useState(null);
   const [rcAlert,   setRcAlert]   = useState(null); // {count, runAt} — auto-reconcile discrepancy alert
+  const [syncStatus, setSyncStatus] = useState(null); // {status:'green'|'red', tables, problems, checked_at} — top-bar sync health badge
   const [accessNotice, setAccessNotice] = useState(""); // shown on login screen (no browser alert)
   const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(false);
@@ -448,6 +507,25 @@ export default function App() {
       setRcAlert(null);
     }
   }, [tab, rcAlert]);
+
+  // ── Sync health badge: top-of-page RED/GREEN indicator, visible to every
+  // logged-in user regardless of role (Wylee 2026-08-26 — "the app should
+  // alert or notify us that the sync is not running", made visible instead
+  // of just a push alert, so anyone can see it at a glance). No permission
+  // gate on the backend either — same policy as the stock lookup.
+  useEffect(() => {
+    if (!session) { setSyncStatus(null); return; }
+    let stop = false;
+    const check = async () => {
+      try {
+        const { data } = await invokeReconcile({ action: 'syncStatus' });
+        if (!stop && data && !data.error) setSyncStatus(data);
+      } catch { /* offline/unreachable — keep showing the last known status */ }
+    };
+    check();
+    const iv = setInterval(check, 5 * 60 * 1000);
+    return () => { stop = true; clearInterval(iv); };
+  }, [session]);
   // Show login if no session (AFTER all hooks — required by React)
   if (!session) return <LoginScreen onLogin={async s => {
   // Staff cannot log in outside the access window (7:30am–7pm, no Friday)
@@ -512,6 +590,7 @@ export default function App() {
             <div style={{ color:C.white, fontWeight:800, fontSize:30, letterSpacing:0.5 }}>M GAS STEEL SDN BHD</div>
             <div style={{ color:"#94a3b8", fontSize:15, letterSpacing:1  }}>SISTEM KEPUTUSAN HARGA</div>
             <div style={{ marginLeft:"auto", display:"flex", gap:6, alignItems:"center" }}>
+              <SyncStatusBadge status={syncStatus} />
               <span style={{ background:"rgba(255,255,255,0.1)", color:"#94a3b8", fontSize:11, padding:"3px 10px", borderRadius:20 }}>
                 {prices.filter(p=>p.hasPrice||p.price>0).length} harga aktif
               </span>

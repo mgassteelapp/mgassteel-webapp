@@ -6,7 +6,7 @@
 // Staff see their own quotes; owner/senior/manager see everyone's.
 // ════════════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from './supabase';
+import { supabase, invokeReconcile } from './supabase';
 
 const C = { navy:'#0f2744', accent:'#e8780a', border:'#e2e8f0', gray:'#f8fafc',
             text:'#1e2d3d', muted:'#64748b', white:'#ffffff',
@@ -255,9 +255,7 @@ export default function QuotationTab({ session, prices }) {
     const t = setTimeout(async () => {
       setCustSearching(true);
       try {
-        const { data } = await supabase.functions.invoke('reconcile-proxy', {
-          body: { action: 'customers', q },
-        });
+        const { data } = await invokeReconcile({ action: 'customers', q });
         setCustMatches(data?.customers || []);
       } catch { setCustMatches([]); }
       setCustSearching(false);

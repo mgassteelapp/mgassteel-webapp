@@ -11,7 +11,7 @@
 // Read-only. Never writes to accounting.
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { supabase } from './supabase';
+import { supabase, invokeReconcile } from './supabase';
 import SSMonitor from './SSMonitor';
 
 // USD/MYR live rate. Note this is api.frankfurter.dev/v1 — the older
@@ -139,9 +139,7 @@ function LowStockPanel({ session, onPickCode }) {
     let cancelled = false;
     (async () => {
       try {
-        const { data: res, error } = await supabase.functions.invoke('reconcile-proxy', {
-          body: { action: 'lowStock' },
-        });
+        const { data: res, error } = await invokeReconcile({ action: 'lowStock' });
         if (error || !res || res.error) throw new Error(res?.error || error?.message || 'gagal');
         if (!cancelled) setData(res);
       } catch {
@@ -290,9 +288,7 @@ export default function PurchasingTab({ prices = [], session }) {
     setLoading(true); setVelocity(null); setMonthly([]); setOpenPOs([]); setReceived([]); setStockInfo(null); setVariants([]); setLoadError("");
     (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('reconcile-proxy', {
-          body: { action: 'purchasing', code },
-        });
+        const { data, error } = await invokeReconcile({ action: 'purchasing', code });
         if (error || !data || data.error) throw new Error(data?.error || error?.message || 'gagal');
         if (cancelled) return;
         setVelocity({ qty_6mo: data.qty_6mo, active_months: data.active_months });

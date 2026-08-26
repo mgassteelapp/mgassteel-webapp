@@ -1,7 +1,7 @@
 // MGasSteel App v3.1
 import { useState, useEffect, useRef } from 'react';
 import ReconcileTab from './ReconcileTab';
-import { supabase } from './supabase';
+import { supabase, invokeReconcile, describeFnError } from './supabase';
 import PlateCalculator from './PlateCalculator';
 import KatalogTab from './KatalogTab';
 import QuotationTab from './QuotationTab';
@@ -426,7 +426,7 @@ export default function App() {
     let stop = false;
     const check = async () => {
       try {
-        const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'latest' } });
+        const { data } = await invokeReconcile({ action: 'latest' });
         if (stop || !data || data.error) return;
         const seen = localStorage.getItem('mgas_reconcile_seen') || '';
         if ((data.exceptions_count || 0) > 0 && data.run_at && data.run_at !== seen) {
@@ -612,7 +612,7 @@ function AssistantTab({ prices, gsStatus, session }) {
     setStockMap(m => { const n = { ...m }; need.forEach(c => { n[c] = 'loading'; }); return n; });
     (async () => {
       try {
-        const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'stock', codes: need } });
+        const { data } = await invokeReconcile({ action: 'stock', codes: need });
         const results = data?.stock || [];
         const byCode = {}; results.forEach(r => { byCode[r.code] = r; });
         setStockMap(m => { const n = { ...m }; need.forEach(c => { n[c] = byCode[c] || null; }); return n; });
@@ -636,7 +636,7 @@ function AssistantTab({ prices, gsStatus, session }) {
     setStockDetail('loading');
     (async () => {
       try {
-        const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'stockDetail', code } });
+        const { data } = await invokeReconcile({ action: 'stockDetail', code });
         setStockDetail(data && !data.error ? data : null);
       } catch {
         setStockDetail(null);
@@ -755,7 +755,7 @@ function AssistantTab({ prices, gsStatus, session }) {
                     ))}
                   </div>
                   {codeResults.slice(0,15).map((p,i)=>(
-                    <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); }}
+                    <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); if (session) logActivity(session, "Semak Harga", `${p.itemCode||"-"} ${p.product||""}`.slice(0,80)); }}
                       style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1.3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
                       <div>
@@ -1784,9 +1784,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
   const runCheckAuto = async () => {
     setLoading(true); setError(""); setResults([]); setRan(false); setExpandedIdx(null); setAutoInfo(null);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke('reconcile-proxy', {
-        body: { action: 'salesLines', days: autoDays },
-      });
+      const { data, error: fnErr } = await invokeReconcile({ action: 'salesLines', days: autoDays });
       if (fnErr) throw fnErr;
       if (data?.error) throw new Error(data.error);
       const lines = data?.lines || [];
@@ -1799,7 +1797,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
       setAutoInfo({ count: lines.length, start: data?.start || '', hasDesc2: !!data?.hasDesc2 });
       annotateLines(checked);
     } catch (e) {
-      setError("Semakan auto tidak tersedia: " + String(e?.message || e));
+      setError("Semakan auto tidak tersedia: " + (await describeFnError(e)));
     }
     setLoading(false);
   };

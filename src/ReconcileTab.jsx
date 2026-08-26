@@ -22,7 +22,7 @@
 //   <ReconcileTab session={session} />}
 
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from './supabase';
+import { supabase, invokeReconcile, describeFnError } from './supabase';
 
 // ── Map an automated run (reconcile_runs row from the CRM) to the exact
 //    results shape the manual flow produces — the render code is shared. ──
@@ -577,7 +577,7 @@ export default function ReconcileTab({ session, results, setResults }) {
       const body = action === 'run'
         ? { action: 'run', poDays: days ?? poDays }
         : { action: 'latest' };
-      const { data, error: fnErr } = await supabase.functions.invoke('reconcile-proxy', { body });
+      const { data, error: fnErr } = await invokeReconcile(body);
       if (fnErr) throw fnErr;
       if (data && data.error) throw new Error(data.error);
       if (data && data.run_at) {
@@ -590,7 +590,7 @@ export default function ReconcileTab({ session, results, setResults }) {
       }
       fetchLog();
     } catch (e) {
-      setAutoError('Semakan auto tidak tersedia: ' + String(e?.message || e));
+      setAutoError('Semakan auto tidak tersedia: ' + (await describeFnError(e)));
     }
     setAutoLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -601,7 +601,7 @@ export default function ReconcileTab({ session, results, setResults }) {
   const [dclToday, setDclToday] = useState([]);
   const fetchLog = async () => {
     try {
-      const { data } = await supabase.functions.invoke('reconcile-proxy', { body: { action: 'history' } });
+      const { data } = await invokeReconcile({ action: 'history' });
       if (data?.runs) setRunLog(data.runs);
     } catch { /* ignore */ }
     try {

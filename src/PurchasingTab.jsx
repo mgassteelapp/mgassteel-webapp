@@ -124,16 +124,28 @@ function isWeighted(product = '') {
   return /\/mt|kg\/m|\bkg\b|rebar|coil|hrc|plate|\bbar\b/i.test(product);
 }
 
-// ── Stok Rendah — reorder alert (Wylee 2026-08-25) ──────────────────────────
+// ── Stok Rendah — reorder alert (Wylee 2026-08-25, pill redesign 2026-08-26) ─
 // reorder_level = (purata jualan bulanan ÷ 4 minggu) × 2 minggu, dikira
 // bertentangan dengan medan "reorder level" SQL Account (Wylee: tidak tepat).
 // "Rendah" = (stok di tangan + kuantiti PO terbuka) < paras reorder — sudah
 // dikira & disimpan oleh cron 3x sehari (pagi/lepas makan tengahari/4petang);
 // panel ini hanya memaparkan snapshot terkini, tiada pengiraan client-side.
+//
+// Category pills (Wylee, approved mockup 2026-08-26): the `pill` field on
+// each item is computed SERVER-SIDE (pill_of() in Supabase, called from
+// reorder_candidates()) — never derived client-side from category/item_code
+// here. That was a deliberate choice (Wylee: "if 2 person on the cadangan
+// PO, one person is cut off") — every viewer sees the identical grouping at
+// all times, even mid-deploy when one tab is running stale cached JS. PILLS
+// below is display order only, matching the finalized 12-pill taxonomy.
+const PILLS = ['Others', 'Hardware', 'Pipes', 'IBEAM', 'Stainless Steel', 'Sheets',
+  'Bar', 'Hollow', 'Flat Bar', 'Roofing', 'Angle', 'U Channel'];
+
 function LowStockPanel({ session, onPickCode }) {
   const [data, setData] = useState(null); // { items, count, computed_at }
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedPill, setSelectedPill] = useState('Semua');
 
   useEffect(() => {
     let cancelled = false;
@@ -164,6 +176,14 @@ function LowStockPanel({ session, onPickCode }) {
   const fmtT = ts => ts ? new Date(ts).toLocaleString('en-MY', { timeZone:'Asia/Kuala_Lumpur',
     day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
 
+  // Pill counts from the full (unfiltered) snapshot — a pill with 0 items
+  // still shows so staff can see the full taxonomy, not just what's low today.
+  const items = data.items || [];
+  const categories = [{ name: 'Semua', count: items.length }]
+    .concat(PILLS.map(p => ({ name: p, count: items.filter(it => it.pill === p).length })));
+
+  const filtered = selectedPill === 'Semua' ? items : items.filter(it => it.pill === selectedPill);
+
   return (
     <div style={{ background:C.redLight, border:`1px solid #fca5a5`, borderRadius:10,
                   marginBottom:14, overflow:'hidden' }}>
@@ -179,40 +199,81 @@ function LowStockPanel({ session, onPickCode }) {
         </span>
       </button>
       {expanded && (
-        <div style={{ borderTop:'1px solid #fca5a5', maxHeight:360, overflowY:'auto' }}>
-          <div style={{ fontSize:10.5, color:C.red, padding:'6px 14px', opacity:0.8 }}>
+        <div style={{ borderTop:'1px solid #fca5a5' }}>
+          <div style={{ fontSize:10.5, color:C.red, padding:'8px 14px 4px', opacity:0.8 }}>
             Dikira setakat {fmtT(data.computed_at)} — paras reorder = (purata jualan bulanan ÷ 4) × 2
           </div>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11.5 }}>
-            <thead>
-              <tr style={{ textAlign:'left', color:C.muted, fontSize:10.5, textTransform:'uppercase' }}>
-                <th style={{ padding:'4px 14px' }}>Kod / Nama</th>
-                <th style={{ padding:'4px 8px', textAlign:'right' }}>Purata/Bln</th>
-                <th style={{ padding:'4px 8px', textAlign:'right' }}>Paras Reorder</th>
-                <th style={{ padding:'4px 8px', textAlign:'right' }}>Stok</th>
-                <th style={{ padding:'4px 8px', textAlign:'right' }}>PO Terbuka</th>
-                <th style={{ padding:'4px 14px', textAlign:'right' }}>Jumlah Ada</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((it, i) => (
-                <tr key={it.item_code + i} onClick={() => onPickCode && onPickCode(it.item_code)}
-                  style={{ cursor: onPickCode ? 'pointer' : 'default',
-                            background: i % 2 === 0 ? 'rgba(255,255,255,0.4)' : 'transparent',
-                            borderTop:'1px solid rgba(252,165,165,0.5)' }}>
-                  <td style={{ padding:'6px 14px' }}>
-                    <div style={{ fontWeight:700, color:C.navy }}>{it.item_code}</div>
-                    {it.item_name && <div style={{ fontSize:10.5, color:C.muted }}>{it.item_name}</div>}
-                  </td>
-                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.avg_monthly_qty}</td>
-                  <td style={{ padding:'6px 8px', textAlign:'right', fontWeight:700 }}>{it.reorder_level}</td>
-                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.actual_stock}</td>
-                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.open_po_qty}</td>
-                  <td style={{ padding:'6px 14px', textAlign:'right', fontWeight:800, color:C.red }}>{it.netted_available}</td>
+
+          <div style={{ padding:'2px 14px 10px' }}>
+            <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:0.4, textTransform:'uppercase',
+                          color:C.red, opacity:0.65, marginBottom:6 }}>Tapis Ikut Kategori</div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+              {categories.map(cat => {
+                const active = selectedPill === cat.name;
+                return (
+                  <button key={cat.name} onClick={() => setSelectedPill(cat.name)} style={{
+                    display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:20,
+                    border: active ? `1px solid ${C.navy}` : '1px solid rgba(153,27,27,0.25)',
+                    background: active ? C.navy : C.white,
+                    color: active ? C.white : C.navy,
+                    fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+                    {cat.name}
+                    <span style={{
+                      background: active ? 'rgba(255,255,255,0.2)' : C.redLight,
+                      color: active ? C.white : C.red,
+                      fontSize:10, fontWeight:800, padding:'1px 6px', borderRadius:10 }}>{cat.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ borderTop:'1px solid #fca5a5', maxHeight:360, overflowY:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11.5 }}>
+              <thead>
+                <tr style={{ textAlign:'left', color:C.muted, fontSize:10.5, textTransform:'uppercase' }}>
+                  <th style={{ padding:'6px 14px', background:'#fef2f2', position:'sticky', top:0 }}>Kod / Nama</th>
+                  <th style={{ padding:'6px 8px', textAlign:'right', background:'#fef2f2', position:'sticky', top:0 }}>Purata/Bln</th>
+                  <th style={{ padding:'6px 8px', textAlign:'right', background:'#fef2f2', position:'sticky', top:0 }}>Paras Reorder</th>
+                  <th style={{ padding:'6px 8px', textAlign:'right', background:'#fef2f2', position:'sticky', top:0 }}>Stok</th>
+                  <th style={{ padding:'6px 8px', textAlign:'right', background:'#fef2f2', position:'sticky', top:0 }}>PO Terbuka</th>
+                  <th style={{ padding:'6px 14px', textAlign:'right', background:'#fef2f2', position:'sticky', top:0 }}>Jumlah Ada</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((it, i) => {
+                  const urgent = it.netted_available <= 0;
+                  return (
+                    <tr key={it.item_code + i} onClick={() => onPickCode && onPickCode(it.item_code)}
+                      style={{ cursor: onPickCode ? 'pointer' : 'default',
+                                background: urgent ? 'rgba(153,27,27,0.08)' : (i % 2 === 0 ? 'rgba(255,255,255,0.4)' : 'transparent'),
+                                borderTop:'1px solid rgba(252,165,165,0.5)' }}>
+                      <td style={{ padding:'6px 14px' }}>
+                        <div style={{ fontWeight:700, color:C.navy }}>{it.item_code}</div>
+                        {it.item_name && <div style={{ fontSize:10.5, color:C.muted }}>{it.item_name}</div>}
+                      </td>
+                      <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.avg_monthly_qty}</td>
+                      <td style={{ padding:'6px 8px', textAlign:'right', fontWeight:700 }}>{it.reorder_level}</td>
+                      <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.actual_stock}</td>
+                      <td style={{ padding:'6px 8px', textAlign:'right' }}>{it.open_po_qty}</td>
+                      <td style={{ padding:'6px 14px', textAlign:'right', whiteSpace:'nowrap' }}>
+                        <span style={{ fontWeight:800, color:C.red, fontSize: urgent ? 13 : 11.5 }}>{it.netted_available}</span>
+                        {urgent && (
+                          <span style={{ marginLeft:6, background:C.red, color:C.white, fontSize:8.5, fontWeight:800,
+                                        padding:'2px 5px', borderRadius:4, letterSpacing:0.3, verticalAlign:'middle' }}>HABIS</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div style={{ padding:'24px 14px', textAlign:'center', color:C.red, opacity:0.7, fontSize:12 }}>
+                Tiada item di bawah paras reorder dalam kategori ini.
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

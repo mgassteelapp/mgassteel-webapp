@@ -661,7 +661,7 @@ function AssistantTab({ prices, gsStatus, session }) {
   const [thinking,        setThinking]        = useState(false);
   const [codeSearch,      setCodeSearch]      = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [calcQty,         setCalcQty]         = useState("");
+  const [calcQty,         setCalcQty]         = useState("1");
   const [stockMap,        setStockMap]        = useState({}); // itemCode -> {qty,branches,as_of} | 'loading' | null
   const [stockDetail,     setStockDetail]     = useState(null); // 4-metric projection for selectedProduct | 'loading' | null
   const bottomRef = useRef(null);
@@ -834,7 +834,7 @@ function AssistantTab({ prices, gsStatus, session }) {
                     ))}
                   </div>
                   {codeResults.slice(0,15).map((p,i)=>(
-                    <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty(""); setCodeSearch(""); if (session) logActivity(session, "Semak Harga", `${p.itemCode||"-"} ${p.product||""}`.slice(0,80)); }}
+                    <div key={p.id} onClick={()=>{ setSelectedProduct(p); setCalcQty("1"); setCodeSearch(""); if (session) logActivity(session, "Semak Harga", `${p.itemCode||"-"} ${p.product||""}`.slice(0,80)); }}
                       style={{ display:"grid", gridTemplateColumns:"1fr 3fr 1fr 1.3fr 1fr", padding:"9px 12px", gap:8, background:i%2===0?C.white:C.gray, borderBottom:`1px solid ${C.border}`, cursor:"pointer" }}>
                       <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{p.itemCode||"—"}</div>
                       <div>

@@ -415,7 +415,7 @@ export default function PurchasingTab({ prices = [], session }) {
 
       {/* Search */}
       <div style={{ ...box, marginBottom:14, padding:12 }}>
-        <input value={query} onChange={e => setQuery(e.target.value)}
+        <input value={query} onChange={e => { setQuery(e.target.value); if (selected) setSelected(null); }}
           placeholder="Kod produk atau nama…  (cth: 102550, 1025 HOLLOW)"
           style={{ width:'100%', boxSizing:'border-box', border:`1px solid ${C.border}`, borderRadius:8, padding:'11px 13px', fontSize:14 }} />
         {results.length > 0 && !selected && (

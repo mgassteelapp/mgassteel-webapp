@@ -651,6 +651,81 @@ export default function App() {
   );
 }
 
+// ── Free, non-AI rule-based chat answer (Wylee 2026-08-28: "normal chat box
+// without the AI" — no Anthropic API, no per-message cost, runs entirely in
+// the browser). Keyword-matched against the same discount/escalation policy
+// the AI version's system prompt encodes (kept in lockstep — if the policy
+// changes, update BOTH this function and ai-chat's SYSTEM_PROMPT). Single-
+// shot only: unlike the AI, it cannot ask a diagnostic follow-up question and
+// wait for the reply — every message gets one best-guess templated answer
+// immediately, based on keywords in that message alone.
+function getRulesAnswer(text, prices=[]) {
+  const t = text.toLowerCase();
+  const has = (...w) => w.some(x=>t.includes(x));
+  const getQty = () => { const m=t.match(/\b(\d+)\s*(btg|pcs|keping|biji|unit|batang|length|helai)/); return m?parseInt(m[1]):null; };
+  const getRm  = () => { const m=t.match(/rm\s?([\d,]+)/i); return m?parseFloat(m[1].replace(",","")):null; };
+
+  const words = t.split(/\s+/).filter(w=>w.length>1);
+  const matched = prices.filter(p => p.price>0 && words.some(w =>
+    (p.product||"").toLowerCase().includes(w) || (p.size||"").toLowerCase().includes(w) || (p.category||"").toLowerCase().includes(w)
+  ));
+  const priceInfo = matched.length>0
+    ? "\n\n**Harga semasa dalam senarai:**\n" + matched.slice(0,3).map(p=>`• ${p.product} ${p.size||""} (${p.grade}) — RM ${fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price),p.category),p.category)} / ${p.unit}`).join("\n")
+    : "";
+
+  // 1. Kerja potong/gerudi/fabrikasi/bengkok — tiada harga, wajib hubungi boss
+  if (has("potong","cut","cutting","drill","gerudi","fabri","bend","lentur","bengkok")) {
+    return `**Apa yang perlu dibuat:**\nJangan bagi sebarang harga. Kumpul maklumat dahulu, kemudian hubungi boss.\n\n**Diskaun dibenarkan:** Tiada — jangan quote harga langsung\n\n**Perlu hubungi boss?** ✅ YA — WAJIB\n\n**Maklumat yang perlu dikumpul:**\n• Jenis produk & saiz semasa\n• Saiz potongan & bilangan potongan\n• Tarikh diperlukan\n• Nama & nombor pelanggan\n\n**Apa yang perlu dikatakan:**\n_"Boleh saya dapatkan maklumat lengkap dahulu? Saya akan semak dan maklumkan harga selepas ini."_`;
+  }
+  // 2. Salah hantar / terima barang salah
+  if (has("salah hantar","hantar salah","terima salah","barang salah","salah item","salah saiz")) {
+    return `**Apa yang perlu dibuat:**\nTawarkan diskaun 5% dahulu. Jika tolak, boleh naik ke 10%. Wajib maklumkan boss selepas.\n\n**Diskaun dibenarkan:** 5% → maksimum 10% (staf boleh luluskan, WAJIB maklum boss selepas)\n\n**Perlu hubungi boss?** ⚠️ Tidak perlu sebelum — WAJIB maklum selepas\n\n**Apa yang perlu dikatakan:**\n_"Maaf atas kesalahan penghantaran. Kami boleh tawarkan diskaun 5% jika bersetuju terima barang ini."_`;
+  }
+  // 3. Stainless steel kemek/rosak/cacat
+  if (has("stainless","ss304","ss316") && has("kemek","dent","rosak","cacat","damage")) {
+    return `**Apa yang perlu dibuat:**\nAmbil foto dahulu (WAJIB). Tawarkan 20%. Jika tolak, boleh naik ke 30%.\n\n**Diskaun dibenarkan:** 20% dahulu → maksimum 30% (staf boleh luluskan)\n\n**Perlu hubungi boss?** ✅ YA — hanya jika pelanggan tolak 30%\n\n**Apa yang perlu dikatakan:**\n_"Barang ini ada sedikit kemek tetapi masih boleh digunakan. Kami boleh tawarkan diskaun 20%."_`;
+  }
+  // 4. Mild steel berkarat/kemek/bengkok/rosak — 40% perlu kelulusan boss
+  if (has("berkarat","karat","rust") || (has("mild","ms") && has("kemek","rosak","bengkok","damage","cacat"))) {
+    return `**Apa yang perlu dibuat:**\nAmbil foto dahulu (WAJIB). Tawarkan 20%, boleh naik ke 30% (staf boleh luluskan). 40% HANYA dengan kelulusan boss.\n\n**Diskaun dibenarkan:** 20% → 30% (staf boleh luluskan); 40% perlu kelulusan boss\n\n**Perlu hubungi boss?** ⚠️ Hanya jika perlu tawar 40% atau pelanggan masih tolak selepas 30%\n\n**Apa yang perlu dikatakan:**\n_"Barang ini ada kerosakan/karat tetapi masih boleh digunakan. Kami boleh tawarkan diskaun 20%."_`;
+  }
+  // 5. Barang reject / off-grade
+  if (has("reject","off-grade","off grade","barang reject")) {
+    return `**Apa yang perlu dibuat:**\nSemak dahulu: bahan (mild steel/stainless), jenis produk (hollow/pipe/flat bar/angle dll.), panjang/lengths, isu reject, dan adakah Ah Yew sudah tahu pasal barang ni. Jual pada diskaun 30%–40% daripada harga retail.\n\n**Diskaun dibenarkan:** 30%–40% daripada retail (staf boleh luluskan dalam julat ini)\n\n**Perlu hubungi boss?** ⚠️ Hanya jika nak diskaun lebih 40%${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Barang ini reject/off-grade — kami boleh tawarkan diskaun istimewa 30–40% daripada harga retail."_`;
+  }
+  // 6. Diskaun bundle/borong — minimum 21 unit
+  const qty = getQty();
+  if (has("bundle","diskaun","discount","kurang","murah","harga special","harga khas","borong") || (qty!==null&&qty>=21)) {
+    if (qty!==null&&qty<21) {
+      return `**Apa yang perlu dibuat:**\nKuantiti ${qty} unit KURANG daripada 21. Tiada diskaun bundle. Guna harga standard.\n\n**Diskaun dibenarkan:** Tiada — minimum bundle adalah 21 unit\n\n**Perlu hubungi boss?** ❌ Tidak perlu${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Harga kami untuk kuantiti ini adalah harga standard. Diskaun bundle untuk 21 unit ke atas."_`;
+    }
+    return `**Apa yang perlu dibuat:**\nKuantiti ${qty||"21+"} unit layak diskaun bundle. Tawarkan 3–5%.\n\n**Diskaun dibenarkan:** 3% – 5% (staf boleh luluskan)\n\n**Perlu hubungi boss?** ✅ YA — hanya jika pelanggan minta lebih 5%${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Untuk pesanan ${qty||"21+"} unit, kami boleh berikan diskaun bundle 3–5%."_`;
+  }
+  // 7. Stok habis / perlu saiz gantian
+  if (has("stok habis","tiada stok","takde stok","saiz lain","ganti","substitute")) {
+    const rm=getRm();
+    if (rm&&rm>1000) return `**Apa yang perlu dibuat:**\nNilai pesanan > RM1,000. JANGAN tawarkan harga. Hubungi boss dahulu.\n\n**Diskaun dibenarkan:** Tiada — WAJIB hubungi boss\n\n**Perlu hubungi boss?** ✅ YA\n\n**Apa yang perlu dikatakan:**\n_"Saiz yang diminta tiada stok. Saya akan semak dan maklumkan tidak lama lagi."_`;
+    return `**Apa yang perlu dibuat:**\nTawarkan saiz gantian dengan diskaun 15% satu kali. Hanya untuk pesanan ≤ RM1,000.\n\n**Diskaun dibenarkan:** 15% khas (staf boleh luluskan jika ≤ RM1,000)${priceInfo}\n\n**Perlu hubungi boss?** ✅ YA — jika nilai > RM1,000\n\n**Apa yang perlu dikatakan:**\n_"Saiz diminta tiada stok. Ada saiz gantian dengan diskaun khas 15% — tawaran sekali sahaja."_`;
+  }
+  // 8. Pelanggan lama/setia/selalu beli
+  if (has("pelanggan lama","pelanggan setia","selalu beli","regular","loyal")) {
+    return `**Apa yang perlu dibuat:**\nPelanggan setia — jangan tolak terus. Maklumkan boss untuk keputusan.\n\n**Diskaun dibenarkan:** Tiada keputusan dari staf — boss yang tentukan\n\n**Perlu hubungi boss?** ✅ YA\n\n**Apa yang perlu dikatakan:**\n_"Terima kasih atas kesetiaan tuan/puan. Biar saya semak dengan pengurusan untuk harga terbaik."_`;
+  }
+  // 9. Terma kredit/tangguh bayar/hutang — boleh runding 50/50 via boss
+  if (has("kredit","credit","tangguh bayar","payment term","hutang")) {
+    return `**Apa yang perlu dibuat:**\nDefault ialah TIDAK BOLEH — syarikat guna bayaran online/tunai sebelum penghantaran. Staf boleh terus maklumkan penolakan ini. Jika pelanggan berkeras/nak runding (cth. 50% deposit, baki 50% sehari sebelum sampai), WAJIB hubungi boss.\n\n**Diskaun dibenarkan:** Tidak berkaitan\n\n**Perlu hubungi boss?** ⚠️ Hanya jika pelanggan berkeras/nak runding terma\n\n**Apa yang perlu dikatakan:**\n_"Kami sedang beralih ke bayaran online/tunai sebelum penghantaran, jadi tidak boleh guna terma kredit buat masa ini."_`;
+  }
+  // 10. Penghantaran / kos hantar
+  if (has("hantar","deliver","penghantaran","shipping")) {
+    return `**Apa yang perlu dibuat:**\nHarga penghantaran perlu disahkan boss. Jangan bagi anggaran tanpa pengesahan.${priceInfo}\n\n**Diskaun dibenarkan:** Tiada keputusan dari staf\n\n**Perlu hubungi boss?** ✅ YA\n\n**Apa yang perlu dikatakan:**\n_"Boleh saya dapatkan alamat lengkap? Saya akan semak kos penghantaran dan maklumkan."_`;
+  }
+  // 11. Pesanan standard — tiada situasi khas
+  if (priceInfo) {
+    return `**Apa yang perlu dibuat:**\nSemak harga dalam senarai di bawah. Guna harga standard — tiada diskaun untuk pesanan biasa.\n\n**Diskaun dibenarkan:** Tiada (pesanan standard)\n\n**Perlu hubungi boss?** ❌ Tidak perlu${priceInfo}\n\n**Apa yang perlu dikatakan:**\n_"Harga semasa untuk produk ini adalah RM [masukkan harga]. Adakah tuan/puan ingin meneruskan?"_`;
+  }
+  return `**Apa yang perlu dibuat:**\nSila nyatakan dengan lebih lanjut — jenis produk, kuantiti, dan situasi (diskaun, rosak, hantar, potong saiz, reject, dll.)\n\n**Perlu hubungi boss?** ⚠️ Hubungi boss jika tidak pasti\n\n**Apa yang perlu dikatakan:**\n_"Biar saya semak dengan pihak kami dan maklumkan tidak lama lagi."_`;
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // TAB 1 — PEMBANTU AI
 // ════════════════════════════════════════════════════════════════════════════
@@ -765,46 +840,22 @@ function AssistantTab({ prices, gsStatus, session }) {
     return { qty, recPrice, tierLabel, totalPrice, cat, tiers, nextTier, unitType: p.unitType || "" };
   })() : null;
 
-  // ── Send message (fully AI-driven — calls the ai-chat edge function,
-  // which holds the discount/escalation policy as a system prompt and
-  // calls Claude Haiku) ───────────────────────────────────────────────────
-  const send = async () => {
+  // ── Send message (Wylee 2026-08-28: "normal chat box without the AI" — no
+  // Anthropic API, no per-message cost. Runs getRulesAnswer() locally in the
+  // browser instead of calling the ai-chat edge function. Single-shot
+  // keyword matching only — it cannot ask a diagnostic follow-up question
+  // and wait for the reply the way the AI version could. The ai-chat edge
+  // function is left deployed (unused) in case AI mode is switched back on
+  // later — see CLAUDE.md for how to re-enable it. ─────────────────────────
+  const send = () => {
     const text = input.trim(); if (!text || thinking) return;
     setInput("");
     const newMsgs = [...messages, { role:"user", content:text }];
     setMessages(newMsgs); setThinking(true);
-    try {
-      // Lightweight price grounding: same word-match approach as before,
-      // top 5 matches sent as context so the AI doesn't invent prices.
-      const t = text.toLowerCase();
-      const words = t.split(/\s+/).filter(w=>w.length>1);
-      const priceContext = prices
-        .filter(p => p.price>0 && words.some(w =>
-          (p.product||"").toLowerCase().includes(w) || (p.size||"").toLowerCase().includes(w) || (p.category||"").toLowerCase().includes(w)
-        ))
-        .slice(0, 5)
-        .map(p => ({ product:p.product, size:p.size, grade:p.grade, unit:p.unit, price: fmtPrice(roundPrice(parseFloat(p.retailPrice||p.price), p.category), p.category) }));
-
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: { messages: newMsgs.map(m => ({ role:m.role, content:m.content })), priceContext },
-      });
-      if (error || !data || data.error) {
-        // supabase-js swallows the edge function's JSON error body behind a
-        // generic "non-2xx status code" message — dig the real message out
-        // of error.context (the raw Response) so staff see something useful.
-        let serverMsg = data?.error;
-        if (!serverMsg && error?.context && typeof error.context.json === "function") {
-          try { const body = await error.context.json(); serverMsg = body?.error; } catch {}
-        }
-        setMessages([...newMsgs, { role:"assistant", content: `⚠️ ${serverMsg || error?.message || "Ralat menghubungi pembantu AI. Cuba lagi."}` }]);
-      } else {
-        setMessages([...newMsgs, { role:"assistant", content: data.reply }]);
-      }
-    } catch (e) {
-      setMessages([...newMsgs, { role:"assistant", content: "⚠️ Ralat menghubungi pembantu AI. Cuba lagi." }]);
-    }
+    const reply = getRulesAnswer(text, prices);
+    setMessages([...newMsgs, { role:"assistant", content: reply }]);
     setThinking(false);
-    if (session) logActivity(session, "Soalan AI", text.slice(0, 80));
+    if (session) logActivity(session, "Soalan Chat", text.slice(0, 80));
   };
 
   // ── Render ────────────────────────────────────────────────────────────────

@@ -739,6 +739,7 @@ function AssistantTab({ prices, gsStatus, session }) {
   const [calcQty,         setCalcQty]         = useState("1");
   const [stockMap,        setStockMap]        = useState({}); // itemCode -> {qty,branches,as_of} | 'loading' | null
   const [stockDetail,     setStockDetail]     = useState(null); // 4-metric projection for selectedProduct | 'loading' | null
+  const [expandedBreakdown, setExpandedBreakdown] = useState(null); // null | 'so' | 'do' | 'po' — which projection cell's document list is open
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, thinking]);
@@ -786,6 +787,7 @@ function AssistantTab({ prices, gsStatus, session }) {
   // Cadangan PO window since incoming purchases don't go stale the same way.
   useEffect(() => {
     const code = selectedProduct?.itemCode;
+    setExpandedBreakdown(null);
     if (!code) { setStockDetail(null); return; }
     setStockDetail('loading');
     (async () => {
@@ -923,7 +925,14 @@ function AssistantTab({ prices, gsStatus, session }) {
                   {selectedProduct.product}
                   {selectedProduct.listPrice > 0 && <span style={{ marginLeft:28 }}>RRP MYR {fmtRrp(selectedProduct.listPrice, selectedProduct.product)}</span>}
                 </div>
-                <div style={{ color:"#94a3b8", fontSize:12 }}>{selectedProduct.itemCode} | {selectedProduct.category}</div>
+                <div style={{ color:"#94a3b8", fontSize:12 }}>
+                  {selectedProduct.itemCode} | {selectedProduct.category}
+                  {session?.role==='owner' && (
+                    <span style={{ marginLeft:14, color:"#fcd34d", fontWeight:700 }}>
+                      Kos: {selectedProduct.cost>0 ? `RM ${fmtPrice(selectedProduct.cost)}` : "—"}
+                    </span>
+                  )}
+                </div>
               </div>
               <button onClick={()=>setSelectedProduct(null)} style={{ background:"transparent", border:"none", color:"#94a3b8", fontSize:20, cursor:"pointer" }}>×</button>
             </div>
@@ -956,12 +965,27 @@ function AssistantTab({ prices, gsStatus, session }) {
                 const d = stockDetail;
                 if (d === 'loading') return <div style={{ fontSize:11, color:C.muted, marginTop:8 }}>Mengira anggaran stok…</div>;
                 if (!d) return null;
-                const cell = (label, val, color) => (
-                  <div style={{ flex:"1 1 120px", minWidth:110 }}>
-                    <div style={{ fontSize:9.5, fontWeight:700, color:C.muted, textTransform:"uppercase", marginBottom:2 }}>{label}</div>
-                    <div style={{ fontWeight:900, fontSize:17, color: val<0 ? C.red : color }}>{val}</div>
-                  </div>
-                );
+                const cell = (label, val, color, key, lines) => {
+                  const hasLines = Array.isArray(lines) && lines.length > 0;
+                  const open = expandedBreakdown === key;
+                  return (
+                    <div style={{ flex:"1 1 120px", minWidth:110, cursor: hasLines ? "pointer" : "default" }}
+                      onClick={() => hasLines && setExpandedBreakdown(k => k===key ? null : key)}
+                      title={hasLines ? "Klik untuk lihat butiran dokumen" : undefined}>
+                      <div style={{ fontSize:9.5, fontWeight:700, color:C.muted, textTransform:"uppercase", marginBottom:2 }}>
+                        {label}{hasLines && <span style={{ marginLeft:4, color:C.accent }}>{open ? "▲" : "▼"}</span>}
+                      </div>
+                      <div style={{ fontWeight:900, fontSize:17, color: val<0 ? C.red : color, textDecoration: hasLines ? "underline" : "none", textDecorationStyle:"dotted", textDecorationColor:"#cbd5e1" }}>{val}</div>
+                    </div>
+                  );
+                };
+                // Breakdown table config per cell — which docs make up that number.
+                const BREAKDOWN = {
+                  so: { title: "SO Terbuka (belum dihantar penuh, 30 hari terakhir)", lines: d.open_so_lines || [], cols: ["No. SO","Tarikh","Kuantiti","Dihantar","Baki"] },
+                  do: { title: "DO Belum Disegerak (jurang sync)", lines: d.do_pending_lines || [], cols: ["No. DO","Tarikh","Kuantiti"] },
+                  po: { title: `PO Belum Sampai (${d.po_window_months} bulan terakhir)`, lines: d.po_lines || [], cols: ["No. PO","Tarikh","Kuantiti","Diterima","Baki"] },
+                };
+                const bd = expandedBreakdown ? BREAKDOWN[expandedBreakdown] : null;
                 return (
                   <div style={{ marginTop:8, background:"#fffbea", border:"1px solid #fde68a", borderRadius:8, padding:"10px 12px" }}>
                     {d.sync_stale_days > 1 && (
@@ -970,14 +994,46 @@ function AssistantTab({ prices, gsStatus, session }) {
                       </div>
                     )}
                     <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
-                      {cell("Anggaran Stok utk Jualan", d.projected_for_sale, C.navy)}
-                      {cell("Stok Sebenar utk Jualan (Sebenar)", d.true_actual_for_sale, C.navy)}
-                      {cell("Anggaran Stok (+PO)", d.projected, C.green)}
+                      {cell("Anggaran Stok utk Jualan", d.projected_for_sale, C.navy, "so", d.open_so_lines)}
+                      {cell("Stok Sebenar utk Jualan (Sebenar)", d.true_actual_for_sale, C.navy, "do", d.do_pending_lines)}
+                      {cell("Anggaran Stok (+PO)", d.projected, C.green, "po", d.po_lines)}
                     </div>
                     <div style={{ fontSize:10, color:"#92702a", marginTop:8, lineHeight:1.5 }}>
                       Anggaran Jualan = Stok − SO terbuka ({d.open_so_30d} unit, {d.window_days} hari terakhir), minimum 0. Stok Sebenar = Stok − DO belum disegerak ({d.do_pending} unit, sejak {d.do_window_start}), minimum 0 — SQL Account memotong stok semasa DO disimpan, bukan invois; ini hanya menutup jurang sync. Anggaran (+PO) = Anggaran Jualan + PO belum sampai ({d.outstanding_po} unit, {d.po_window_months} bulan terakhir sahaja — PO lebih lama dianggap void, tidak dikira).
                       <br /><b>{d.scope_note}</b>
                     </div>
+                    {bd && (
+                      <div style={{ marginTop:10, background:C.white, border:`1px solid ${C.border}`, borderRadius:8, overflow:"hidden" }}>
+                        <div style={{ padding:"6px 10px", fontSize:10.5, fontWeight:700, color:C.navy, background:C.gray, borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                          <span>{bd.title}</span>
+                          <span onClick={() => setExpandedBreakdown(null)} style={{ cursor:"pointer", color:C.muted, fontSize:13 }}>×</span>
+                        </div>
+                        {bd.lines.length === 0 ? (
+                          <div style={{ padding:"10px 12px", fontSize:11, color:C.muted }}>Tiada rekod dalam tempoh ini.</div>
+                        ) : (
+                          <div style={{ maxHeight:200, overflowY:"auto" }}>
+                            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
+                              <thead>
+                                <tr>{bd.cols.map(c => (
+                                  <th key={c} style={{ textAlign:"left", padding:"5px 10px", color:C.muted, fontWeight:700, fontSize:9.5, textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>{c}</th>
+                                ))}</tr>
+                              </thead>
+                              <tbody>
+                                {bd.lines.map((l, i) => (
+                                  <tr key={l.docno + i} style={{ borderBottom: i < bd.lines.length-1 ? `1px solid ${C.border}` : "none" }}>
+                                    <td style={{ padding:"5px 10px", fontWeight:600, color:C.navy }}>{l.docno || "—"}</td>
+                                    <td style={{ padding:"5px 10px", color:C.muted }}>{l.docdate || "—"}</td>
+                                    <td style={{ padding:"5px 10px" }}>{l.qty}</td>
+                                    {expandedBreakdown !== "do" && <td style={{ padding:"5px 10px" }}>{expandedBreakdown==="so" ? l.delivered : l.received}</td>}
+                                    {expandedBreakdown !== "do" && <td style={{ padding:"5px 10px", fontWeight:700 }}>{expandedBreakdown==="so" ? l.remaining : l.outstanding}</td>}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })()}

@@ -450,19 +450,10 @@ export default function PurchasingTab({ prices = [], session }) {
                 <span>Kos Pasaran <b style={{ color:C.text }}>RM{calc.cost.toFixed(2)}</b></span>
                 <span>Retail <b style={{ color:C.text }}>RM{calc.retail.toFixed(2)}</b></span>
               </div>
-              {calc.sqlCost > 0 && (
-                <div style={{ fontSize:11.5, color:C.muted, marginBottom:8 }}>
-                  Kos SQL Account <b style={{ color:C.text }}>RM{calc.sqlCost.toFixed(2)}</b>
-                  {calc.cost > 0 && (() => {
-                    const diffPct = ((calc.cost - calc.sqlCost) / calc.sqlCost) * 100;
-                    if (Math.abs(diffPct) < 0.5) return <span style={{ marginLeft:6, color:C.muted }}>(sama)</span>;
-                    const up = diffPct > 0;
-                    return <span style={{ marginLeft:6, fontWeight:700, color: up ? C.red : C.green }}>
-                      {up ? '↑' : '↓'} pasaran {Math.abs(diffPct).toFixed(1)}% {up ? 'atas' : 'bawah'} SQL
-                    </span>;
-                  })()}
-                </div>
-              )}
+              {/* "Kos SQL Account" comparison badge removed 2026-08-28 — sql_cost
+                  was a one-off manual import (2026-08-19, 302/898 items), never
+                  kept in sync, so the badge was silently comparing against
+                  stale/missing data. See CLAUDE.md Section 14. */}
               <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
                 <div style={lbl}>Stok Di Tangan (SQL)</div>
                 {loading ? <div style={{ fontSize:12, color:C.muted }}>Memuat…</div>

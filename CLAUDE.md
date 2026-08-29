@@ -36,8 +36,11 @@ stay in English.
 - **Hosting:** Vercel
 - **Live URL:** https://mgassteel-webapp-888q.vercel.app
 - **Repo:** GitHub `mgassteelapp/mgassteel-webapp`
-- **Data backend:** Google Sheet (ID `1wUn_2v7w-J2l1TY-zmFXbBPgqMeH9D4_VQ4d0KAR1vg`)
-  accessed via a deployed Google Apps Script web app
+- **Data backend:** Supabase project **mgas-pricecheck** (`hskatymjicizppmovrse`)
+  — `prices`/`costs` tables read directly by the webapp (`loadPrices()` /
+  `loadCosts()` in App.jsx). The old Google Sheet / Apps Script backend
+  described below is **dead** (see Section 15 — GS_URL returned 404 and was
+  removed); this line was stale until corrected 2026-08-28.
 - **Data scale:** 15 product tabs (incl. an empty "Hardware" tab to be filled
   later), ~1,135 products
 
@@ -670,11 +673,22 @@ manual Excel uploads. Data now flows automatically:
 
 **Pipeline:** SQL Accounting (Firebird, on Wylee's PC) → synced every 15 min
 to the **mgas-crm** Supabase project (`plyfibrprnccbbewznxf`, built in a
-separate chat session) → `run-reconcile` edge function on mgas-crm re-runs the
-reconciliation every 15 min (pg_cron `reconcile-every-15min` + pg_net) →
-results stored in `reconcile_runs` table (mgas-crm, RLS service-role-only) →
-webapp reads via `reconcile-proxy` edge function on mgas-pricecheck
-(`hskatymjicizppmovrse`).
+separate chat session; raw table sync verified healthy via `sync_state`) →
+`run-reconcile` edge function on mgas-crm re-runs the reconciliation **3x/day**
+(pg_cron job `reconcile-thrice-daily`, schedule `30 3,6,8 * * *` UTC =
+11:30am/2:30pm/4:30pm KL, action `run` + pg_net) → results stored in
+`reconcile_runs` table (mgas-crm, RLS service-role-only) → webapp reads via
+`reconcile-proxy` edge function on mgas-pricecheck (`hskatymjicizppmovrse`).
+(Corrected 2026-08-28 — this used to say "every 15 min" via a job named
+`reconcile-every-15min`; that is not what's actually deployed. Confirmed via
+`cron.job` on mgas-crm.)
+
+**Low-stock scan** (feeds `low_stock_status`, the Cadangan PO tab's candidate
+list) runs on the same `run-reconcile` function, action `lowStockScan`, but on
+its own separate schedule — **3x/day**, not continuous: `low-stock-morning`
+(9am KL), `low-stock-afternoon` (1:30pm KL), `low-stock-4pm` (4pm KL), each
+its own pg_cron job with a 60s `net.http_post` timeout (the scan itself
+typically takes ~3-9s).
 
 **Auth chain:** browser sends the user's pricecheck JWT to `reconcile-proxy`
 (verify_jwt=false because CORS preflight; JWT validated manually via
@@ -814,6 +828,20 @@ NOTE: deploy_edge_function MCP tool defaults verify_jwt=true which BREAKS the
 secret-only callers (cron, sync script, proxy) — always pass verify_jwt:false
 when redeploying run-reconcile or reconcile-proxy.
 
+**"Kos SQL Account" badge — REMOVED 2026-08-28.** The Cadangan PO detail card
+used to show `costs.sql_cost` (mgas-pricecheck) next to the manual `costs.cost`
+as a "pasaran naik/turun X% atas/bawah SQL" comparison. Sync-health audit
+found `sql_cost` was populated **once**, manually, on 2026-08-19, for only
+302 of 898 items (596 rows NULL, never synced), and nothing has refreshed it
+since — no cron job exists for it (mgas-pricecheck has no `cron.job` table at
+all; pg_cron isn't installed there), unlike `stock_items`/`prices`/`costs`
+which do have a real recurring sync. The badge was silently comparing against
+up-to-9-day-old or missing data as if it were live, so it was pulled from the
+UI rather than left misleading staff. `sql_cost`/`sql_cost_updated_at`
+columns are untouched in the DB if this is ever wired into a real recurring
+sync later (would need a defined source pipeline from SQL Account, same
+shape as `stock_items`'s sync).
+
 ### 15. Aktiviti / Pengguna / Deals / Senario — Supabase (Apps Script dead)
 
 The old Google Apps Script backend (GS_URL) returned 404 and was removed from
@@ -828,3 +856,57 @@ and scenarios tables replace the Sheets storage for Rekod Tawaran / Senario
 AI (scenarios: owner-only writes, all read — the AI prompt uses them).
 loadDeals()/loadScenarios() were referenced but never defined (every load
 threw and flipped gsStatus to error) — now real Supabase queries.
+
+### 16. Item-code family matching (`familyOf()`, run-reconcile.ts) — v23, 2026-08-26
+
+Both the price-check stock lookup (stockForFamily → stockBulk/stockDetail,
+used by every staff member) and Cadangan PO's velocity/PO queries
+(purchasingInfo, stockProjection) decide "is this SQL Account item_code the
+same product as the code I searched for?" via `familyOf(base)` — never by
+prefix-guessing. It matches the exact code, or `base` + one of `-`/` `/`.`
++ a continuation, per Wylee's rule (2026-08-26): "digits/number
+combination><units>-letters or mixed letter numbers are the proper product
+code. Anything beyond that is just annotation you should not take into
+consideration." So the DEFAULT is permissive — a continuation is safe
+unless PROVEN to mark a genuinely different product sharing the same base.
+
+"Proven" = a catalog-wide scan of `stock_items`: for every base code, list
+every distinct FIRST TOKEN following the boundary; any base with more than
+one distinct token is a real conflict (two different SKUs sharing a base).
+Re-run this scan (see query shape in the `DANGEROUS_TOKENS` comment block
+in run-reconcile.ts) whenever new items land and something looks
+mismatched — a token proven unsafe must be added to `DANGEROUS_TOKENS`,
+never removed without re-verifying it's now safe. Structural rules
+(`DIM_RE` = NxN dimension, `THICKNESS_MM_RE` = decimal+MM) catch shapes not
+yet literally in the token list, e.g. a brand-new dimension code.
+
+History: v21 required a PURE-NUMERIC continuation only (missed packaging
+suffixes like `PG1650-BS 49S 49T`). v22 added a whitelist of packaging
+units (S/T/P/L/LF/LM/LE) but stayed digit-led-only (missed letter-led
+annotation like `1025-CQ HOLLOW 100T,LE,P/144L`). v23 (current) flipped to
+a blocklist, permissive by default, driven by the base-code-conflict scan
+— confirmed both bugs fixed and re-confirmed the known-dangerous cases
+(Q030-19X76/-25X76/... dimension variants, ASFB-0.35MM/-0.47MM thickness,
+BS/CQ/AJIYA/ASTINO/THI/TASHIN/MGAS/TSA/WS/JT grade-brand-spec tags,
+KANAN/KIRI/TENGAH side tags) still isolate correctly — see git history /
+session log for the full before/after stock numbers.
+
+### 17. Cadangan PO pill classification + reorder_candidates alias fix (2026-08-26)
+
+`pill_of(category, item_code)` (SQL, immutable) classifies every low-stock
+candidate into one of 12 UI filter pills using the authoritative `category`
+column (never item-code-prefix guessing — a bare "A"-prefix guess would
+wrongly catch non-ANGLE items). `reorder_candidates(p_months)` returns
+`pill` now, and — separately, an unrelated pre-existing bug found and fixed
+in the same pass — resolves sales/PO/PI item codes through the
+`item_code_aliases` chain (recursive CTE, depth-capped at 5) before
+aggregating; without this, ~70 of ~180 low-stock rows showed `actual_stock
+= 0` / blank category for items renamed after the BS/CQ hollow-section
+cleanup, because the old join was exact-match only. `low_stock_status`
+gained a `pill` column; `PurchasingTab.jsx`'s `LowStockPanel` now has a
+clickable pill-filter row (12 pills + Semua) matching the approved Claude
+Design mockup, with urgent rows (`netted_available <= 0`) shown in red with
+a "HABIS" badge. A residual ~49 "Others"-pill rows are genuinely orphaned
+historical item codes with no matching `stock_items` row under any known
+alias — a real data-cleanup backlog, not a join bug; don't try to "fix" it
+by loosening the match.

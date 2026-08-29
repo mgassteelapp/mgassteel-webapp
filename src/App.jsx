@@ -969,13 +969,17 @@ function AssistantTab({ prices, gsStatus, session }) {
                   const hasLines = Array.isArray(lines) && lines.length > 0;
                   const open = expandedBreakdown === key;
                   return (
-                    <div style={{ flex:"1 1 120px", minWidth:110, cursor: hasLines ? "pointer" : "default" }}
-                      onClick={() => hasLines && setExpandedBreakdown(k => k===key ? null : key)}
-                      title={hasLines ? "Klik untuk lihat butiran dokumen" : undefined}>
-                      <div style={{ fontSize:9.5, fontWeight:700, color:C.muted, textTransform:"uppercase", marginBottom:2 }}>
-                        {label}{hasLines && <span style={{ marginLeft:4, color:C.accent }}>{open ? "▲" : "▼"}</span>}
-                      </div>
-                      <div style={{ fontWeight:900, fontSize:17, color: val<0 ? C.red : color, textDecoration: hasLines ? "underline" : "none", textDecorationStyle:"dotted", textDecorationColor:"#cbd5e1" }}>{val}</div>
+                    <div style={{ flex:"1 1 120px", minWidth:110 }}>
+                      <div style={{ fontSize:9.5, fontWeight:700, color:C.muted, textTransform:"uppercase", marginBottom:2 }}>{label}</div>
+                      <div style={{ fontWeight:900, fontSize:17, color: val<0 ? C.red : color }}>{val}</div>
+                      {hasLines ? (
+                        <div onClick={() => setExpandedBreakdown(k => k===key ? null : key)}
+                          style={{ marginTop:2, fontSize:10.5, fontWeight:700, color:C.accent, cursor:"pointer", userSelect:"none", display:"inline-block" }}>
+                          {open ? "▲ Tutup butiran" : "▼ Lihat butiran"}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop:2, fontSize:10.5, color:"#cbd5e1" }}>Tiada dokumen dalam tempoh ini</div>
+                      )}
                     </div>
                   );
                 };

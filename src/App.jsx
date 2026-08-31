@@ -183,12 +183,12 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 // mockup (sidebar-nav-mockup.html), with the two standalone items sitting
 // where the old "Alat" group used to be.
 const NAV = [
-  { type:"group", key:"harga_stok", label:"Harga & Stok", icon:"🔍", tabs:["assistant","prices","daily"] },
-  { type:"group", key:"jualan",     label:"Jualan",       icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","queries"] },
-  { type:"group", key:"pembelian",  label:"Pembelian",    icon:"📦", tabs:["purchasing","reconcile"] },
+  { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices"] },
+  { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","queries"] },
+  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
-  { type:"group", key:"admin",      label:"Admin",        icon:"🔐", tabs:["activity","users"] },
+  { type:"group", key:"admin",          label:"Admin",           icon:"🔐", tabs:["activity","users"] },
 ];
 const GROUPS = NAV.filter(n => n.type === "group");
 function groupKeyForTab(key) {

@@ -188,7 +188,7 @@ const NAV = [
   { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
-  { type:"group", key:"admin",          label:"Admin",           icon:"🔐", tabs:["activity","users"] },
+  { type:"group", key:"admin",          label:"Setting",           icon:"🔐", tabs:["activity","users"] },
 ];
 const GROUPS = NAV.filter(n => n.type === "group");
 function groupKeyForTab(key) {

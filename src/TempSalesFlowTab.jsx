@@ -184,12 +184,12 @@ function printFlowHTML(rowRaw, stage) {
 
   ${signBlocks}
 
-  ${stage === 'picking' ? `
+  ${(stage === 'picking' || stage === 'do' || stage === 'invoice') ? `
   <div class="kuning-block">
-    <div class="word">KUNING</div>
+    ${stage === 'picking' ? '<div class="word">KUNING</div>' : ''}
     <div class="qr">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(docNoFor(row, 'picking'))}" alt="QR ${esc(docNoFor(row, 'picking'))}" />
-      <div class="qr-cap">${esc(docNoFor(row, 'picking'))}</div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(docNoFor(row, stage))}" alt="QR ${esc(docNoFor(row, stage))}" />
+      <div class="qr-cap">${esc(docNoFor(row, stage))}</div>
     </div>
   </div>` : ''}
 
@@ -253,6 +253,11 @@ export default function TempSalesFlowTab({ session, prices }) {
   const [error,     setError]     = useState('');
   const [savedRow,  setSavedRow]  = useState(null);
   const [savedStage,setSavedStage]= useState(null);
+
+  const [reissueRow,  setReissueRow]  = useState(null); // row being reissued
+  const [reissueNo,   setReissueNo]   = useState('');   // SQL invoice no. staff typed
+  const [reissueStep, setReissueStep] = useState('input'); // 'input' | 'confirm'
+  const [reissueSaving, setReissueSaving] = useState(false);
 
   const [rows,    setRows]    = useState([]);
   const [loading, setLoading] = useState(true);
@@ -375,11 +380,24 @@ export default function TempSalesFlowTab({ session, prices }) {
     writeFlowPrint(printWin, data, next);
   };
 
-  const setStatus = async (row, status) => {
+  // Reissue is a one-way, confirmed action: staff must key in the REAL SQL
+  // Account invoice number, confirm it back, and it locks permanently — no
+  // "buka semula" afterwards, so a wrong number can't quietly get reused.
+  const startReissue = (row) => { setReissueRow(row); setReissueNo(''); setReissueStep('input'); };
+  const cancelReissue = () => { setReissueRow(null); setReissueNo(''); setReissueStep('input'); };
+  const confirmReissue = async () => {
+    if (!reissueRow || !reissueNo.trim()) return;
+    setReissueSaving(true);
     const { error: e } = await supabase.from('temp_sales_flow').update({
-      status, status_updated_at: new Date().toISOString(), status_updated_by: session.name,
-    }).eq('id', row.id);
-    if (!e) setRows(rs => rs.map(r => r.id === row.id ? { ...r, status, status_updated_by: session.name } : r));
+      status: 'reissued', sql_invoice_no: reissueNo.trim(),
+      status_updated_at: new Date().toISOString(), status_updated_by: session.name,
+    }).eq('id', reissueRow.id);
+    setReissueSaving(false);
+    if (e) { alert('Gagal kemaskini: ' + e.message); return; }
+    setRows(rs => rs.map(r => r.id === reissueRow.id
+      ? { ...r, status: 'reissued', sql_invoice_no: reissueNo.trim(), status_updated_by: session.name }
+      : r));
+    cancelReissue();
   };
 
   const filteredRows = rows.filter(r => stageFilter === 'ALL' || r.stage === stageFilter);
@@ -562,6 +580,11 @@ export default function TempSalesFlowTab({ session, prices }) {
                         <span style={{ background:stcfg.bg, color:stcfg.tx, borderRadius:6, padding:'3px 8px', fontSize:10.5, fontWeight:800 }}>
                           {stcfg.label}
                         </span>
+                        {r.sql_invoice_no && (
+                          <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:700 }}>
+                            SQL: {r.sql_invoice_no}
+                          </div>
+                        )}
                       </td>
                       <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
                         <button onClick={() => openFlowPrint(r, r.stage)}
@@ -577,17 +600,10 @@ export default function TempSalesFlowTab({ session, prices }) {
                           </button>
                         )}
                         {isManager && r.stage === 'invoice' && r.status === 'pending' && (
-                          <button onClick={() => setStatus(r, 'reissued')}
+                          <button onClick={() => startReissue(r)}
                             style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',
                                      borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>
                             ✓ Dikeluarkan Semula
-                          </button>
-                        )}
-                        {isManager && r.status === 'reissued' && (
-                          <button onClick={() => setStatus(r, 'pending')}
-                            style={{ padding:'4px 9px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
-                                     borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer' }}>
-                            Buka semula
                           </button>
                         )}
                       </td>
@@ -599,6 +615,79 @@ export default function TempSalesFlowTab({ session, prices }) {
           </div>
         )}
       </div>
+
+      {/* ── Reissue confirmation modal — locks in the real SQL invoice no. ── */}
+      {reissueRow && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(15,39,68,0.55)', zIndex:100,
+                       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+          <div style={{ background:C.white, borderRadius:14, padding:'22px 24px', width:420, maxWidth:'100%',
+                        boxShadow:'0 12px 40px rgba(0,0,0,0.25)' }}>
+            {reissueStep === 'input' ? (
+              <>
+                <div style={{ fontWeight:800, fontSize:15, color:C.navy, marginBottom:4 }}>
+                  Sahkan Nombor Invois SQL Account
+                </div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>
+                  {reissueRow.flow_no} — {reissueRow.customer_name}
+                </div>
+                <div style={{ background:C.amberBg, border:`1px solid #eab308`, color:C.amber, borderRadius:8,
+                              padding:'8px 12px', fontSize:11.5, fontWeight:600, lineHeight:1.5, marginBottom:12 }}>
+                  ⚠ Wajib masukkan nombor invois SEBENAR yang dikeluarkan dalam SQL Account bagi jualan ini.
+                  Nombor ini TIDAK BOLEH diubah selepas disahkan.
+                </div>
+                <input value={reissueNo} onChange={e => setReissueNo(e.target.value)} autoFocus
+                  placeholder="cth: IV-26083100"
+                  style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:8,
+                           border:`1.5px solid ${C.border}`, fontSize:14, fontFamily:'inherit', marginBottom:16 }} />
+                <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
+                  <button onClick={cancelReissue}
+                    style={{ padding:'9px 16px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
+                             borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                    Batal
+                  </button>
+                  <button onClick={() => reissueNo.trim() && setReissueStep('confirm')} disabled={!reissueNo.trim()}
+                    style={{ padding:'9px 18px', background: reissueNo.trim() ? C.navy : C.border,
+                             color:C.white, border:'none', borderRadius:8, fontWeight:700, fontSize:13,
+                             cursor: reissueNo.trim() ? 'pointer' : 'not-allowed' }}>
+                    Seterusnya
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight:800, fontSize:15, color:C.navy, marginBottom:4 }}>
+                  Adakah nombor ini BETUL?
+                </div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>
+                  {reissueRow.flow_no} — {reissueRow.customer_name}
+                </div>
+                <div style={{ textAlign:'center', background:C.gray, border:`1.5px solid ${C.border}`,
+                              borderRadius:10, padding:'16px 12px', fontSize:22, fontWeight:900,
+                              color:C.navy, letterSpacing:1, marginBottom:12 }}>
+                  {reissueNo.trim()}
+                </div>
+                <div style={{ background:C.redBg, border:`1px solid #fca5a5`, color:C.red, borderRadius:8,
+                              padding:'8px 12px', fontSize:11.5, fontWeight:700, lineHeight:1.5, marginBottom:16 }}>
+                  ⚠ Selepas disahkan, rekod ini akan DIKUNCI — nombor ini TIDAK BOLEH diubah lagi.
+                  Sila semak dengan teliti sebelum sahkan.
+                </div>
+                <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
+                  <button onClick={() => setReissueStep('input')} disabled={reissueSaving}
+                    style={{ padding:'9px 16px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
+                             borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                    Kembali
+                  </button>
+                  <button onClick={confirmReissue} disabled={reissueSaving}
+                    style={{ padding:'9px 18px', background:C.green, color:C.white, border:'none',
+                             borderRadius:8, fontWeight:700, fontSize:13, cursor: reissueSaving ? 'not-allowed' : 'pointer' }}>
+                    {reissueSaving ? 'Menyimpan…' : '✓ Ya, Sahkan & Kunci'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

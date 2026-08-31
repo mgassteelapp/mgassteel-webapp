@@ -366,7 +366,7 @@ function LoginScreen({ onLogin, notice }) {
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:20, position:"relative", overflow:"hidden" }}>
-      <img src="/logo.png" alt="" style={{position:"absolute", opacity:0.05, width:"70%", maxWidth:500, top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none"}} />
+      <img src="/logo.png" alt="" style={{position:"absolute", opacity:0.05, width:"85vw", maxWidth:1100, top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none"}} />
       <div style={{ width:"100%", maxWidth:380, position:"relative", zIndex:1 }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>

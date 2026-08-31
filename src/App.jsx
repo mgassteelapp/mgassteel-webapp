@@ -184,11 +184,12 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 // where the old "Alat" group used to be.
 const NAV = [
   { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices"] },
-  { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","queries"] },
+  { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
   { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
-  { type:"group", key:"admin",          label:"Setting",           icon:"🔐", tabs:["activity","users"] },
+  { type:"group", key:"chat_center",    label:"Chat Center",     icon:"💬", tabs:["broadcast","queries"] },
+  { type:"group", key:"admin",          label:"Setting",         icon:"🔐", tabs:["activity","users"] },
 ];
 const GROUPS = NAV.filter(n => n.type === "group");
 function groupKeyForTab(key) {
@@ -626,8 +627,9 @@ export default function App() {
       { key:"queries", label:"❓ Pertanyaan Harga" },
     ] : []),
     ...(session.role==="owner" ? [
-      { key:"activity", label:"📊 Aktiviti" },
-      { key:"users",    label:"👥 Pengguna" },
+      { key:"broadcast", label:"📣 Pengumuman Live" },
+      { key:"activity",  label:"📊 Aktiviti" },
+      { key:"users",     label:"👥 Pengguna" },
     ] : []),
   ];
 
@@ -824,6 +826,7 @@ export default function App() {
             {tab==="temp_invoice" && hasPerm(session, "temp_invoice") && <TempInvoiceTab session={session} prices={prices} />}
             {tab==="temp_sales_flow" && hasPerm(session, "temp_sales_flow") && <TempSalesFlowTab session={session} prices={prices} />}
             {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
+            {tab==="broadcast" && session.role==="owner" && <BroadcastTab session={session} />}
             {tab==="activity"  && session.role==="owner" && <ActivityTab />}
             {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
             {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
@@ -1494,123 +1497,12 @@ function UsersTab({ session }) {
     flash(`✅ Kebenaran ${u.name} dikembalikan ke default peranan.`);
   };
 
-  // ── Broadcast composer + acknowledgement tracker ──
-  const [bcMsg, setBcMsg] = useState("");
-  const [bcSending, setBcSending] = useState(false);
-  const [bcList, setBcList] = useState([]);
-  const [bcExpanded, setBcExpanded] = useState(null); // broadcast id currently showing who saw/didn't
-  const loadBroadcasts = async () => {
-    try {
-      const { data: bs } = await supabase.from('broadcasts')
-        .select('*').order('created_at', { ascending: false }).limit(8);
-      if (!bs?.length) { setBcList([]); return; }
-      const { data: acks } = await supabase.from('broadcast_acks')
-        .select('*').in('broadcast_id', bs.map(b => b.id));
-      setBcList(bs.map(b => ({ ...b, acks: (acks || []).filter(a => a.broadcast_id === b.id) })));
-    } catch { /* table absent */ }
-  };
-  useEffect(() => { loadBroadcasts(); }, []);
-  const sendBroadcast = async () => {
-    const msg = bcMsg.trim();
-    if (!msg || bcSending) return;
-    setBcSending(true);
-    const { error } = await supabase.from('broadcasts')
-      .insert({ created_by: session.name, message: msg });
-    setBcSending(false);
-    if (error) { flash("⚠️ Gagal hantar: " + error.message); return; }
-    setBcMsg("");
-    flash("📣 Pengumuman dihantar — pop-up muncul serta-merta pada semua yang sedang log masuk.");
-    loadBroadcasts();
-  };
-
   if (loading) return <Card style={{ padding:40, textAlign:"center" }}><div style={{ color:C.muted }}>Memuatkan...</div></Card>;
-
-  const activeCount = users.filter(u => u.active !== false && u.name !== session.name).length;
 
   return (
     <div>
       {saved && <Alert color={saved.startsWith("✅") || saved.startsWith("📣") ? "green" : "orange"}>{saved}</Alert>}
       {errMsg && <Alert color="orange">{errMsg}</Alert>}
-
-      {/* ── Broadcast — live announcement to everyone ── */}
-      <Card style={{ padding:16, marginBottom:14 }}>
-        <div style={{ fontWeight:600, fontSize:13, color:C.navy, marginBottom:4 }}>📣 Pengumuman Live (Broadcast)</div>
-        <div style={{ fontSize:11.5, color:C.muted, marginBottom:10 }}>
-          Taip dan hantar — pop-up muncul serta-merta pada skrin semua yang sedang log masuk (dengan bunyi),
-          dan semasa log masuk untuk yang belum online. Setiap orang mesti tekan ✓ Terima; balasan mereka dipapar di bawah.
-        </div>
-        <div style={{ display:"flex", gap:8 }}>
-          <textarea value={bcMsg} onChange={e => setBcMsg(e.target.value)} rows={2}
-            placeholder="cth: Semua staf, sila semak stok hollow sebelum 5 petang hari ini."
-            style={{ flex:1, border:`1.5px solid ${C.border}`, borderRadius:8, padding:"9px 11px", fontSize:13, fontFamily:"inherit", resize:"vertical" }} />
-          <button onClick={sendBroadcast} disabled={!bcMsg.trim() || bcSending}
-            style={{ padding:"0 22px", background:!bcMsg.trim()||bcSending ? C.border : C.accent, color:!bcMsg.trim()||bcSending ? C.muted : C.white,
-                     border:"none", borderRadius:6, fontWeight:800, fontSize:14, cursor:!bcMsg.trim()||bcSending ? "not-allowed" : "pointer", boxShadow: (!bcMsg.trim()||bcSending) ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
-            {bcSending ? "…" : "📣 Hantar"}
-          </button>
-        </div>
-
-        {bcList.length > 0 && (
-          <div style={{ marginTop:14 }}>
-            {bcList.map(b => {
-              const ackedNames = new Set(b.acks.map(a => a.user_name));
-              const notYet = users.filter(u => u.active !== false && u.name !== b.created_by && !ackedNames.has(u.name));
-              const isOpen = bcExpanded === b.id;
-              return (
-                <div key={b.id} style={{ borderTop:`1px solid ${C.border}`, padding:"10px 0" }}>
-                  <div style={{ display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap" }}>
-                    <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>
-                      {new Date(b.created_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" })} · {b.created_by}
-                    </span>
-                    <span style={{ fontSize:12.5, flex:1, minWidth:200 }}>{b.message}</span>
-                    <button onClick={() => setBcExpanded(isOpen ? null : b.id)}
-                      style={{ border:"none", background:"none", padding:0, cursor:"pointer" }}
-                      title="Klik untuk lihat senarai siapa dah/belum terima">
-                      <Badge color={b.acks.length >= activeCount ? "green" : "orange"}>
-                        ✓ {b.acks.length}/{activeCount} terima {isOpen ? "▲" : "▼"}
-                      </Badge>
-                    </button>
-                  </div>
-                  {b.acks.some(a => a.reply) && (
-                    <div style={{ marginTop:6, fontSize:11.5, color:C.muted, lineHeight:1.6 }}>
-                      {b.acks.filter(a => a.reply).map(a => (
-                        <div key={a.id}>💬 <b style={{ color:C.text }}>{a.user_name}</b>: {a.reply}</div>
-                      ))}
-                    </div>
-                  )}
-                  {isOpen && (
-                    <div style={{ marginTop:8, display:"flex", gap:16, flexWrap:"wrap", background:C.gray, borderRadius:8, padding:"10px 12px" }}>
-                      <div style={{ minWidth:160 }}>
-                        <div style={{ fontSize:10.5, fontWeight:700, color:C.green, textTransform:"uppercase", letterSpacing:.4, marginBottom:5 }}>
-                          Dah Terima ({b.acks.length})
-                        </div>
-                        {b.acks.length === 0
-                          ? <div style={{ fontSize:11.5, color:C.muted }}>— tiada lagi —</div>
-                          : [...b.acks].sort((x, y) => new Date(x.acked_at) - new Date(y.acked_at)).map(a => (
-                              <div key={a.id} style={{ fontSize:11.5, color:C.text, marginBottom:2 }}>
-                                {a.user_name}
-                                <span style={{ color:C.muted }}> — {new Date(a.acked_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })}</span>
-                              </div>
-                            ))}
-                      </div>
-                      <div style={{ minWidth:160 }}>
-                        <div style={{ fontSize:10.5, fontWeight:700, color:C.red, textTransform:"uppercase", letterSpacing:.4, marginBottom:5 }}>
-                          Belum Terima ({notYet.length})
-                        </div>
-                        {notYet.length === 0
-                          ? <div style={{ fontSize:11.5, color:C.muted }}>— semua dah terima —</div>
-                          : notYet.map(u => (
-                              <div key={u.id} style={{ fontSize:11.5, color:C.text, marginBottom:2 }}>{u.name}</div>
-                            ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
 
       <Card style={{ padding:"12px 14px", marginBottom:14, background:"#f0f9ff", border:"1px solid #bae6fd" }}>
         <div style={{ fontWeight:700, fontSize:13, color:"#0369a1", marginBottom:4 }}>👥 Pengurusan Pengguna</div>
@@ -1727,6 +1619,148 @@ function UsersTab({ session }) {
             </tbody>
           </table>
         </div>
+      </Card>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// BROADCAST TAB — live announcement to everyone (extracted out of UsersTab
+// 2026-08-31 so it can sit under its own "Chat Center" sidebar group
+// alongside Pertanyaan Harga, per Wylee's request — same owner-only access
+// UsersTab already had, just relocated). Fetches its own users list (needed
+// for the acked/not-acked counts) independently of UsersTab's own fetch.
+// ════════════════════════════════════════════════════════════════════════════
+function BroadcastTab({ session }) {
+  const [users,   setUsers]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saved,   setSaved]   = useState("");
+
+  const load = async () => {
+    const { data } = await supabase.from('profiles')
+      .select('id, name, role, active, permissions').order('name');
+    setUsers(data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 3000); };
+
+  // ── Broadcast composer + acknowledgement tracker ──
+  const [bcMsg, setBcMsg] = useState("");
+  const [bcSending, setBcSending] = useState(false);
+  const [bcList, setBcList] = useState([]);
+  const [bcExpanded, setBcExpanded] = useState(null); // broadcast id currently showing who saw/didn't
+  const loadBroadcasts = async () => {
+    try {
+      const { data: bs } = await supabase.from('broadcasts')
+        .select('*').order('created_at', { ascending: false }).limit(8);
+      if (!bs?.length) { setBcList([]); return; }
+      const { data: acks } = await supabase.from('broadcast_acks')
+        .select('*').in('broadcast_id', bs.map(b => b.id));
+      setBcList(bs.map(b => ({ ...b, acks: (acks || []).filter(a => a.broadcast_id === b.id) })));
+    } catch { /* table absent */ }
+  };
+  useEffect(() => { loadBroadcasts(); }, []);
+  const sendBroadcast = async () => {
+    const msg = bcMsg.trim();
+    if (!msg || bcSending) return;
+    setBcSending(true);
+    const { error } = await supabase.from('broadcasts')
+      .insert({ created_by: session.name, message: msg });
+    setBcSending(false);
+    if (error) { flash("⚠️ Gagal hantar: " + error.message); return; }
+    setBcMsg("");
+    flash("📣 Pengumuman dihantar — pop-up muncul serta-merta pada semua yang sedang log masuk.");
+    loadBroadcasts();
+  };
+
+  if (loading) return <Card style={{ padding:40, textAlign:"center" }}><div style={{ color:C.muted }}>Memuatkan...</div></Card>;
+
+  const activeCount = users.filter(u => u.active !== false && u.name !== session.name).length;
+
+  return (
+    <div>
+      {saved && <Alert color="green">{saved}</Alert>}
+
+      {/* ── Broadcast — live announcement to everyone ── */}
+      <Card style={{ padding:16, marginBottom:14 }}>
+        <div style={{ fontWeight:600, fontSize:13, color:C.navy, marginBottom:4 }}>📣 Pengumuman Live (Broadcast)</div>
+        <div style={{ fontSize:11.5, color:C.muted, marginBottom:10 }}>
+          Taip dan hantar — pop-up muncul serta-merta pada skrin semua yang sedang log masuk (dengan bunyi),
+          dan semasa log masuk untuk yang belum online. Setiap orang mesti tekan ✓ Terima; balasan mereka dipapar di bawah.
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <textarea value={bcMsg} onChange={e => setBcMsg(e.target.value)} rows={2}
+            placeholder="cth: Semua staf, sila semak stok hollow sebelum 5 petang hari ini."
+            style={{ flex:1, border:`1.5px solid ${C.border}`, borderRadius:8, padding:"9px 11px", fontSize:13, fontFamily:"inherit", resize:"vertical" }} />
+          <button onClick={sendBroadcast} disabled={!bcMsg.trim() || bcSending}
+            style={{ padding:"0 22px", background:!bcMsg.trim()||bcSending ? C.border : C.accent, color:!bcMsg.trim()||bcSending ? C.muted : C.white,
+                     border:"none", borderRadius:6, fontWeight:800, fontSize:14, cursor:!bcMsg.trim()||bcSending ? "not-allowed" : "pointer", boxShadow: (!bcMsg.trim()||bcSending) ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
+            {bcSending ? "…" : "📣 Hantar"}
+          </button>
+        </div>
+
+        {bcList.length > 0 && (
+          <div style={{ marginTop:14 }}>
+            {bcList.map(b => {
+              const ackedNames = new Set(b.acks.map(a => a.user_name));
+              const notYet = users.filter(u => u.active !== false && u.name !== b.created_by && !ackedNames.has(u.name));
+              const isOpen = bcExpanded === b.id;
+              return (
+                <div key={b.id} style={{ borderTop:`1px solid ${C.border}`, padding:"10px 0" }}>
+                  <div style={{ display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap" }}>
+                    <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>
+                      {new Date(b.created_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" })} · {b.created_by}
+                    </span>
+                    <span style={{ fontSize:12.5, flex:1, minWidth:200 }}>{b.message}</span>
+                    <button onClick={() => setBcExpanded(isOpen ? null : b.id)}
+                      style={{ border:"none", background:"none", padding:0, cursor:"pointer" }}
+                      title="Klik untuk lihat senarai siapa dah/belum terima">
+                      <Badge color={b.acks.length >= activeCount ? "green" : "orange"}>
+                        ✓ {b.acks.length}/{activeCount} terima {isOpen ? "▲" : "▼"}
+                      </Badge>
+                    </button>
+                  </div>
+                  {b.acks.some(a => a.reply) && (
+                    <div style={{ marginTop:6, fontSize:11.5, color:C.muted, lineHeight:1.6 }}>
+                      {b.acks.filter(a => a.reply).map(a => (
+                        <div key={a.id}>💬 <b style={{ color:C.text }}>{a.user_name}</b>: {a.reply}</div>
+                      ))}
+                    </div>
+                  )}
+                  {isOpen && (
+                    <div style={{ marginTop:8, display:"flex", gap:16, flexWrap:"wrap", background:C.gray, borderRadius:8, padding:"10px 12px" }}>
+                      <div style={{ minWidth:160 }}>
+                        <div style={{ fontSize:10.5, fontWeight:700, color:C.green, textTransform:"uppercase", letterSpacing:.4, marginBottom:5 }}>
+                          Dah Terima ({b.acks.length})
+                        </div>
+                        {b.acks.length === 0
+                          ? <div style={{ fontSize:11.5, color:C.muted }}>— tiada lagi —</div>
+                          : [...b.acks].sort((x, y) => new Date(x.acked_at) - new Date(y.acked_at)).map(a => (
+                              <div key={a.id} style={{ fontSize:11.5, color:C.text, marginBottom:2 }}>
+                                {a.user_name}
+                                <span style={{ color:C.muted }}> — {new Date(a.acked_at).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })}</span>
+                              </div>
+                            ))}
+                      </div>
+                      <div style={{ minWidth:160 }}>
+                        <div style={{ fontSize:10.5, fontWeight:700, color:C.red, textTransform:"uppercase", letterSpacing:.4, marginBottom:5 }}>
+                          Belum Terima ({notYet.length})
+                        </div>
+                        {notYet.length === 0
+                          ? <div style={{ fontSize:11.5, color:C.muted }}>— semua dah terima —</div>
+                          : notYet.map(u => (
+                              <div key={u.id} style={{ fontSize:11.5, color:C.text, marginBottom:2 }}>{u.name}</div>
+                            ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Card>
     </div>
   );

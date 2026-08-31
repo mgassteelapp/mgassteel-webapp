@@ -7,14 +7,10 @@
 // ════════════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useMemo } from 'react';
 import { supabase, invokeReconcile } from './supabase';
+import { C } from './theme';
 
-const C = { navy:'#0f2744', accent:'#e8780a', border:'#e2e8f0', gray:'#f8fafc',
-            text:'#1e2d3d', muted:'#64748b', white:'#ffffff',
-            green:'#166534', greenBg:'#dcfce7', red:'#991b1b', redBg:'#fee2e2',
-            amber:'#854d0e', amberBg:'#fef9c3' };
-
-const card = { background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-               boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 };
+const card = { background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+               padding:'16px 18px', marginBottom:12 };
 
 const STATUS_CFG = {
   pending: { bg:C.amberBg, tx:C.amber, label:'MENUNGGU' },
@@ -349,7 +345,7 @@ export default function QuotationTab({ session, prices }) {
 
       {/* ── Create quotation ── */}
       <div style={card}>
-        <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:12 }}>
+        <div style={{ fontWeight:600, fontSize:14, color:C.navy, marginBottom:12 }}>
           📝 Sebut Harga Baru
         </div>
 
@@ -426,8 +422,8 @@ export default function QuotationTab({ session, prices }) {
             <input style={{ ...inp, width:120 }} type="number" step="0.01" placeholder="Harga (RM)"
               value={price} onChange={e => setPrice(e.target.value)} />
             <button onClick={addLine}
-              style={{ padding:'9px 18px', border:'none', borderRadius:8, fontWeight:700, fontSize:13,
-                       background:C.navy, color:C.white, cursor:'pointer' }}>
+              style={{ padding:'9px 18px', border:'none', borderRadius:6, fontWeight:700, fontSize:13,
+                       background:C.navy, color:C.white, cursor:'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
               + Tambah
             </button>
           </div>
@@ -519,9 +515,9 @@ export default function QuotationTab({ session, prices }) {
           <input style={{ ...inp, flex:1, minWidth:220 }} placeholder="Catatan (opsional)"
             value={notes} onChange={e => setNotes(e.target.value)} />
           <button onClick={saveQuote} disabled={saving}
-            style={{ padding:'11px 26px', border:'none', borderRadius:9, fontWeight:800, fontSize:14,
+            style={{ padding:'11px 26px', border:'none', borderRadius:6, fontWeight:800, fontSize:14,
                      background: saving ? C.muted : C.accent, color:C.white,
-                     cursor: saving ? 'not-allowed' : 'pointer' }}>
+                     cursor: saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {saving ? 'Menyimpan...' : '💾 Simpan Sebut Harga'}
           </button>
         </div>
@@ -533,8 +529,8 @@ export default function QuotationTab({ session, prices }) {
                         alignItems:'center', flexWrap:'wrap' }}>
             <span style={{ fontWeight:800, color:C.green }}>✓ {savedRow.quote_no} disimpan.</span>
             <button onClick={() => downloadPNG(savedRow)}
-              style={{ padding:'9px 18px', border:'none', borderRadius:8, fontWeight:700, fontSize:13,
-                       background:C.navy, color:C.white, cursor:'pointer' }}>
+              style={{ padding:'9px 18px', border:'none', borderRadius:6, fontWeight:700, fontSize:13,
+                       background:C.navy, color:C.white, cursor:'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
               ⬇ Muat Turun PNG
             </button>
             {canShareFiles() && (
@@ -554,7 +550,7 @@ export default function QuotationTab({ session, prices }) {
       {/* ── Monitoring / history ── */}
       <div style={card}>
         <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:10 }}>
-          <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
+          <div style={{ fontWeight:600, fontSize:14, color:C.navy }}>
             📊 {isManager ? 'Semua Sebut Harga' : 'Sebut Harga Saya'}
           </div>
           <span style={{ background:C.amberBg, color:C.amber, padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700 }}>
@@ -592,8 +588,8 @@ export default function QuotationTab({ session, prices }) {
               Gagal memuatkan senarai — sebut harga anda selamat tersimpan.
             </div>
             <button onClick={() => load()}
-              style={{ padding:'9px 20px', border:'none', borderRadius:8, fontWeight:700,
-                       fontSize:13, background:C.navy, color:C.white, cursor:'pointer' }}>
+              style={{ padding:'9px 20px', border:'none', borderRadius:6, fontWeight:700,
+                       fontSize:13, background:C.navy, color:C.white, cursor:'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
               🔄 Cuba Lagi
             </button>
           </div>

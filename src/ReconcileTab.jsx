@@ -23,6 +23,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { supabase, invokeReconcile, describeFnError } from './supabase';
+import { C } from './theme';
 
 // ── Map an automated run (reconcile_runs row from the CRM) to the exact
 //    results shape the manual flow produces — the render code is shared. ──
@@ -690,9 +691,6 @@ export default function ReconcileTab({ session, results, setResults }) {
   });
 
   const counts = exc.reduce((a, r) => { a[r.status] = (a[r.status]||0)+1; return a; }, {});
-  const C = { navy:'#0f2744', accent:'#e8780a', accentLight:'#fef3e2', green:'#166534',
-              greenLight:'#dcfce7', red:'#991b1b', redLight:'#fee2e2', border:'#e2e8f0',
-              gray:'#f8fafc', text:'#1e2d3d', muted:'#64748b', white:'#ffffff' };
 
   const FileInput = ({ label, file, setFile, required = false, accept = '.xlsx' }) => (
     <div style={{ flex: 1, minWidth: 200 }}>
@@ -713,10 +711,10 @@ export default function ReconcileTab({ session, results, setResults }) {
     <div style={{ fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
 
       {/* ── Auto mode card — data straight from CRM, refreshed every 15 min ── */}
-      <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                    boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 }}>
+      <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                    padding:'16px 18px', marginBottom:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:6 }}>
-          <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
+          <div style={{ fontWeight:600, fontSize:14, color:C.navy }}>
             ⚡ Semakan Auto (Live Sync)
           </div>
           <span style={{ background:'#dcfce7', color:'#166534', padding:'2px 10px',
@@ -740,13 +738,14 @@ export default function ReconcileTab({ session, results, setResults }) {
             <option value={30}>PO 30 Hari</option>
           </select>
           <button onClick={() => fetchAuto('run')} disabled={autoLoading}
-            style={{ padding:'10px 24px', border:'none', borderRadius:9, fontWeight:700,
+            style={{ padding:'10px 24px', border:'none', borderRadius:6, fontWeight:700,
                      fontSize:13, cursor: autoLoading ? 'not-allowed' : 'pointer',
-                     background: autoLoading ? C.muted : C.navy, color:C.white }}>
+                     background: autoLoading ? C.muted : C.navy, color:C.white,
+                     boxShadow: autoLoading ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {autoLoading ? '⏳ Sedang Semak...' : '▶ Semak Sekarang'}
           </button>
           <button onClick={() => fetchAuto('latest')} disabled={autoLoading}
-            style={{ padding:'10px 16px', border:`1.5px solid ${C.border}`, borderRadius:9,
+            style={{ padding:'10px 16px', border:`1.5px solid ${C.border}`, borderRadius:6,
                      fontWeight:700, fontSize:12, cursor: autoLoading ? 'not-allowed' : 'pointer',
                      background:C.white, color:C.navy }}>
             🔄 Muat Semula
@@ -793,9 +792,9 @@ export default function ReconcileTab({ session, results, setResults }) {
                           padding:'8px 4px', userSelect:'none' }}>
           📁 Manual — muat naik fail Excel (fallback lama)
         </summary>
-      <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                    boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 }}>
-        <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:4 }}>
+      <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                    padding:'16px 18px', marginBottom:12 }}>
+        <div style={{ fontWeight:600, fontSize:14, color:C.navy, marginBottom:4 }}>
           🔍 Check Daily Purchase Order Against Cash Sales / Invoice / Delivery Order
         </div>
         <div style={{ fontSize:11, color:C.muted, marginBottom:14 }}>
@@ -818,10 +817,10 @@ export default function ReconcileTab({ session, results, setResults }) {
 
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
           <button onClick={run} disabled={loading || !poFile || !salesFile}
-            style={{ padding:'10px 24px', border:'none', borderRadius:9, fontWeight:700,
+            style={{ padding:'10px 24px', border:'none', borderRadius:6, fontWeight:700,
                      fontSize:13, cursor: loading||!poFile||!salesFile ? 'not-allowed':'pointer',
                      background: loading||!poFile||!salesFile ? C.muted : C.navy,
-                     color: C.white }}>
+                     color: C.white, boxShadow: (loading||!poFile||!salesFile) ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {loading ? '⏳ Sedang Semak...' : '▶ Jalankan Semakan'}
           </button>
           {results && (
@@ -851,10 +850,10 @@ export default function ReconcileTab({ session, results, setResults }) {
       </details>
 
       {/* ── Activity log ── */}
-      <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                    boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'12px 16px', marginBottom:12 }}>
+      <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                    padding:'12px 16px', marginBottom:12 }}>
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', marginBottom:8 }}>
-          <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>📜 Log Aktiviti Semakan</div>
+          <div style={{ fontWeight:600, fontSize:13, color:C.navy }}>📜 Log Aktiviti Semakan</div>
           <span style={{ fontSize:11, color:C.muted }}>
             Semakan harian hari ini:{' '}
             {dclToday.length ? dclToday.map(m =>
@@ -905,8 +904,8 @@ export default function ReconcileTab({ session, results, setResults }) {
 
       {/* ── Summary chips ── */}
       {results && (
-        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'12px 16px', marginBottom:12 }}>
+        <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                      padding:'12px 16px', marginBottom:12 }}>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
             <span style={{ fontSize:11, fontWeight:700, color:C.muted, marginRight:4 }}>Keputusan:</span>
             {[
@@ -961,8 +960,8 @@ export default function ReconcileTab({ session, results, setResults }) {
 
       {/* ── Exceptions tab ── */}
       {results && activeTab === 'exceptions' && (
-        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+        <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                      overflow:'hidden' }}>
           {/* Filter + search bar */}
           <div style={{ padding:'10px 14px', borderBottom:`1px solid ${C.border}`,
                         display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
@@ -1084,8 +1083,8 @@ export default function ReconcileTab({ session, results, setResults }) {
 
       {/* ── Matched tab ── */}
       {results && activeTab === 'matched' && (
-        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+        <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                      overflow:'hidden' }}>
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
               <thead>
@@ -1138,8 +1137,8 @@ export default function ReconcileTab({ session, results, setResults }) {
 
       {/* ── DO Matched tab ── */}
       {results && activeTab === 'matcheddo' && (
-        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+        <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                      overflow:'hidden' }}>
           <div style={{ padding:'10px 14px', background:'#e8f5e9', borderBottom:`1px solid ${C.border}`,
                         fontSize:11, color:'#2e7d32', fontWeight:600 }}>
             🚚 Padanan melalui Delivery Order — PO yang IV-nya tidak dijumpai tetapi DO sepadan.
@@ -1202,8 +1201,8 @@ export default function ReconcileTab({ session, results, setResults }) {
 
       {/* ── Stock tab ── */}
       {results && activeTab === 'stock' && (
-        <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-                      boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+        <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+                      overflow:'hidden' }}>
           <div style={{ padding:'10px 14px', background:'#e3f2fd', borderBottom:`1px solid ${C.border}`,
                         fontSize:11, color:'#1565c0', fontWeight:600 }}>
             📦 Pesanan stok gudang — blank DocRef, tiada jualan dijangka.

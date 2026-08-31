@@ -13,13 +13,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase, invokeReconcile } from './supabase';
 import SSMonitor from './SSMonitor';
+import { C } from './theme';
 
 // USD/MYR live rate. Note this is api.frankfurter.dev/v1 — the older
 // api.frankfurter.app URL 301s here WITHOUT CORS headers on the redirect,
 // which browsers block, so the fetch must target the canonical host directly.
 const FX_ENDPOINT = 'https://api.frankfurter.dev/v1/latest?from=USD&to=MYR';
-
-const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
 
 // usdMyr/usdMyrPrev are only a cold-start fallback for when the live fetch
 // fails before any rate has ever been stored; they are seeded equal so the
@@ -408,7 +407,7 @@ export default function PurchasingTab({ prices = [], session }) {
 
   return (
     <div>
-      <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:4 }}>Cadangan PO — Keputusan Pembelian</div>
+      <div style={{ fontSize:13, fontWeight:600, color:C.navy, marginBottom:4 }}>Cadangan PO — Keputusan Pembelian</div>
       <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>Cari produk → lihat jualan & harga → cadangan kuantiti order</div>
 
       <LowStockPanel session={session} onPickCode={setQuery} />
@@ -475,7 +474,7 @@ export default function PurchasingTab({ prices = [], session }) {
                 <div style={{ marginTop:8, fontSize:11.5, color:C.red }}>
                   {loadError}
                   <button onClick={() => setSelected({ ...selected })}
-                    style={{ display:'block', marginTop:6, background:C.navy, color:C.white, border:'none', borderRadius:7, padding:'6px 12px', fontWeight:700, fontSize:11, cursor:'pointer' }}>🔄 Cuba Lagi</button>
+                    style={{ display:'block', marginTop:6, background:C.navy, color:C.white, border:'none', borderRadius:6, padding:'6px 12px', fontWeight:700, fontSize:11, cursor:'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>🔄 Cuba Lagi</button>
                 </div>
               )}
             </div>
@@ -540,7 +539,7 @@ export default function PurchasingTab({ prices = [], session }) {
                     const usdMyr  = safeNum(document.getElementById('_fx').value,   market.usdMyr);
                     setMarket({ ...market, hrc, hrcPrev, usdMyrPrev: market.usdMyr, usdMyr, asOf: new Date().toISOString().slice(0,10) });
                     setShowMarketEdit(false);
-                  }} style={{ background:C.navy, color:C.white, border:'none', borderRadius:6, padding:'7px', fontWeight:700, cursor:'pointer', fontSize:11 }}>Simpan</button>
+                  }} style={{ background:C.navy, color:C.white, border:'none', borderRadius:6, padding:'7px', fontWeight:700, cursor:'pointer', fontSize:11, boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>Simpan</button>
                 </div>
               )}
             </div>

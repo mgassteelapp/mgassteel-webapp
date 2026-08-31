@@ -21,8 +21,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabase';
-
-const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
+import { C } from './theme';
 
 // ── Cost-model constants ─────────────────────────────────────────────────────
 // SS 304 (nickel-driven, per-kg conversion, cost+margin band):
@@ -351,7 +350,7 @@ export default function SSMonitor({ session, selected }) {
       <div onClick={() => setOpen(o => !o)}
         style={{ ...box, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
         <span style={{ fontSize: 14 }}>📈</span>
-        <span style={{ fontWeight: 800, fontSize: 13, color: C.navy }}>Mill Price Monitor</span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: C.navy }}>Mill Price Monitor</span>
         <span style={{ fontSize: 11, color: C.muted }}>SS · Mild Steel · GI — evaluate supplier prices against nickel / HRC</span>
         {nickel && (
           <span style={{ marginLeft: 'auto', fontSize: 11, background: C.gray, border: `1px solid ${C.border}`, borderRadius: 6, padding: '3px 8px' }}>
@@ -467,7 +466,7 @@ export default function SSMonitor({ session, selected }) {
                   : 'Enter the list price to see the nett'}
               </div>
               <button onClick={runEval} disabled={!canEval}
-                style={{ width: '100%', marginTop: 8, background: canEval ? C.navy : C.border, color: canEval ? C.white : C.muted, border: 'none', borderRadius: 8, padding: 9, fontWeight: 700, fontSize: 13, cursor: canEval ? 'pointer' : 'not-allowed' }}>
+                style={{ width: '100%', marginTop: 8, background: canEval ? C.navy : C.border, color: canEval ? C.white : C.muted, border: 'none', borderRadius: 6, padding: 9, fontWeight: 700, fontSize: 13, cursor: canEval ? 'pointer' : 'not-allowed', boxShadow: canEval ? '0 1px 2px rgba(26,22,24,0.1)' : 'none' }}>
                 Evaluate Offer
               </button>
             </div>
@@ -489,7 +488,7 @@ export default function SSMonitor({ session, selected }) {
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                   <input style={{ ...fld, width: 120 }} inputMode="numeric" value={nickelDraft}
                     onChange={e => setNickelDraft(e.target.value)} placeholder="LME US$/t" />
-                  <button onClick={saveNickel} style={{ background: C.navy, color: C.white, border: 'none', borderRadius: 7, padding: '6px 14px', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Save (shared)</button>
+                  <button onClick={saveNickel} style={{ background: C.navy, color: C.white, border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, fontSize: 12, cursor: 'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>Save (shared)</button>
                 </div>
               )}
               {!result ? (
@@ -569,7 +568,7 @@ export default function SSMonitor({ session, selected }) {
               {result && (
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
                   <button onClick={saveEval}
-                    style={{ background: C.accent, color: C.white, border: 'none', borderRadius: 7, padding: '7px 14px', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                    style={{ background: C.accent, color: C.white, border: 'none', borderRadius: 6, padding: '7px 14px', fontWeight: 700, fontSize: 12, cursor: 'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
                     💾 Save to history
                   </button>
                   {saveMsg && <span style={{ fontSize: 10.5, opacity: .9 }}>{saveMsg}</span>}

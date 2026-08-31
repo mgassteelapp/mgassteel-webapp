@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import React, { useState, useMemo } from "react";
+import { C } from "./theme";
 
 // ── M Gas Steel — Service Center ─────────────────────────────────
 // Hub for engineering-service calculators. Sub-tabs:
@@ -42,7 +43,7 @@ export default function PlateCalculator({ session }) {
             <button key={t.key} className="sc-subbtn"
               onClick={() => setSub(t.key)}
               style={{
-                background: active ? "#e8780a" : "#1e3a5f",
+                background: active ? C.accent : C.navy,
                 color: active ? "#fff" : "#cbd5e1",
               }}>
               <span>{t.icon}</span>{t.label}
@@ -78,15 +79,15 @@ function ComingSoon({ title, desc }) {
 const SC = {
   page: { padding: 0, color: "#1e293b", fontFamily: "'Segoe UI', system-ui, sans-serif" },
   header: { marginBottom: 14 },
-  kicker: { fontSize: 10, letterSpacing: 2, color: "#e8780a", fontWeight: 700 },
-  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 800, letterSpacing: -0.4, color: "#0f2744" },
+  kicker: { fontSize: 10, letterSpacing: 2, color: C.accent, fontWeight: 700 },
+  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 600, letterSpacing: -0.4, color: C.navy },
   sub: { color: "#64748b", fontSize: 13, margin: 0 },
-  soon: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14,
-    padding: "48px 24px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  soon: { background: "#fff", border: `0.5px solid ${C.border}`, borderRadius: 12,
+    padding: "48px 24px", textAlign: "center" },
   soonIcon: { fontSize: 42, marginBottom: 12 },
-  soonTitle: { fontSize: 18, fontWeight: 800, color: "#0f2744", marginBottom: 6 },
+  soonTitle: { fontSize: 18, fontWeight: 600, color: C.navy, marginBottom: 6 },
   soonDesc: { fontSize: 13, color: "#64748b", maxWidth: 380, margin: "0 auto 16px", lineHeight: 1.5 },
-  soonBadge: { display: "inline-block", background: "#fef3e2", color: "#e8780a",
+  soonBadge: { display: "inline-block", background: "#fef3e2", color: C.accent,
     border: "1px solid #fcd5a0", borderRadius: 20, padding: "5px 16px", fontSize: 12, fontWeight: 700 },
 };
 
@@ -288,10 +289,9 @@ export function BendCalculator({ session }) {
 const B = {
   page: { padding: 0, color: "#1e293b", fontFamily: "'Segoe UI', system-ui, sans-serif" },
   head: { marginBottom: 14 },
-  h1: { fontSize: 20, margin: "0 0 4px", fontWeight: 800, letterSpacing: -0.3, color: "#0f2744" },
+  h1: { fontSize: 20, margin: "0 0 4px", fontWeight: 600, letterSpacing: -0.3, color: C.navy },
   sub: { color: "#64748b", fontSize: 13, margin: 0 },
-  panel: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  panel: { background: "#fff", border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 16 },
   panelTitle: { fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase",
     color: "#64748b", fontWeight: 700, marginBottom: 10 },
   smallLabel: { fontSize: 12, color: "#64748b", marginBottom: 5 },
@@ -302,9 +302,9 @@ const B = {
   ftHint: { fontSize: 11, color: "#94a3b8", marginTop: 4, marginBottom: 12, textAlign: "right" },
   divider: { height: 1, background: "#e2e8f0", margin: "14px 0" },
   rowBetween: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  toggle: { background: "transparent", border: "none", color: "#e8780a",
+  toggle: { background: "transparent", border: "none", color: C.accent,
     fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 },
-  addBtn: { background: "#fef3e2", color: "#e8780a", border: "1px solid #fcd5a0",
+  addBtn: { background: "#fef3e2", color: C.accent, border: "1px solid #fcd5a0",
     borderRadius: 7, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: 600 },
   limitHint: { fontSize: 11, color: "#94a3b8", fontStyle: "italic", margin: "4px 0 8px" },
   limitRow: { display: "flex", alignItems: "center", gap: 5, marginBottom: 7 },
@@ -321,7 +321,7 @@ const B = {
   verdictMain: { fontSize: 16, fontWeight: 700 },
   verdictSub: { fontSize: 12.5, color: "#64748b", marginTop: 3 },
   suggest: { background: "#fef3e2", border: "1px solid #fcd5a0", borderRadius: 9,
-    padding: "10px 12px", fontSize: 12.5, color: "#e8780a", marginBottom: 12, lineHeight: 1.5 },
+    padding: "10px 12px", fontSize: 12.5, color: C.accent, marginBottom: 12, lineHeight: 1.5 },
   calcBox: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10,
     padding: 14, marginBottom: 14 },
   calcLine: { display: "flex", justifyContent: "space-between", alignItems: "baseline",
@@ -330,7 +330,7 @@ const B = {
   calcVal: { color: "#1e293b", fontWeight: 700, fontVariantNumeric: "tabular-nums" },
   calcFormula: { fontSize: 11, color: "#94a3b8", fontFamily: "ui-monospace, monospace", padding: "0 0 6px" },
   grandBox: { display: "flex", justifyContent: "space-between", alignItems: "center",
-    background: "#0f2744", border: "1px solid #0f2744", borderRadius: 12,
+    background: C.navy, border: `1px solid ${C.navy}`, borderRadius: 12,
     padding: "16px 18px", marginBottom: 8 },
   grandLbl: { fontSize: 11, letterSpacing: 1.5, color: "#94a3b8", fontWeight: 700 },
   grandPer: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
@@ -917,7 +917,7 @@ function PlateCutCalculator() {
 
             <button style={{
               ...S.copyBtn,
-              background: copied ? "#166534" : "#e8780a",
+              background: copied ? "#166534" : C.accent,
             }} onClick={copyQuote}>
               {copied ? "✓ Dah salin — tampal kat WhatsApp" : "📋 Salin sebut harga"}
             </button>
@@ -961,15 +961,15 @@ function NestView({ nest, last, qty }) {
             <rect key={i}
               x={p.x * scale} y={p.y * scale}
               width={p.w * scale} height={p.h * scale}
-              fill={used ? "#0f2744" : "#e2e8f0"}
-              stroke={used ? "#e8780a" : "#cbd5e1"}
+              fill={used ? C.navy : "#e2e8f0"}
+              stroke={used ? C.accent : "#cbd5e1"}
               strokeWidth={1} rx={2}
             />
           );
         })}
       </svg>
       <div style={S.legend}>
-        <span><i style={{ ...S.dot, background: "#0f2744" }} /> potong ({usedThisSheet})</span>
+        <span><i style={{ ...S.dot, background: C.navy }} /> potong ({usedThisSheet})</span>
         <span><i style={{ ...S.dot, background: "#e2e8f0", borderColor: "#cbd5e1" }} /> ruang lebih</span>
         <span><i style={{ ...S.dot, background: "#f8fafc", borderColor: "#e2e8f0" }} /> baki tinggga</span>
       </div>
@@ -995,12 +995,11 @@ const S = {
     fontFamily: "'Segoe UI', system-ui, sans-serif" },
   wrap: { maxWidth: 940, margin: "0 auto" },
   head: { marginBottom: 16 },
-  kicker: { fontSize: 10, letterSpacing: 2, color: "#e8780a", fontWeight: 700 },
-  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 800, letterSpacing: -0.4, color: "#0f2744" },
+  kicker: { fontSize: 10, letterSpacing: 2, color: C.accent, fontWeight: 700 },
+  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 600, letterSpacing: -0.4, color: C.navy },
   sub: { color: "#64748b", fontSize: 13, maxWidth: 560, lineHeight: 1.5, margin: 0 },
   grid: {},
-  panel: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  panel: { background: "#fff", border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 16 },
   panelTitle: { fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase",
     color: "#64748b", fontWeight: 700, marginBottom: 10 },
   smallLabel: { fontSize: 12, color: "#64748b", marginBottom: 5 },
@@ -1011,7 +1010,7 @@ const S = {
   rowBetween: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   checkRow: { display: "flex", gap: 8, alignItems: "center", fontSize: 13,
     color: "#334155", marginTop: 6, cursor: "pointer" },
-  addBtn: { background: "#fef3e2", color: "#e8780a", border: "1px solid #fcd5a0",
+  addBtn: { background: "#fef3e2", color: C.accent, border: "1px solid #fcd5a0",
     borderRadius: 7, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: 600 },
   shelfRow: { display: "flex", alignItems: "center", gap: 4, marginBottom: 7 },
   miniInput: { width: 62, background: "#fff", border: "1.5px solid #e2e8f0",
@@ -1025,7 +1024,7 @@ const S = {
   verdict: { display: "flex", gap: 14, alignItems: "center", padding: 14,
     borderRadius: 10, border: "1px solid", marginBottom: 12 },
   verdictIcon: { fontSize: 26, lineHeight: 1 },
-  verdictMain: { fontSize: 16, fontWeight: 700, color: "#0f2744" },
+  verdictMain: { fontSize: 16, fontWeight: 700, color: C.navy },
   verdictSub: { fontSize: 12.5, color: "#64748b", marginTop: 3 },
   planBox: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10,
     padding: 12, marginBottom: 12 },
@@ -1034,11 +1033,11 @@ const S = {
   planText: { color: "#334155" },
   dim: { color: "#94a3b8" },
   suggest: { background: "#fef3e2", border: "1px solid #fcd5a0", borderRadius: 9,
-    padding: "10px 12px", fontSize: 13, color: "#e8780a", marginBottom: 12 },
+    padding: "10px 12px", fontSize: 13, color: C.accent, marginBottom: 12 },
   metrics: { display: "flex", gap: 10, marginBottom: 4 },
   metric: { flex: 1, background: "#f8fafc", border: "1px solid #e2e8f0",
     borderRadius: 9, padding: "10px 8px", textAlign: "center" },
-  metricVal: { fontSize: 16, fontWeight: 800, color: "#0f2744" },
+  metricVal: { fontSize: 16, fontWeight: 800, color: C.navy },
   metricLbl: { fontSize: 10.5, color: "#64748b", marginTop: 2, letterSpacing: 0.3 },
   svg: { display: "block", marginTop: 8, borderRadius: 8, background: "#f8fafc",
     border: "1px solid #e2e8f0", maxWidth: "100%" },
@@ -1048,15 +1047,15 @@ const S = {
   foot: { marginTop: 16, fontSize: 11.5, color: "#94a3b8", lineHeight: 1.5 },
 
   stepBar: { display: "flex", alignItems: "center", gap: 10, margin: "22px 0 12px", flexWrap: "wrap" },
-  stepNum: { width: 26, height: 26, borderRadius: "50%", background: "#0f2744",
+  stepNum: { width: 26, height: 26, borderRadius: "50%", background: C.navy,
     color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
     fontWeight: 800, fontSize: 14, flexShrink: 0 },
-  stepTitle: { fontSize: 16, fontWeight: 800, letterSpacing: -0.3, color: "#0f2744" },
+  stepTitle: { fontSize: 16, fontWeight: 600, letterSpacing: -0.3, color: C.navy },
   stepHint: { fontSize: 12, color: "#94a3b8" },
 
   emptyNote: { fontSize: 12, color: "#94a3b8", fontStyle: "italic", padding: "4px 0 8px" },
   holeLbl: { color: "#64748b", fontSize: 15, width: 14, textAlign: "center" },
-  rateToggle: { background: "transparent", border: "none", color: "#e8780a",
+  rateToggle: { background: "transparent", border: "none", color: C.accent,
     fontSize: 13, cursor: "pointer", padding: 0, fontWeight: 600 },
   tierRow: { display: "flex", alignItems: "center", gap: 7, marginBottom: 6 },
   tierLbl: { fontSize: 12, color: "#334155", minWidth: 96 },
@@ -1078,13 +1077,13 @@ const S = {
   calcFormula: { fontSize: 11, color: "#94a3b8", fontFamily: "ui-monospace, monospace",
     padding: "0 0 6px", letterSpacing: -0.2 },
   grandBox: { display: "flex", justifyContent: "space-between", alignItems: "center",
-    background: "#0f2744", border: "1px solid #0f2744", borderRadius: 12,
+    background: C.navy, border: `1px solid ${C.navy}`, borderRadius: 12,
     padding: "16px 18px", marginBottom: 8 },
   grandLbl: { fontSize: 12, letterSpacing: 2, color: "#94a3b8", fontWeight: 700 },
   grandPer: { fontSize: 12.5, color: "#94a3b8", marginTop: 2 },
   grandVal: { fontSize: 24, fontWeight: 900, color: "#fcd34d",
     fontVariantNumeric: "tabular-nums", letterSpacing: -0.5 },
-  copyBtn: { width: "100%", padding: "13px", borderRadius: 10, border: "1px solid #e8780a",
-    color: "#fff", background: "#e8780a", fontSize: 14.5, fontWeight: 700, cursor: "pointer",
-    marginBottom: 6, transition: "all .15s" },
+  copyBtn: { width: "100%", padding: "13px", borderRadius: 6, border: `1px solid ${C.accent}`,
+    color: "#fff", background: C.accent, fontSize: 14.5, fontWeight: 700, cursor: "pointer",
+    marginBottom: 6, transition: "all .15s", boxShadow: '0 1px 2px rgba(26,22,24,0.1)' },
 };

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { C } from "./theme";
 import ubucData        from "./data/katalog/universal-beam-columns.json";
 import chsData          from "./data/katalog/chs.json";
 import shsData          from "./data/katalog/shs.json";
@@ -358,7 +359,7 @@ export default function KatalogTab({ session }) {
       {/* ── Katalog PDF rasmi — lihat / muat turun untuk pelanggan ── */}
       {KATALOG_PDFS_ENABLED && (
       <details style={{ marginBottom:14 }}>
-        <summary style={{ cursor:'pointer', fontWeight:700, fontSize:13, color:'#0f2744',
+        <summary style={{ cursor:'pointer', fontWeight:600, fontSize:13, color:C.navy,
                           padding:'10px 14px', background:'#fff', borderRadius:10,
                           border:'1px solid #e2e8f0', userSelect:'none' }}>
           📕 Katalog PDF Rasmi — lihat atau muat turun untuk hantar kepada pelanggan
@@ -371,15 +372,15 @@ export default function KatalogTab({ session }) {
                                        padding:'10px 12px', display:'flex', alignItems:'center', gap:10 }}>
               <span style={{ fontSize:20 }}>{p.icon}</span>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontWeight:700, fontSize:12, color:'#0f2744', whiteSpace:'nowrap',
+                <div style={{ fontWeight:700, fontSize:12, color:C.navy, whiteSpace:'nowrap',
                               overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</div>
                 <div style={{ display:'flex', gap:8, marginTop:4 }}>
                   <a href={`/katalog-pdf/${p.file}`} target="_blank" rel="noreferrer"
-                     style={{ fontSize:11, fontWeight:700, color:'#0f2744', textDecoration:'none' }}>
+                     style={{ fontSize:11, fontWeight:700, color:C.navy, textDecoration:'none' }}>
                     👁 Lihat
                   </a>
                   <a href={`/katalog-pdf/${p.file}`} download
-                     style={{ fontSize:11, fontWeight:700, color:'#e8780a', textDecoration:'none' }}>
+                     style={{ fontSize:11, fontWeight:700, color:C.accent, textDecoration:'none' }}>
                     ⬇ Muat Turun
                   </a>
                 </div>
@@ -396,7 +397,7 @@ export default function KatalogTab({ session }) {
           return (
             <button key={c.key} className="kat-catbtn"
               onClick={() => { setCatKey(c.key); setSearch(""); setSelected(null); }}
-              style={{ background: active ? "#e8780a" : "#1e3a5f", color: active ? "#fff" : "#cbd5e1" }}>
+              style={{ background: active ? C.accent : C.navy, color: active ? "#fff" : "#cbd5e1" }}>
               <span>{c.icon}</span>{c.label}
             </button>
           );
@@ -482,7 +483,7 @@ export default function KatalogTab({ session }) {
                         return (
                           <button key={g.key} type="button" style={{
                             ...K.gradeBtn,
-                            background: active ? "#e8780a" : "#f1f5f9",
+                            background: active ? C.accent : "#f1f5f9",
                             color: active ? "#fff" : "#334155",
                           }} onClick={() => setGrade(g.key)}>
                             {g.label}
@@ -528,11 +529,11 @@ export default function KatalogTab({ session }) {
                 <>
                   <div style={K.gradeBar}>
                     <button type="button" style={{ ...K.gradeBtn, flex: 1,
-                        background: bagMode === "kg" ? "#e8780a" : "#f1f5f9",
+                        background: bagMode === "kg" ? C.accent : "#f1f5f9",
                         color: bagMode === "kg" ? "#fff" : "#334155" }}
                       onClick={() => setBagMode("kg")}>Saya ada Berat (kg)</button>
                     <button type="button" style={{ ...K.gradeBtn, flex: 1,
-                        background: bagMode === "pcs" ? "#e8780a" : "#f1f5f9",
+                        background: bagMode === "pcs" ? C.accent : "#f1f5f9",
                         color: bagMode === "pcs" ? "#fff" : "#334155" }}
                       onClick={() => setBagMode("pcs")}>Saya ada Bilangan (pcs)</button>
                   </div>
@@ -671,12 +672,11 @@ const Field = ({ label, children }) => (
 const K = {
   page: { padding: 0, color: "#1e293b", fontFamily: "'Segoe UI', system-ui, sans-serif" },
   header: { marginBottom: 14 },
-  kicker: { fontSize: 10, letterSpacing: 2, color: "#e8780a", fontWeight: 700 },
-  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 800, letterSpacing: -0.4, color: "#0f2744" },
+  kicker: { fontSize: 10, letterSpacing: 2, color: C.accent, fontWeight: 700 },
+  h1: { fontSize: 22, margin: "4px 0 4px", fontWeight: 600, letterSpacing: -0.4, color: C.navy },
   sub: { color: "#64748b", fontSize: 13, margin: 0, maxWidth: 560, lineHeight: 1.5 },
-  panel: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
-  panelTitle: { fontSize: 12, fontWeight: 700, color: "#0f2744", marginBottom: 10 },
+  panel: { background: "#fff", border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 16 },
+  panelTitle: { fontSize: 12, fontWeight: 600, color: C.navy, marginBottom: 10 },
   smallLabel: { fontSize: 12, color: "#64748b", marginBottom: 5 },
   input: { width: "100%", boxSizing: "border-box", background: "#fff",
     border: "1.5px solid #e2e8f0", borderRadius: 8, color: "#1e293b",
@@ -687,26 +687,26 @@ const K = {
   row: { display: "flex", justifyContent: "space-between", alignItems: "center",
     padding: "10px 12px", borderBottom: "1px solid #e2e8f0", cursor: "pointer", gap: 10 },
   rowMain: { minWidth: 0 },
-  rowDesig: { fontSize: 13, fontWeight: 700, color: "#0f2744" },
+  rowDesig: { fontSize: 13, fontWeight: 700, color: C.navy },
   rowDims: { fontSize: 11, color: "#64748b", marginTop: 2 },
-  rowMass: { fontSize: 12.5, fontWeight: 700, color: "#e8780a", whiteSpace: "nowrap", flexShrink: 0 },
+  rowMass: { fontSize: 12.5, fontWeight: 700, color: C.accent, whiteSpace: "nowrap", flexShrink: 0 },
   moreNote: { padding: "8px 12px", background: "#f8fafc", fontSize: 11, color: "#64748b", textAlign: "center" },
   emptyCalc: { textAlign: "center", padding: "38px 14px" },
   emptyIcon: { fontSize: 34, marginBottom: 10 },
-  emptyTitle: { fontSize: 14, fontWeight: 700, color: "#0f2744", marginBottom: 4 },
+  emptyTitle: { fontSize: 14, fontWeight: 600, color: C.navy, marginBottom: 4 },
   emptyDesc: { fontSize: 12, color: "#64748b", maxWidth: 300, margin: "0 auto", lineHeight: 1.5 },
   selCard: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: 14, marginBottom: 14 },
-  selDesig: { fontSize: 16, fontWeight: 800, color: "#0f2744" },
+  selDesig: { fontSize: 16, fontWeight: 800, color: C.navy },
   selCat: { fontSize: 11, color: "#94a3b8", marginTop: 2 },
   selDims: { fontSize: 12.5, color: "#334155", marginTop: 8 },
-  selNotes: { fontSize: 11, color: "#e8780a", marginTop: 8, lineHeight: 1.5, background: "#fef3e2",
+  selNotes: { fontSize: 11, color: C.accent, marginTop: 8, lineHeight: 1.5, background: "#fef3e2",
     border: "1px solid #fcd5a0", borderRadius: 7, padding: "6px 9px" },
   selMassRow: { display: "flex", justifyContent: "space-between", alignItems: "center",
     marginTop: 10, paddingTop: 10, borderTop: "1px solid #e2e8f0" },
   selMassLbl: { fontSize: 11.5, color: "#64748b" },
-  selMassVal: { fontSize: 15, fontWeight: 800, color: "#0f2744" },
+  selMassVal: { fontSize: 15, fontWeight: 800, color: C.navy },
   selMassValStrike: { color: "#94a3b8", fontWeight: 600, textDecoration: "line-through", fontSize: 13 },
-  selMassValMarket: { fontSize: 15, fontWeight: 800, color: "#e8780a" },
+  selMassValMarket: { fontSize: 15, fontWeight: 800, color: C.accent },
   selMassValSecondary: { fontSize: 12, fontWeight: 600, color: "#64748b" },
   marketBox: { marginTop: 4, paddingTop: 10, borderTop: "1px dashed #e2e8f0" },
   gradeBar: { display: "flex", gap: 6, marginTop: 5, marginBottom: 4 },
@@ -727,7 +727,7 @@ const K = {
   calcVal: { color: "#1e293b", fontWeight: 700, fontVariantNumeric: "tabular-nums" },
   calcFormula: { fontSize: 11, color: "#94a3b8", fontFamily: "ui-monospace, monospace" },
   grandBox: { display: "flex", justifyContent: "space-between", alignItems: "center",
-    background: "#0f2744", border: "1px solid #0f2744", borderRadius: 12,
+    background: C.navy, border: `1px solid ${C.navy}`, borderRadius: 12,
     padding: "16px 18px", marginBottom: 8 },
   grandLbl: { fontSize: 11, letterSpacing: 1.5, color: "#94a3b8", fontWeight: 700 },
   grandPer: { fontSize: 12, color: "#94a3b8", marginTop: 2 },

@@ -8,6 +8,7 @@ import QuotationTab from './QuotationTab';
 import TempInvoiceTab from './TempInvoiceTab';
 import TempSalesFlowTab from './TempSalesFlowTab';
 import PurchasingTab from './PurchasingTab';
+import { C } from './theme';
 
 
 // ── Load functions (from Google Sheets, fallback to local) ────────────────────
@@ -174,8 +175,6 @@ const GRADES     = ["MS","SS304","SS316","GI","Galvanised","Other"];
 const UNITS      = ["length","kg","meter","sheet","pc"];
 
 // ── Colours ───────────────────────────────────────────────────────────────────
-const C = { navy:"#0f2744", accent:"#e8780a", accentLight:"#fef3e2", green:"#166534", greenLight:"#dcfce7", red:"#991b1b", redLight:"#fee2e2", yellow:"#854d0e", yellowLight:"#fef9c3", blue:"#1e40af", blueLight:"#dbeafe", gray:"#f8fafc", border:"#e2e8f0", text:"#1e293b", muted:"#64748b", white:"#ffffff" };
-
 // ── Rounding helpers ─────────────────────────────────────────────────────────
 const TWO_DP_TABS = ["THI", "AJIYA", "ASTINO 26"];
 function roundPrice(price, category) {
@@ -200,7 +199,7 @@ function normCode(v) {
   return String(v ?? "").trim().replace(/\.0+$/, "").toLowerCase();
 }
 // ── UI helpers ────────────────────────────────────────────────────────────────
-const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:14, border:`1px solid ${C.border}`, boxShadow:"0 2px 8px rgba(0,0,0,0.06)", ...style }}>{children}</div>;
+const Card = ({ children, style={} }) => <div style={{ background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`, ...style }}>{children}</div>;
 const Badge = ({ children, color="gray" }) => {
   const m = { green:{bg:C.greenLight,text:C.green}, red:{bg:C.redLight,text:C.red}, yellow:{bg:C.yellowLight,text:C.yellow}, blue:{bg:C.blueLight,text:C.blue}, orange:{bg:C.accentLight,text:C.accent}, gray:{bg:"#f1f5f9",text:C.muted} };
   const s = m[color]||m.gray;
@@ -326,17 +325,17 @@ function LoginScreen({ onLogin, notice }) {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:C.navy, display:"flex", alignItems:"center", justifyContent:"center", padding:20, position:"relative", overflow:"hidden" }}>
-      <img src="/logo.png" alt="" style={{position:"absolute", opacity:0.06, width:"70%", maxWidth:500, top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none", filter:"invert(1) brightness(2)"}} />
+    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:20, position:"relative", overflow:"hidden" }}>
+      <img src="/logo.png" alt="" style={{position:"absolute", opacity:0.05, width:"70%", maxWidth:500, top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none"}} />
       <div style={{ width:"100%", maxWidth:380, position:"relative", zIndex:1 }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:32 }}>
-          <div style={{ color:C.white, fontWeight:800, fontSize:26, letterSpacing:1, marginBottom:4 }}>M GAS STEEL SDN BHD</div>
-          <div style={{ color:"#94a3b8", fontSize:12, letterSpacing:2, marginTop:4  }}>SISTEM KEPUTUSAN STAF</div>
+          <div style={{ color:C.navy, fontWeight:600, fontSize:26, letterSpacing:1, marginBottom:4 }}>M GAS STEEL SDN BHD</div>
+          <div style={{ color:C.muted, fontSize:12, letterSpacing:2, marginTop:4  }}>SISTEM KEPUTUSAN STAF</div>
         </div>
 
         <Card style={{ padding:28 }}>
-          <div style={{ fontWeight:700, fontSize:15, color:C.navy, marginBottom:20, textAlign:"center" }}>Log Masuk</div>
+          <div style={{ fontWeight:600, fontSize:15, color:C.navy, marginBottom:20, textAlign:"center" }}>Log Masuk</div>
           {notice && (
             <div style={{ background:"#fef3e2", border:"1.5px solid #f5c78e", color:"#9a4d00",
                           borderRadius:10, padding:"12px 14px", fontSize:12.5, fontWeight:700,
@@ -383,7 +382,7 @@ function LoginScreen({ onLogin, notice }) {
           </div>
 
           <button onClick={tryLogin} disabled={locked||!selected||!pin||!acknowledged}
-            style={{ width:"100%", padding:"13px", background:locked||!selected||!pin||!acknowledged?C.muted:C.navy, color:C.white, border:"none", borderRadius:10, fontWeight:700, fontSize:15, cursor:locked||!selected||!pin||!acknowledged?"not-allowed":"pointer" }}>
+            style={{ width:"100%", padding:"13px", background:locked||!selected||!pin||!acknowledged?C.muted:C.navy, color:C.white, border:"none", borderRadius:6, fontWeight:700, fontSize:15, cursor:locked||!selected||!pin||!acknowledged?"not-allowed":"pointer", boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
             {locked ? "🔒 Dikunci" : "Masuk →"}
           </button>
         </Card>
@@ -543,7 +542,7 @@ export default function App() {
 }} notice={accessNotice} />;
 
   if (typeof window !== 'undefined' && !document.body.style.background) {
-    document.body.style.background = '#f0f4f8';
+    document.body.style.background = C.bg;
   }
 
   const persistPrices    = p => { setPrices(p);    savePrices(p); };     // local backup
@@ -584,7 +583,7 @@ export default function App() {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Segoe UI',system-ui,sans-serif", color:C.text }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Segoe UI',system-ui,sans-serif", color:C.text }}>
       <AgentQueryPopup session={session} />
       <BroadcastPopup session={session} />
       {session.role === "manager" && <DailyCheckReminder session={session} goCheck={() => setTab("reconcile")} />}
@@ -607,9 +606,9 @@ export default function App() {
               const isAlert  = ["reconcile","daily","purchasing","queries","activity","users"].includes(t.key);
               return (
                 <button key={t.key} onClick={()=>setTab(t.key)} style={{
-                  padding:"8px 14px", border:"none", cursor:"pointer", borderRadius:8,
+                  padding:"8px 14px", border:"none", cursor:"pointer", borderRadius:9,
                   fontWeight:600, fontSize:12, transition:"all 0.15s",
-                  background: isActive ? C.accent : "#1e3a5f",
+                  background: isActive ? C.accent : C.navy,
                   color: isActive ? "#fff" : isAlert ? "#fca5a5" : "#cbd5e1",
                 }}>{t.label}{t.key === "reconcile" && rcAlert ? (
                   <span style={{ marginLeft:6, background:"#dc2626", color:"#fff",
@@ -620,7 +619,7 @@ export default function App() {
               );
             })}
             <button onClick={async()=>{ await logActivity(session,"Logout",""); localStorage.removeItem("mgas_login_time"); await supabase.auth.signOut(); clearSession(); setSession_(null); }}
-              style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" }}>
+              style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:6, fontSize:11, fontWeight:600, cursor:"pointer" }}>
               {session.name.split(" ")[0]} · Keluar
             </button>
           </div>
@@ -872,7 +871,7 @@ function AssistantTab({ prices, gsStatus, session }) {
       {/* Price Checker */}
       <Card style={{ marginBottom:12, padding:"14px 16px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-          <div style={{ fontSize:12, color:C.navy, fontWeight:700 }}>Semak Harga — Cari by Kod atau Nama Produk</div>
+          <div style={{ fontSize:12, color:C.navy, fontWeight:600 }}>Semak Harga — Cari by Kod atau Nama Produk</div>
           <span style={{ fontSize:10, fontWeight:600, color: gsStatus==="ok"?C.green:C.red }}>
             {`${prices.length} produk`}
           </span>
@@ -1014,7 +1013,7 @@ function AssistantTab({ prices, gsStatus, session }) {
                     </div>
                     {bd && (
                       <div style={{ marginTop:10, background:C.white, border:`1px solid ${C.border}`, borderRadius:8, overflow:"hidden" }}>
-                        <div style={{ padding:"6px 10px", fontSize:10.5, fontWeight:700, color:C.navy, background:C.gray, borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                        <div style={{ padding:"6px 10px", fontSize:10.5, fontWeight:600, color:C.navy, background:C.gray, borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                           <span>{bd.title}</span>
                           <span onClick={() => setExpandedBreakdown(null)} style={{ cursor:"pointer", color:C.muted, fontSize:13 }}>×</span>
                         </div>
@@ -1117,7 +1116,7 @@ function AssistantTab({ prices, gsStatus, session }) {
         <div style={{ borderTop:`1px solid ${C.border}`, padding:"11px 13px", display:"flex", gap:8 }}>
           <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Terangkan situasi pelanggan..."
             style={{ flex:1, padding:"9px 13px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:"inherit", outline:"none" }} />
-          <button onClick={send} disabled={thinking||!input.trim()} style={{ background:thinking?C.muted:C.accent, color:C.white, border:"none", borderRadius:8, padding:"9px 16px", fontWeight:700, fontSize:13, cursor:thinking?"not-allowed":"pointer" }}>Hantar</button>
+          <button onClick={send} disabled={thinking||!input.trim()} style={{ background:thinking?C.muted:C.accent, color:C.white, border:"none", borderRadius:6, padding:"9px 16px", fontWeight:700, fontSize:13, cursor:thinking?"not-allowed":"pointer", boxShadow: thinking ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>Hantar</button>
         </div>
       </Card>
     </div>
@@ -1350,7 +1349,7 @@ function UsersTab({ session }) {
 
       {/* ── Broadcast — live announcement to everyone ── */}
       <Card style={{ padding:16, marginBottom:14 }}>
-        <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:4 }}>📣 Pengumuman Live (Broadcast)</div>
+        <div style={{ fontWeight:600, fontSize:13, color:C.navy, marginBottom:4 }}>📣 Pengumuman Live (Broadcast)</div>
         <div style={{ fontSize:11.5, color:C.muted, marginBottom:10 }}>
           Taip dan hantar — pop-up muncul serta-merta pada skrin semua yang sedang log masuk (dengan bunyi),
           dan semasa log masuk untuk yang belum online. Setiap orang mesti tekan ✓ Terima; balasan mereka dipapar di bawah.
@@ -1361,7 +1360,7 @@ function UsersTab({ session }) {
             style={{ flex:1, border:`1.5px solid ${C.border}`, borderRadius:8, padding:"9px 11px", fontSize:13, fontFamily:"inherit", resize:"vertical" }} />
           <button onClick={sendBroadcast} disabled={!bcMsg.trim() || bcSending}
             style={{ padding:"0 22px", background:!bcMsg.trim()||bcSending ? C.border : C.accent, color:!bcMsg.trim()||bcSending ? C.muted : C.white,
-                     border:"none", borderRadius:10, fontWeight:800, fontSize:14, cursor:!bcMsg.trim()||bcSending ? "not-allowed" : "pointer" }}>
+                     border:"none", borderRadius:6, fontWeight:800, fontSize:14, cursor:!bcMsg.trim()||bcSending ? "not-allowed" : "pointer", boxShadow: (!bcMsg.trim()||bcSending) ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {bcSending ? "…" : "📣 Hantar"}
           </button>
         </div>
@@ -1485,7 +1484,7 @@ function UsersTab({ session }) {
       {/* ── Permissions matrix — per-user feature control ── */}
       <Card style={{ marginTop:14 }}>
         <div style={{ padding:"12px 14px", borderBottom:`1px solid ${C.border}` }}>
-          <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>🔐 Kebenaran Ciri (Permissions)</div>
+          <div style={{ fontWeight:600, fontSize:13, color:C.navy }}>🔐 Kebenaran Ciri (Permissions)</div>
           <div style={{ fontSize:11.5, color:C.muted, marginTop:2 }}>
             Klik untuk benarkan (✓) atau sekat (✕) setiap ciri bagi setiap pengguna. Kotak kelabu = ikut default peranan.
             Owner sentiasa ada semua akses. Perubahan berkuat kuasa pada log masuk seterusnya.
@@ -1573,13 +1572,13 @@ function ActivityTab() {
   return (
     <div>
       <Card style={{ padding:"12px 14px", marginBottom:12, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-        <div style={{ fontWeight:700, fontSize:14, color:C.navy, flex:1 }}>📊 Log Aktiviti Staf</div>
+        <div style={{ fontWeight:600, fontSize:14, color:C.navy, flex:1 }}>📊 Log Aktiviti Staf</div>
         <select value={filter} onChange={e=>setFilter(e.target.value)}
-          style={{ padding:"7px 10px", borderRadius:8, border:`1.5px solid ${C.border}`, fontSize:13, background:C.white }}>
+          style={{ padding:"7px 10px", borderRadius:9, border:`1.5px solid ${C.border}`, fontSize:13, background:C.white }}>
           {names.map(n=><option key={n}>{n}</option>)}
         </select>
         <button onClick={load}
-          style={{ padding:"7px 14px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:600, fontSize:12, cursor:"pointer" }}>
+          style={{ padding:"7px 14px", background:C.navy, color:C.white, border:"none", borderRadius:6, fontWeight:600, fontSize:12, cursor:"pointer", boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
           🔄 Muat Semula
         </button>
       </Card>
@@ -1863,7 +1862,7 @@ const STATUS_ORDER = {
 const STATUS_STYLE = {
   OK:       { bg:"#dcfce7", text:"#166534", label:"OK" },
   DISCOUNT: { bg:"#fee2e2", text:"#991b1b", label:"DISKAUN" },
-  BELOW:    { bg:"#fef3e2", text:"#e8780a", label:"ATAS HARGA" },
+  BELOW:    { bg:"#fef3e2", text:C.accent, label:"ATAS HARGA" },
   REVIEW:   { bg:"#fef9c3", text:"#854d0e", label:"SEMAK" },
   MISSING:  { bg:"#f1f5f9", text:"#64748b", label:"HILANG" },
   NO_PRICE: { bg:"#f1f5f9", text:"#64748b", label:"TIADA HARGA" },
@@ -2060,7 +2059,7 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
       {/* Auto mode — sales lines straight from CRM, no upload */}
       <Card style={{ padding:"14px 16px", marginBottom:12 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", marginBottom:4 }}>
-          <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>📋 Check Daily Sales Price</div>
+          <div style={{ fontWeight:600, fontSize:13, color:C.navy }}>📋 Check Daily Sales Price</div>
           <span style={{ background:"#dcfce7", color:"#166534", padding:"2px 10px",
                          borderRadius:20, fontSize:10, fontWeight:700 }}>
             ⚡ LIVE SYNC · SQL ACCOUNTING
@@ -2079,9 +2078,9 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
             <option value={7}>Jualan 7 Hari</option>
           </select>
           <button onClick={runCheckAuto} disabled={loading} style={{
-            padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
+            padding:"10px 22px", border:"none", borderRadius:6, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
             background: loading ? C.muted : C.navy, color:C.white,
-            cursor: loading ? "not-allowed" : "pointer" }}>
+            cursor: loading ? "not-allowed" : "pointer", boxShadow: loading ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {loading ? "Sedang Semak..." : "▶ Jalankan Semakan (Live Sync)"}
           </button>
           {autoInfo && (
@@ -2116,9 +2115,9 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
           </div>
 
           <button onClick={runCheck} disabled={loading||!salesFile} style={{
-            padding:"10px 22px", border:"none", borderRadius:8, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
+            padding:"10px 22px", border:"none", borderRadius:6, fontWeight:700, fontSize:13, whiteSpace:"nowrap",
             background: loading||!salesFile ? C.muted : C.navy, color:C.white,
-            cursor: loading||!salesFile ? "not-allowed" : "pointer" }}>
+            cursor: loading||!salesFile ? "not-allowed" : "pointer", boxShadow: (loading||!salesFile) ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {loading ? "Sedang Semak..." : "▶ Jalankan Semakan"}
           </button>
         </div>
@@ -2161,9 +2160,9 @@ function DailyCheckTab({ session, prices, results, setResults, ran, setRan }) {
             style={{ marginLeft:"auto", padding:"6px 12px", borderRadius:8,
               border:`1.5px solid ${C.border}`, fontSize:12, minWidth:220, fontFamily:"inherit" }} />
               <button onClick={downloadDailyCSV} style={{
-                  marginLeft:8, padding:"7px 14px", border:"none", borderRadius:8,
+                  marginLeft:8, padding:"7px 14px", border:"none", borderRadius:6,
                   background:C.navy, color:C.white, fontWeight:600, fontSize:12,
-                  cursor:"pointer", whiteSpace:"nowrap" }}>
+                  cursor:"pointer", whiteSpace:"nowrap", boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
                   ⬇ Muat Turun CSV
                 </button>
         </Card>
@@ -2460,7 +2459,7 @@ function QueryKPIPanel() {
 
   return (
     <Card style={{ padding:16, marginBottom:12 }}>
-      <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:10 }}>
+      <div style={{ fontWeight:600, fontSize:13, color:C.navy, marginBottom:10 }}>
         📊 KPI — Pecahan Sebab Jawapan ikut Staff
       </div>
       {stats === null ? (
@@ -2488,7 +2487,7 @@ function QueryKPIPanel() {
                       {label}
                     </div>
                     <div style={{ flex:1, background:'#f1f5f9', borderRadius:5, height:14, position:'relative' }}>
-                      <div style={{ width:`${Math.min(100, (n / s.total) * 100)}%`, background:'#e8780a',
+                      <div style={{ width:`${Math.min(100, (n / s.total) * 100)}%`, background:C.accent,
                                     height:'100%', borderRadius:5 }} />
                     </div>
                     <div style={{ width:24, textAlign:'right', fontSize:11.5, fontWeight:700, color:'#334155' }}>{n}</div>
@@ -2551,7 +2550,7 @@ function ReasonManagerPanel({ session }) {
 
   return (
     <Card style={{ padding:16, marginBottom:12 }}>
-      <div style={{ fontWeight:700, fontSize:13, color:C.navy, marginBottom:10 }}>
+      <div style={{ fontWeight:600, fontSize:13, color:C.navy, marginBottom:10 }}>
         ⚙️ Urus Senarai Sebab Pratetap
       </div>
       <div style={{ fontSize:11.5, color:C.muted, marginBottom:12 }}>
@@ -2587,9 +2586,10 @@ function ReasonManagerPanel({ session }) {
           style={{ flex:1, boxSizing:'border-box', padding:'8px 10px', borderRadius:7,
                    border:'1.5px solid #e2e8f0', fontSize:12.5, fontFamily:'inherit' }} />
         <button onClick={addReason} disabled={!newLabel.trim() || saving}
-          style={{ padding:'8px 16px', border:'none', borderRadius:7, fontWeight:700, fontSize:12.5,
+          style={{ padding:'8px 16px', border:'none', borderRadius:6, fontWeight:700, fontSize:12.5,
                    cursor: (!newLabel.trim()||saving) ? 'not-allowed' : 'pointer',
-                   background: (!newLabel.trim()||saving) ? '#94a3b8' : '#0f2744', color:'#fff' }}>
+                   background: (!newLabel.trim()||saving) ? '#94a3b8' : C.navy, color:'#fff',
+                   boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
           + Tambah
         </button>
       </div>
@@ -2724,10 +2724,10 @@ function AgentQueryPopup({ session }) {
               const active = reasonCode === r.code;
               return (
                 <button key={r.code} type="button" onClick={() => setReasonCode(r.code)}
-                  style={{ padding:'8px 12px', borderRadius:8, cursor:'pointer', fontSize:12.5,
+                  style={{ padding:'8px 12px', borderRadius:9, cursor:'pointer', fontSize:12.5,
                            fontWeight:700, fontFamily:'inherit', textAlign:'left',
-                           border: active ? '1.5px solid #0f2744' : '1.5px solid #e2e8f0',
-                           background: active ? '#0f2744' : '#fff',
+                           border: active ? `1.5px solid ${C.navy}` : '1.5px solid #e2e8f0',
+                           background: active ? C.navy : '#fff',
                            color: active ? '#fff' : '#334155' }}>
                   {active ? '✓ ' : ''}{r.label}
                 </button>
@@ -2742,9 +2742,10 @@ function AgentQueryPopup({ session }) {
             style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:10,
                      border:'1.5px solid #cbd5e1', fontSize:13, fontFamily:'inherit', resize:'vertical' }} />
           <button onClick={submit} disabled={!reasonCode || saving}
-            style={{ marginTop:12, width:'100%', padding:'12px', border:'none', borderRadius:10,
+            style={{ marginTop:12, width:'100%', padding:'12px', border:'none', borderRadius:6,
                      fontWeight:800, fontSize:14, cursor: (!reasonCode||saving) ? 'not-allowed' : 'pointer',
-                     background: (!reasonCode||saving) ? '#94a3b8' : '#0f2744', color:'#fff' }}>
+                     background: (!reasonCode||saving) ? '#94a3b8' : C.navy, color:'#fff',
+                     boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
             {saving ? 'Menghantar...' : '✔ Hantar Jawapan'}
           </button>
         </div>
@@ -2795,19 +2796,19 @@ function QueriesTab({ session }) {
   return (
     <div>
       <Card style={{ padding:'12px 16px', marginBottom:12, display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
-        <div style={{ fontWeight:700, fontSize:13, color:C.navy }}>❓ Pertanyaan Harga kepada Agen</div>
+        <div style={{ fontWeight:600, fontSize:13, color:C.navy }}>❓ Pertanyaan Harga kepada Agen</div>
         <div style={{ marginLeft:'auto', display:'flex', gap:6, flexWrap:'wrap' }}>
           {isAdmin && (
             <button onClick={() => setShowKPI(v => !v)} style={{
               padding:'6px 14px', border:'none', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600,
-              background: showKPI ? '#e8780a' : '#f1f5f9', color: showKPI ? '#fff' : C.muted }}>
+              background: showKPI ? C.accent : '#f1f5f9', color: showKPI ? '#fff' : C.muted }}>
               📊 KPI Staff
             </button>
           )}
           {isAdmin && (
             <button onClick={() => setShowManage(v => !v)} style={{
               padding:'6px 14px', border:'none', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600,
-              background: showManage ? '#e8780a' : '#f1f5f9', color: showManage ? '#fff' : C.muted }}>
+              background: showManage ? C.accent : '#f1f5f9', color: showManage ? '#fff' : C.muted }}>
               ⚙️ Urus Sebab Pratetap
             </button>
           )}
@@ -2924,7 +2925,7 @@ function DailyCheckReminder({ session, goCheck }) {
                   display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
       <div style={{ background:'#fff', borderRadius:16, maxWidth:440, width:'100%',
                     boxShadow:'0 24px 64px rgba(0,0,0,0.4)', overflow:'hidden' }}>
-        <div style={{ background:'#e8780a', color:'#fff', padding:'14px 20px',
+        <div style={{ background:C.accent, color:'#fff', padding:'14px 20px',
                       fontWeight:800, fontSize:15 }}>
           🔔 Peringatan Semakan Harian
         </div>
@@ -2936,18 +2937,19 @@ function DailyCheckReminder({ session, goCheck }) {
           </div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             <button onClick={() => { later(); goCheck(); }}
-              style={{ flex:1, minWidth:130, padding:'11px', border:'none', borderRadius:9,
-                       fontWeight:800, fontSize:13, background:'#0f2744', color:'#fff', cursor:'pointer' }}>
+              style={{ flex:1, minWidth:130, padding:'11px', border:'none', borderRadius:6,
+                       fontWeight:800, fontSize:13, background:C.navy, color:'#fff', cursor:'pointer',
+                       boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
               ▶ Buka Semakan
             </button>
             <button onClick={markDone} disabled={saving}
-              style={{ flex:1, minWidth:130, padding:'11px', border:'none', borderRadius:9,
+              style={{ flex:1, minWidth:130, padding:'11px', border:'none', borderRadius:6,
                        fontWeight:800, fontSize:13, background: saving ? '#94a3b8' : '#166534',
                        color:'#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
               ✓ Sudah Selesai
             </button>
             <button onClick={later}
-              style={{ padding:'11px 14px', border:'none', borderRadius:9, fontWeight:700,
+              style={{ padding:'11px 14px', border:'none', borderRadius:6, fontWeight:700,
                        fontSize:12, background:'transparent', color:'#64748b', cursor:'pointer' }}>
               Nanti (1 jam)
             </button>

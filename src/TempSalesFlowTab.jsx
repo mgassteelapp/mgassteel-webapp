@@ -22,14 +22,10 @@
 // ════════════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useMemo } from 'react';
 import { supabase, invokeReconcile } from './supabase';
+import { C } from './theme';
 
-const C = { navy:'#0f2744', accent:'#e8780a', border:'#e2e8f0', gray:'#f8fafc',
-            text:'#1e2d3d', muted:'#64748b', white:'#ffffff',
-            green:'#166534', greenBg:'#dcfce7', red:'#991b1b', redBg:'#fee2e2',
-            amber:'#854d0e', amberBg:'#fef9c3', blue:'#1d4ed8', blueBg:'#dbeafe' };
-
-const card = { background:C.white, borderRadius:14, border:`1px solid ${C.border}`,
-               boxShadow:'0 2px 8px rgba(0,0,0,0.06)', padding:'16px 18px', marginBottom:12 };
+const card = { background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
+               padding:'16px 18px', marginBottom:12 };
 
 // Stage order + metadata driving both the history table and the print titles.
 const STAGES = ['so', 'picking', 'do', 'invoice'];
@@ -118,7 +114,7 @@ function printFlowHTML(rowRaw, stage) {
   * { box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e2d3d; margin: 0; padding: 24px; }
   .hdr { display:flex; justify-content:space-between; align-items:flex-start;
-         background:#0f2744; color:#fff; padding:18px 22px; border-radius:8px; margin-bottom:18px; }
+         background:${C.navy}; color:#fff; padding:18px 22px; border-radius:8px; margin-bottom:18px; }
   .hdr h1 { margin:0; font-size:20px; letter-spacing:.3px; }
   .hdr .sub { color:#cbd5e1; font-size:11px; font-weight:600; margin-top:4px; }
   .hdr .right { text-align:right; }
@@ -132,17 +128,17 @@ function printFlowHTML(rowRaw, stage) {
   .cust .name { font-size:16px; font-weight:700; margin-top:2px; }
   .cust .line { font-size:12.5px; color:#475569; margin-top:2px; }
   table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
-  thead th { background:#0f2744; color:#fff; text-align:left; padding:8px 8px; font-size:11px; }
+  thead th { background:${C.navy}; color:#fff; text-align:left; padding:8px 8px; font-size:11px; }
   thead th.r { text-align:right; }
   tbody td { padding:7px 8px; border-bottom:1px solid #e2e8f0; }
   tbody tr:nth-child(even) { background:#f8fafc; }
   .r { text-align:right; } .b { font-weight:700; }
   .r.big { font-size:18px; font-weight:800; }
   .code { font-size:10px; color:#94a3b8; margin-top:1px; }
-  .total { text-align:right; font-size:17px; font-weight:800; color:#0f2744;
-           border-top:2px solid #0f2744; padding-top:10px; margin-top:6px; }
+  .total { text-align:right; font-size:17px; font-weight:800; color:${C.navy};
+           border-top:2px solid ${C.navy}; padding-top:10px; margin-top:6px; }
   .notes { font-size:12px; color:#475569; margin-top:14px; }
-  .paid { font-size:13px; font-weight:700; color:#0f2744; margin-top:18px; }
+  .paid { font-size:13px; font-weight:700; color:${C.navy}; margin-top:18px; }
   .paid span { display:inline-block; min-width:160px; border-bottom:1px solid #64748b; padding-bottom:2px; margin-left:6px; }
   .sign { display:flex; gap:40px; margin-top:44px; }
   .sign .box { flex:1; }
@@ -427,7 +423,7 @@ export default function TempSalesFlowTab({ session, prices }) {
 
       {/* ── Create new flow (starts at SO) ── */}
       <div style={card}>
-        <div style={{ fontWeight:700, fontSize:14, color:C.navy, marginBottom:12 }}>
+        <div style={{ fontWeight:600, fontSize:14, color:C.navy, marginBottom:12 }}>
           📝 Pesanan Jualan Sementara Baru (Mula Aliran)
         </div>
 
@@ -477,7 +473,7 @@ export default function TempSalesFlowTab({ session, prices }) {
             style={{ ...inp, width:110 }} />
           <button onClick={addLine}
             style={{ padding:'0 18px', background:C.accent, color:C.white, border:'none',
-                     borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                     borderRadius:6, fontWeight:700, fontSize:13, cursor:'pointer', boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
             + Tambah
           </button>
         </div>
@@ -515,7 +511,7 @@ export default function TempSalesFlowTab({ session, prices }) {
           <div style={{ fontSize:18, fontWeight:800, color:C.navy }}>JUMLAH: {fmtRM(total)}</div>
           <button onClick={saveFlow} disabled={saving}
             style={{ padding:'10px 24px', background:saving ? C.border : C.navy, color:C.white,
-                     border:'none', borderRadius:10, fontWeight:800, fontSize:13.5, cursor:saving ? 'not-allowed' : 'pointer' }}>
+                     border:'none', borderRadius:6, fontWeight:800, fontSize:13.5, cursor:saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : '0 1px 2px rgba(26,22,24,0.1)' }}>
             {saving ? 'Menyimpan…' : '📝 Simpan & Cetak SO Sementara'}
           </button>
         </div>
@@ -537,7 +533,7 @@ export default function TempSalesFlowTab({ session, prices }) {
       {/* ── History ── */}
       <div style={card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexWrap:'wrap', gap:8 }}>
-          <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
+          <div style={{ fontWeight:600, fontSize:14, color:C.navy }}>
             📋 Senarai SO/DO/INV Sementara {pendingCount > 0 && (
               <span style={{ marginLeft:6, background:C.amberBg, color:C.amber, borderRadius:20,
                              padding:'2px 10px', fontSize:11.5, fontWeight:800 }}>

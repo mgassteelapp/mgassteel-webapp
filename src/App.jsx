@@ -174,6 +174,35 @@ const CATEGORIES = ["Pipe","Hollow Section","Angle Bar","Plate","Round Bar","She
 const GRADES     = ["MS","SS304","SS316","GI","Galvanised","Other"];
 const UNITS      = ["length","kg","meter","sheet","pc"];
 
+// ── Sidebar nav groups ───────────────────────────────────────────────────────
+// Two-level sidebar (2026-08-31, replacing the flat top tab bar). Purely a
+// navigation grouping — every TABS key below must appear in exactly one
+// group here, or it silently disappears from the sidebar. Order matches the
+// approved mockup (sidebar-nav-mockup.html).
+const GROUPS = [
+  { key:"harga_stok", label:"Harga & Stok", icon:"🔍", tabs:["assistant","prices","daily"] },
+  { key:"jualan",     label:"Jualan",       icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","queries"] },
+  { key:"pembelian",  label:"Pembelian",    icon:"📦", tabs:["purchasing","reconcile"] },
+  { key:"alat",       label:"Alat",         icon:"🛠️", tabs:["plate","katalog"] },
+  { key:"admin",      label:"Admin",        icon:"🔐", tabs:["activity","users"] },
+];
+function groupKeyForTab(key) {
+  const g = GROUPS.find(g => g.tabs.includes(key));
+  return g ? g.key : GROUPS[0].key;
+}
+// Sidebar sub-items show the tab label without its leading emoji (the group
+// header already carries an icon) — strips the first whitespace-delimited
+// token, which is always the emoji in every TABS label below.
+function stripLabelIcon(label) {
+  return String(label || "").replace(/^\S+\s+/, "");
+}
+function initialsOf(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 // ── Colours ───────────────────────────────────────────────────────────────────
 // ── Rounding helpers ─────────────────────────────────────────────────────────
 const TWO_DP_TABS = ["THI", "AJIYA", "ASTINO 26"];
@@ -410,6 +439,8 @@ export default function App() {
   const [dcRan,     setDcRan]     = useState(false);
   const [loading,   setLoading]   = useState(false);
   const [gsStatus,  setGsStatus]  = useState("connecting"); // connecting | ok | error
+  const [openGroups, setOpenGroups] = useState(() => new Set([groupKeyForTab("assistant")])); // sidebar: which nav groups are expanded
+  const [mobileNavOpen, setMobileNavOpen] = useState(false); // mobile drawer open/closed
 
   // Restore Supabase session on load
   useEffect(() => {
@@ -509,6 +540,13 @@ export default function App() {
     }
   }, [tab, rcAlert]);
 
+  // Keep the active tab's sidebar group expanded, even when navigation to it
+  // happens programmatically (e.g. the rcAlert banner, DailyCheckReminder).
+  useEffect(() => {
+    const gk = groupKeyForTab(tab);
+    setOpenGroups(prev => (prev.has(gk) ? prev : new Set(prev).add(gk)));
+  }, [tab]);
+
   // ── Sync health badge: top-of-page RED/GREEN indicator, visible to every
   // logged-in user regardless of role (Wylee 2026-08-26 — "the app should
   // alert or notify us that the sync is not running", made visible instead
@@ -571,7 +609,7 @@ export default function App() {
       { key:"reconcile", label:"🔍 Check Daily Purchase Order" },
     ] : []),
     ...(canAccessPurchasing(session) ? [
-      { key:"purchasing", label:"Cadangan PO" },
+      { key:"purchasing", label:"📦 Cadangan PO" },
     ] : []),
     ...(hasPerm(session, "queries") ? [
       { key:"queries", label:"❓ Pertanyaan Harga" },
@@ -582,75 +620,191 @@ export default function App() {
     ] : []),
   ];
 
+  const activeGroupKey = groupKeyForTab(tab);
+  const activeGroup    = GROUPS.find(g => g.key === activeGroupKey);
+  const activeTabObj   = TABS.find(t => t.key === tab);
+  const doLogout = async () => {
+    await logActivity(session,"Logout","");
+    localStorage.removeItem("mgas_login_time");
+    await supabase.auth.signOut();
+    clearSession();
+    setSession_(null);
+  };
+  const goTab = (key) => { setTab(key); setMobileNavOpen(false); };
+  const pricesActiveCount = prices.filter(p=>p.hasPrice||p.price>0).length;
+
+  const sidebarNav = (
+    <>
+      {GROUPS.map(g => {
+        const groupTabs = TABS.filter(t => g.tabs.includes(t.key));
+        if (groupTabs.length === 0) return null;
+        const isOpen = openGroups.has(g.key);
+        return (
+          <div key={g.key} className={`sb-group${isOpen ? " open" : ""}`}>
+            <button type="button" className="sb-group-head" aria-expanded={isOpen}
+              onClick={() => setOpenGroups(prev => {
+                const next = new Set(prev);
+                next.has(g.key) ? next.delete(g.key) : next.add(g.key);
+                return next;
+              })}>
+              <span className="sb-group-icon">{g.icon}</span>
+              <span className="sb-group-label">{g.label}</span>
+              <span className="sb-chev">▶</span>
+            </button>
+            <ul className="sb-sub">
+              {groupTabs.map(t => (
+                <li key={t.key}>
+                  <a href="#" className={tab===t.key ? "active" : ""}
+                     onClick={(e)=>{ e.preventDefault(); goTab(t.key); }}>
+                    {stripLabelIcon(t.label)}
+                    {t.key === "reconcile" && rcAlert ? (
+                      <span className="sb-badge">{rcAlert.count}</span>
+                    ) : null}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </>
+  );
+
   return (
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Segoe UI',system-ui,sans-serif", color:C.text }}>
+      <style>{`
+        .mobile-topbar{ display:none; align-items:center; gap:10px; padding:12px 14px; background:${C.navy}; position:sticky; top:0; z-index:30; }
+        .mobile-topbar .mt-burger{ width:34px; height:34px; border-radius:8px; border:0.5px solid rgba(255,255,255,0.28); background:transparent; color:#fff; font-size:16px; cursor:pointer; flex:0 0 auto; }
+        .mobile-topbar .mt-title{ color:#fff; font-weight:700; font-size:14px; flex:1; letter-spacing:0.2px; }
+        .mobile-topbar img{ height:24px; opacity:0.95; flex:0 0 auto; }
+        .nav-backdrop{ position:fixed; inset:0; background:rgba(26,22,24,0.42); z-index:40; }
+        .app-body{ display:flex; align-items:flex-start; min-height:100vh; }
+        .sidebar{ width:272px; flex:0 0 auto; background:${C.white}; border-right:0.5px solid ${C.border};
+          display:flex; flex-direction:column; position:sticky; top:0; height:100vh; }
+        .sb-brand{ display:flex; align-items:center; gap:10px; padding:16px 16px 14px; border-bottom:0.5px solid ${C.border}; }
+        .sb-brand img{ height:32px; flex:0 0 auto; }
+        .sb-brand-text .name{ font-weight:600; font-size:13.5px; color:${C.navy}; line-height:1.2; }
+        .sb-brand-text .sub{ font-size:10px; color:${C.muted}; letter-spacing:0.4px; margin-top:2px; }
+        .sb-drawer-close{ display:none; margin-left:auto; width:28px; height:28px; border-radius:7px; border:none;
+          background:${C.gray}; color:${C.muted}; font-size:13px; cursor:pointer; flex:0 0 auto; }
+        .sb-nav{ flex:1; overflow-y:auto; padding:10px; }
+        .sb-group{ margin-bottom:2px; }
+        .sb-group-head{ width:100%; display:flex; align-items:center; gap:9px; padding:9px 10px; border:none;
+          background:transparent; border-radius:8px; cursor:pointer; font-family:inherit; font-size:12.5px;
+          font-weight:600; color:${C.text}; text-align:left; }
+        .sb-group-head:hover{ background:${C.gray}; }
+        .sb-group-icon{ font-size:14px; width:18px; text-align:center; flex:0 0 auto; }
+        .sb-group-label{ flex:1; }
+        .sb-chev{ font-size:10px; color:${C.muted}; transition:transform .18s ease; flex:0 0 auto; }
+        .sb-group.open > .sb-group-head .sb-chev{ transform:rotate(90deg); }
+        .sb-sub{ list-style:none; margin:2px 0 6px; padding:0 0 0 27px; max-height:0; overflow:hidden; transition:max-height .22s ease; }
+        .sb-group.open .sb-sub{ max-height:400px; }
+        .sb-sub a{ display:block; padding:7px 10px 7px 14px; margin:1px 0; font-size:12.5px; color:${C.muted};
+          text-decoration:none; border-radius:7px; border-left:2px solid transparent; white-space:nowrap;
+          overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+        .sb-sub a:hover{ background:${C.gray}; color:${C.text}; }
+        .sb-sub a.active{ background:${C.accentSoft}; color:${C.navy}; font-weight:700; border-left:2px solid ${C.accent}; }
+        .sb-badge{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:20px; font-size:9.5px;
+          font-weight:800; background:${C.red}; color:#fff; vertical-align:1px; }
+        .sb-foot{ border-top:0.5px solid ${C.border}; padding:12px 14px; display:flex; align-items:center; gap:9px; flex:0 0 auto; }
+        .sb-avatar{ width:28px; height:28px; border-radius:50%; background:${C.gray}; color:${C.navy}; font-weight:700;
+          font-size:11.5px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; border:0.5px solid ${C.border}; }
+        .sb-who-name{ font-size:12px; font-weight:600; color:${C.text}; }
+        .sb-who-role{ font-size:10.5px; color:${C.muted}; text-transform:capitalize; }
+        .sb-logout{ margin-left:auto; background:none; border:none; color:${C.muted}; cursor:pointer; font-size:15px;
+          padding:4px; border-radius:6px; line-height:1; }
+        .sb-logout:hover{ background:${C.gray}; color:${C.red}; }
+        .main-col{ flex:1; min-width:0; }
+        .main-topbar{ display:flex; align-items:center; gap:10px; padding:14px 22px; border-bottom:0.5px solid ${C.border}; flex-wrap:wrap; }
+        .mt-crumb{ font-size:11.5px; color:${C.muted}; }
+        .mt-title{ font-size:15px; font-weight:600; color:${C.navy}; margin-left:2px; }
+        .mt-right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+        .mt-prices-count{ background:${C.gray}; color:${C.muted}; font-size:11px; padding:3px 10px; border-radius:20px; }
+        @media (max-width: 880px){
+          .mobile-topbar{ display:flex; }
+          .app-body{ display:block; }
+          .sidebar{ position:fixed; top:0; bottom:0; left:0; width:82%; max-width:300px;
+            transform:translateX(-100%); transition:transform .22s ease; z-index:41; height:100%; }
+          .sidebar.open{ transform:translateX(0); }
+          .sb-drawer-close{ display:inline-flex; align-items:center; justify-content:center; }
+          .main-topbar{ display:none; }
+          .main-col{ width:100%; }
+        }
+      `}</style>
+
       <AgentQueryPopup session={session} />
       <BroadcastPopup session={session} />
       {session.role === "manager" && <DailyCheckReminder session={session} goCheck={() => setTab("reconcile")} />}
-      <div style={{ background:C.navy }}>
-        <div style={{ maxWidth:960, margin:"0 auto", padding:"18px 14px 0" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-            <img src="/logo.png" alt="mGas" style={{height:38, filter:"invert(1) brightness(2)", opacity:0.9}} />
-            <div style={{ color:C.white, fontWeight:800, fontSize:30, letterSpacing:0.5 }}>M GAS STEEL SDN BHD</div>
-            <div style={{ color:"#94a3b8", fontSize:15, letterSpacing:1  }}>SISTEM KEPUTUSAN HARGA</div>
-            <div style={{ marginLeft:"auto", display:"flex", gap:6, alignItems:"center" }}>
+
+      <div className="mobile-topbar">
+        <button type="button" className="mt-burger" aria-label="Buka menu" onClick={()=>setMobileNavOpen(true)}>☰</button>
+        <img src="/logo.png" alt="mGas" style={{filter:"invert(1) brightness(2)"}} />
+        <div className="mt-title">M GAS STEEL</div>
+        <SyncStatusBadge status={syncStatus} />
+      </div>
+
+      {mobileNavOpen && <div className="nav-backdrop" onClick={()=>setMobileNavOpen(false)} />}
+
+      <div className="app-body">
+        <nav className={`sidebar${mobileNavOpen ? " open" : ""}`} aria-label="Navigasi utama">
+          <div className="sb-brand">
+            <img src="/logo.png" alt="mGas" />
+            <div className="sb-brand-text">
+              <div className="name">M GAS STEEL</div>
+              <div className="sub">SISTEM KEPUTUSAN STAF</div>
+            </div>
+            <button type="button" className="sb-drawer-close" aria-label="Tutup menu" onClick={()=>setMobileNavOpen(false)}>✕</button>
+          </div>
+          <div className="sb-nav">{sidebarNav}</div>
+          <div className="sb-foot">
+            <div className="sb-avatar">{initialsOf(session.name)}</div>
+            <div>
+              <div className="sb-who-name">{session.name.split(" ")[0]}</div>
+              <div className="sb-who-role">{session.role}</div>
+            </div>
+            <button type="button" className="sb-logout" title="Log keluar" onClick={doLogout}>⏻</button>
+          </div>
+        </nav>
+
+        <div className="main-col">
+          <div className="main-topbar">
+            <div className="mt-crumb">{activeGroup?.label}</div>
+            <div className="mt-crumb">/</div>
+            <div className="mt-title">{stripLabelIcon(activeTabObj?.label || "")}</div>
+            <div className="mt-right">
               <SyncStatusBadge status={syncStatus} />
-              <span style={{ background:"rgba(255,255,255,0.1)", color:"#94a3b8", fontSize:11, padding:"3px 10px", borderRadius:20 }}>
-                {prices.filter(p=>p.hasPrice||p.price>0).length} harga aktif
-              </span>
+              <span className="mt-prices-count">{pricesActiveCount} harga aktif</span>
             </div>
           </div>
-          <div style={{ display:"flex", gap:7, flexWrap:"wrap", alignItems:"center" }}>
-            {TABS.map(t => {
-              const isActive = tab===t.key;
-              const isAlert  = ["reconcile","daily","purchasing","queries","activity","users"].includes(t.key);
-              return (
-                <button key={t.key} onClick={()=>setTab(t.key)} style={{
-                  padding:"8px 14px", border:"none", cursor:"pointer", borderRadius:9,
-                  fontWeight:600, fontSize:12, transition:"all 0.15s",
-                  background: isActive ? C.accent : C.navy,
-                  color: isActive ? "#fff" : isAlert ? "#fca5a5" : "#cbd5e1",
-                }}>{t.label}{t.key === "reconcile" && rcAlert ? (
-                  <span style={{ marginLeft:6, background:"#dc2626", color:"#fff",
-                                 borderRadius:10, padding:"1px 7px", fontSize:10, fontWeight:800 }}>
-                    {rcAlert.count}
-                  </span>
-                ) : null}</button>
-              );
-            })}
-            <button onClick={async()=>{ await logActivity(session,"Logout",""); localStorage.removeItem("mgas_login_time"); await supabase.auth.signOut(); clearSession(); setSession_(null); }}
-              style={{ marginLeft:"auto", padding:"6px 12px", background:"rgba(255,255,255,0.1)", color:"#94a3b8", border:"none", borderRadius:6, fontSize:11, fontWeight:600, cursor:"pointer" }}>
-              {session.name.split(" ")[0]} · Keluar
-            </button>
-          </div>
-        </div>
-      </div>
-      <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" || tab==="assistant" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
-        {rcAlert && tab !== "reconcile" && (
-          <div onClick={() => setTab("reconcile")}
-            style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", color:"#991b1b",
-                     borderRadius:10, padding:"10px 16px", marginBottom:14, fontSize:13,
-                     fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:8 }}>
-            ⚠️ Semakan PO auto (CRM) menemui {rcAlert.count} pengecualian — klik untuk lihat laporan.
-          </div>
-        )}
-        {tab==="assistant" && <AssistantTab prices={prices} gsStatus={gsStatus} session={session} />}
-        {tab==="plate" && <PlateCalculator session={session} />}
-        {tab==="katalog" && <KatalogTab session={session} />}
-        {tab==="quote" && <QuotationTab session={session} prices={prices} />}
-        {tab==="temp_invoice" && hasPerm(session, "temp_invoice") && <TempInvoiceTab session={session} prices={prices} />}
-        {tab==="temp_sales_flow" && hasPerm(session, "temp_sales_flow") && <TempSalesFlowTab session={session} prices={prices} />}
-        {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
-        {tab==="activity"  && session.role==="owner" && <ActivityTab />}
-        {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
-        {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
-        {tab==="queries" && canAccessReconcile(session) && <QueriesTab session={session} />}
-        {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
-        {canAccessReconcile(session) && (
+
+          <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" || tab==="assistant" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
+            {rcAlert && tab !== "reconcile" && (
+              <div onClick={() => setTab("reconcile")}
+                style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", color:"#991b1b",
+                         borderRadius:10, padding:"10px 16px", marginBottom:14, fontSize:13,
+                         fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:8 }}>
+                ⚠️ Semakan PO auto (CRM) menemui {rcAlert.count} pengecualian — klik untuk lihat laporan.
+              </div>
+            )}
+            {tab==="assistant" && <AssistantTab prices={prices} gsStatus={gsStatus} session={session} />}
+            {tab==="plate" && <PlateCalculator session={session} />}
+            {tab==="katalog" && <KatalogTab session={session} />}
+            {tab==="quote" && <QuotationTab session={session} prices={prices} />}
+            {tab==="temp_invoice" && hasPerm(session, "temp_invoice") && <TempInvoiceTab session={session} prices={prices} />}
+            {tab==="temp_sales_flow" && hasPerm(session, "temp_sales_flow") && <TempSalesFlowTab session={session} prices={prices} />}
+            {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
+            {tab==="activity"  && session.role==="owner" && <ActivityTab />}
+            {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
+            {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
+            {tab==="queries" && canAccessReconcile(session) && <QueriesTab session={session} />}
+            {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
+            {canAccessReconcile(session) && (
               <div style={{ display: tab==="reconcile" ? "block" : "none" }}>
                 <ReconcileTab session={session} results={rcResults} setResults={setRcResults} />
               </div>
             )}
+          </div>
+        </div>
       </div>
     </div>
   );

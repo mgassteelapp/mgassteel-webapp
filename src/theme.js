@@ -7,6 +7,7 @@ export const C = {
   // ── Brand (maroon restyle) ──────────────────────────────────────────────
   navy: "#8E1315",        // brand maroon — replaces old navy as primary/header color
   accent: "#A83236",      // lighter maroon tint — CTA buttons
+  accentSoft: "#F3E4E1",  // pale maroon tint — active sidebar-item background
   border: "#E4DFDC",      // card/panel hairline border
   borderInput: "#D6D0CD", // input-specific border (slightly darker than card border)
   gray: "#EFECEA",        // muted surface — segmented control / pill backgrounds

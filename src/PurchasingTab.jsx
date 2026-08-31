@@ -142,7 +142,6 @@ const PILLS = ['Others', 'Hardware', 'Pipes', 'IBEAM', 'Stainless Steel', 'Sheet
 
 function LowStockPanel({ session, onPickCode }) {
   const [data, setData] = useState(null); // { items, count, computed_at }
-  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedPill, setSelectedPill] = useState('Semua');
 
@@ -186,19 +185,14 @@ function LowStockPanel({ session, onPickCode }) {
   return (
     <div style={{ background:C.redLight, border:`1px solid #fca5a5`, borderRadius:10,
                   marginBottom:14, overflow:'hidden' }}>
-      <button onClick={() => setExpanded(v => !v)} style={{
+      <div style={{
         width:'100%', display:'flex', alignItems:'center', gap:8, justifyContent:'space-between',
-        background:'none', border:'none', cursor:'pointer', padding:'10px 14px', textAlign:'left',
-        fontFamily:'inherit' }}>
+        padding:'10px 14px', textAlign:'left' }}>
         <span style={{ fontSize:12.5, fontWeight:700, color:C.red }}>
           ⚠️ {data.count} item di bawah paras reorder
         </span>
-        <span style={{ fontSize:11, color:C.red, fontWeight:600 }}>
-          {expanded ? '▲ Tutup' : '▼ Lihat senarai'}
-        </span>
-      </button>
-      {expanded && (
-        <div style={{ borderTop:'1px solid #fca5a5' }}>
+      </div>
+      <div style={{ borderTop:'1px solid #fca5a5' }}>
           <div style={{ fontSize:10.5, color:C.red, padding:'8px 14px 4px', opacity:0.8 }}>
             Dikira setakat {fmtT(data.computed_at)} — paras reorder = (purata jualan bulanan ÷ 4) × 2
           </div>
@@ -274,7 +268,6 @@ function LowStockPanel({ session, onPickCode }) {
             )}
           </div>
         </div>
-      )}
     </div>
   );
 }

@@ -109,7 +109,7 @@ const PERM_FEATURES = [
   { key: "queries",    label: "Pertanyaan Harga",  def: (r) => ["owner","senior","manager"].includes(r) },
   { key: "quote",      label: "Sebut Harga",       def: () => true },
   { key: "temp_invoice", label: "Cash Sales Sementara", def: () => true },
-  { key: "temp_sales_flow", label: "Jualan Sementara", def: () => true },
+  { key: "temp_sales_flow", label: "SO/DO/INV Sementara", def: () => true },
 ];
 function hasPerm(sess, key) {
   if (!sess) return false;
@@ -560,7 +560,7 @@ export default function App() {
       { key:"temp_invoice", label:"🧾 Cash Sales Sementara" },
     ] : []),
     ...(hasPerm(session, "temp_sales_flow") ? [
-      { key:"temp_sales_flow", label:"📝 Jualan Sementara" },
+      { key:"temp_sales_flow", label:"📝 SO/DO/INV Sementara" },
     ] : []),
     ...(hasPerm(session, "prices") ? [
       { key:"prices", label:"💰 Senarai Harga" },

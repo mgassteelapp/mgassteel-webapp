@@ -538,7 +538,7 @@ export default function TempSalesFlowTab({ session, prices }) {
       <div style={card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexWrap:'wrap', gap:8 }}>
           <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
-            📋 Senarai Jualan Sementara {pendingCount > 0 && (
+            📋 Senarai SO/DO/INV Sementara {pendingCount > 0 && (
               <span style={{ marginLeft:6, background:C.amberBg, color:C.amber, borderRadius:20,
                              padding:'2px 10px', fontSize:11.5, fontWeight:800 }}>
                 {pendingCount} belum dikeluarkan semula

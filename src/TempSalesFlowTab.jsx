@@ -143,6 +143,13 @@ function printFlowHTML(rowRaw, stage) {
   .sign .lbl { font-size:11px; font-weight:700; color:#475569; }
   .sign .sub { font-size:10px; color:#94a3b8; margin-top:2px; }
   .foot { font-size:10.5px; color:#94a3b8; margin-top:26px; line-height:1.6; }
+  .kuning-block { text-align:center; margin-top:30px; }
+  .kuning-block .word { display:inline-block; background:#facc15; color:#1e2d3d;
+    font-size:30px; font-weight:900; letter-spacing:10px; padding:8px 28px;
+    border:2px solid #1e2d3d; border-radius:6px; }
+  .kuning-block .qr { margin-top:14px; }
+  .kuning-block .qr img { width:110px; height:110px; }
+  .kuning-block .qr-cap { font-size:9.5px; color:#94a3b8; margin-top:4px; }
   @media print { .noprint { display:none; } body { padding:0; } }
 </style></head><body>
   <div class="hdr">
@@ -177,6 +184,15 @@ function printFlowHTML(rowRaw, stage) {
 
   ${signBlocks}
 
+  ${stage === 'picking' ? `
+  <div class="kuning-block">
+    <div class="word">KUNING</div>
+    <div class="qr">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(docNoFor(row, 'picking'))}" alt="QR ${esc(docNoFor(row, 'picking'))}" />
+      <div class="qr-cap">${esc(docNoFor(row, 'picking'))}</div>
+    </div>
+  </div>` : ''}
+
   <div class="foot">
     Dokumen ini dijana oleh sistem dalaman M Gas Steel Sdn Bhd sebagai rekod sementara sahaja.<br/>
     No. dokumen ini (${esc(docNoFor(row, stage))}) adalah rujukan dalaman — bukan nombor rasmi SQL Account.
@@ -186,11 +202,23 @@ function printFlowHTML(rowRaw, stage) {
 </body></html>`;
 }
 
-function openFlowPrint(row, stage) {
+// Split in two so callers with an async gap (save/advance both await a
+// Supabase call before the document is ready) can open the tab BEFORE the
+// await — browsers only allow window.open() without blocking when it's
+// still inside the synchronous click handler. Opening it early, then
+// writing into it once data arrives, avoids the "Pop-up disekat" block.
+function openBlankPrintWindow() {
   const w = window.open('', '_blank');
-  if (!w) { alert('Pop-up disekat — sila benarkan pop-up untuk cetak dokumen.'); return; }
+  if (!w) alert('Pop-up disekat — sila benarkan pop-up untuk cetak dokumen.');
+  return w;
+}
+function writeFlowPrint(w, row, stage) {
+  if (!w) return;
   w.document.write(printFlowHTML(row, stage));
   w.document.close();
+}
+function openFlowPrint(row, stage) {
+  writeFlowPrint(openBlankPrintWindow(), row, stage);
 }
 
 // ── Draft autosave — same pattern as Invois Sementara ──
@@ -304,6 +332,7 @@ export default function TempSalesFlowTab({ session, prices }) {
     setError('');
     if (!custName.trim()) { setError('Sila isi nama pelanggan.'); return; }
     if (!lines.length)    { setError('Sila tambah sekurang-kurangnya satu barang.'); return; }
+    const printWin = openBlankPrintWindow(); // BEFORE any await — see note above
     setSaving(true);
     try {
       const { data: no, error: e1 } = await supabase.rpc('next_temp_flow_no');
@@ -325,8 +354,9 @@ export default function TempSalesFlowTab({ session, prices }) {
       setSavedRow(ins); setSavedStage('so');
       resetForm();
       load();
-      openFlowPrint(ins, 'so');
+      writeFlowPrint(printWin, ins, 'so');
     } catch (e) {
+      if (printWin) printWin.close();
       setError('Gagal simpan: ' + String(e?.message || e));
     }
     setSaving(false);
@@ -336,12 +366,13 @@ export default function TempSalesFlowTab({ session, prices }) {
   const advance = async (row) => {
     const next = STAGE_CFG[row.stage]?.next;
     if (!next) return;
+    const printWin = openBlankPrintWindow(); // BEFORE any await — see note above
     const patch = { stage: next, [`${next}_by`]: session.name, [`${next}_at`]: new Date().toISOString() };
     const { data, error: e } = await supabase.from('temp_sales_flow')
       .update(patch).eq('id', row.id).select('*').single();
-    if (e) { alert('Gagal kemaskini: ' + e.message); return; }
+    if (e) { if (printWin) printWin.close(); alert('Gagal kemaskini: ' + e.message); return; }
     setRows(rs => rs.map(r => r.id === row.id ? data : r));
-    openFlowPrint(data, next);
+    writeFlowPrint(printWin, data, next);
   };
 
   const setStatus = async (row, status) => {
@@ -481,7 +512,7 @@ export default function TempSalesFlowTab({ session, prices }) {
       <div style={card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexWrap:'wrap', gap:8 }}>
           <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
-            📋 Senarai Aliran Jualan Sementara {pendingCount > 0 && (
+            📋 Senarai Jualan Sementara {pendingCount > 0 && (
               <span style={{ marginLeft:6, background:C.amberBg, color:C.amber, borderRadius:20,
                              padding:'2px 10px', fontSize:11.5, fontWeight:800 }}>
                 {pendingCount} belum dikeluarkan semula

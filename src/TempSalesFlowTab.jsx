@@ -56,6 +56,12 @@ const fmt = (n) => (Number(n) || 0).toFixed(2);
 const fmtRM = (n) => 'RM ' + (Number(n) || 0).toLocaleString('en-MY', { minimumFractionDigits:2, maximumFractionDigits:2 });
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const docNoFor = (row, stage) => `${STAGE_CFG[stage].prefix}${row.flow_no}`;
+// Real SQL Account invoice numbers are 'IV-' + 8 digits (e.g. IV-26083100).
+// Wylee: getting this exact number right matters more than anything else in
+// this flow, so it's format-checked before staff can even reach the confirm
+// step, not just free text.
+const IV_NO_RE = /^IV-\d{8}$/i;
+const isValidIvNo = (s) => IV_NO_RE.test((s || '').trim());
 
 function stampFor(row, stage) {
   const at = row[`${stage}_at`], by = row[`${stage}_by`];
@@ -386,16 +392,17 @@ export default function TempSalesFlowTab({ session, prices }) {
   const startReissue = (row) => { setReissueRow(row); setReissueNo(''); setReissueStep('input'); };
   const cancelReissue = () => { setReissueRow(null); setReissueNo(''); setReissueStep('input'); };
   const confirmReissue = async () => {
-    if (!reissueRow || !reissueNo.trim()) return;
+    if (!reissueRow || !isValidIvNo(reissueNo)) return;
+    const ivNo = reissueNo.trim().toUpperCase();
     setReissueSaving(true);
     const { error: e } = await supabase.from('temp_sales_flow').update({
-      status: 'reissued', sql_invoice_no: reissueNo.trim(),
+      status: 'reissued', sql_invoice_no: ivNo,
       status_updated_at: new Date().toISOString(), status_updated_by: session.name,
     }).eq('id', reissueRow.id);
     setReissueSaving(false);
     if (e) { alert('Gagal kemaskini: ' + e.message); return; }
     setRows(rs => rs.map(r => r.id === reissueRow.id
-      ? { ...r, status: 'reissued', sql_invoice_no: reissueNo.trim(), status_updated_by: session.name }
+      ? { ...r, status: 'reissued', sql_invoice_no: ivNo, status_updated_by: session.name }
       : r));
     cancelReissue();
   };
@@ -638,17 +645,25 @@ export default function TempSalesFlowTab({ session, prices }) {
                 <input value={reissueNo} onChange={e => setReissueNo(e.target.value)} autoFocus
                   placeholder="cth: IV-26083100"
                   style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:8,
-                           border:`1.5px solid ${C.border}`, fontSize:14, fontFamily:'inherit', marginBottom:16 }} />
+                           border:`1.5px solid ${reissueNo.trim() && !isValidIvNo(reissueNo) ? C.red : C.border}`,
+                           fontSize:14, fontFamily:'inherit', marginBottom:6 }} />
+                <div style={{ fontSize:11, marginBottom:16,
+                              color: reissueNo.trim() && !isValidIvNo(reissueNo) ? C.red : C.muted,
+                              fontWeight: reissueNo.trim() && !isValidIvNo(reissueNo) ? 700 : 500 }}>
+                  {reissueNo.trim() && !isValidIvNo(reissueNo)
+                    ? 'Format salah — mesti IV- diikuti 8 digit, cth: IV-26083100'
+                    : 'Format: IV- diikuti 8 digit (cth: IV-26083100)'}
+                </div>
                 <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
                   <button onClick={cancelReissue}
                     style={{ padding:'9px 16px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
                              borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
                     Batal
                   </button>
-                  <button onClick={() => reissueNo.trim() && setReissueStep('confirm')} disabled={!reissueNo.trim()}
-                    style={{ padding:'9px 18px', background: reissueNo.trim() ? C.navy : C.border,
+                  <button onClick={() => isValidIvNo(reissueNo) && setReissueStep('confirm')} disabled={!isValidIvNo(reissueNo)}
+                    style={{ padding:'9px 18px', background: isValidIvNo(reissueNo) ? C.navy : C.border,
                              color:C.white, border:'none', borderRadius:8, fontWeight:700, fontSize:13,
-                             cursor: reissueNo.trim() ? 'pointer' : 'not-allowed' }}>
+                             cursor: isValidIvNo(reissueNo) ? 'pointer' : 'not-allowed' }}>
                     Seterusnya
                   </button>
                 </div>
@@ -664,7 +679,7 @@ export default function TempSalesFlowTab({ session, prices }) {
                 <div style={{ textAlign:'center', background:C.gray, border:`1.5px solid ${C.border}`,
                               borderRadius:10, padding:'16px 12px', fontSize:22, fontWeight:900,
                               color:C.navy, letterSpacing:1, marginBottom:12 }}>
-                  {reissueNo.trim()}
+                  {reissueNo.trim().toUpperCase()}
                 </div>
                 <div style={{ background:C.redBg, border:`1px solid #fca5a5`, color:C.red, borderRadius:8,
                               padding:'8px 12px', fontSize:11.5, fontWeight:700, lineHeight:1.5, marginBottom:16 }}>

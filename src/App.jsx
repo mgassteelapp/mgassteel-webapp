@@ -6,6 +6,7 @@ import PlateCalculator from './PlateCalculator';
 import KatalogTab from './KatalogTab';
 import QuotationTab from './QuotationTab';
 import TempInvoiceTab from './TempInvoiceTab';
+import TempSalesFlowTab from './TempSalesFlowTab';
 import PurchasingTab from './PurchasingTab';
 
 
@@ -108,6 +109,7 @@ const PERM_FEATURES = [
   { key: "queries",    label: "Pertanyaan Harga",  def: (r) => ["owner","senior","manager"].includes(r) },
   { key: "quote",      label: "Sebut Harga",       def: () => true },
   { key: "temp_invoice", label: "Invois Sementara", def: () => true },
+  { key: "temp_sales_flow", label: "Aliran Jualan Sementara", def: () => true },
 ];
 function hasPerm(sess, key) {
   if (!sess) return false;
@@ -557,6 +559,9 @@ export default function App() {
     ...(hasPerm(session, "temp_invoice") ? [
       { key:"temp_invoice", label:"🧾 Invois Sementara" },
     ] : []),
+    ...(hasPerm(session, "temp_sales_flow") ? [
+      { key:"temp_sales_flow", label:"📝 Aliran Jualan Sementara" },
+    ] : []),
     ...(hasPerm(session, "prices") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
@@ -635,6 +640,7 @@ export default function App() {
         {tab==="katalog" && <KatalogTab session={session} />}
         {tab==="quote" && <QuotationTab session={session} prices={prices} />}
         {tab==="temp_invoice" && hasPerm(session, "temp_invoice") && <TempInvoiceTab session={session} prices={prices} />}
+        {tab==="temp_sales_flow" && hasPerm(session, "temp_sales_flow") && <TempSalesFlowTab session={session} prices={prices} />}
         {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
         {tab==="activity"  && session.role==="owner" && <ActivityTab />}
         {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}

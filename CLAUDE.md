@@ -828,19 +828,15 @@ NOTE: deploy_edge_function MCP tool defaults verify_jwt=true which BREAKS the
 secret-only callers (cron, sync script, proxy) — always pass verify_jwt:false
 when redeploying run-reconcile or reconcile-proxy.
 
-**"Kos SQL Account" badge — REMOVED 2026-08-28.** The Cadangan PO detail card
-used to show `costs.sql_cost` (mgas-pricecheck) next to the manual `costs.cost`
-as a "pasaran naik/turun X% atas/bawah SQL" comparison. Sync-health audit
-found `sql_cost` was populated **once**, manually, on 2026-08-19, for only
-302 of 898 items (596 rows NULL, never synced), and nothing has refreshed it
-since — no cron job exists for it (mgas-pricecheck has no `cron.job` table at
-all; pg_cron isn't installed there), unlike `stock_items`/`prices`/`costs`
-which do have a real recurring sync. The badge was silently comparing against
-up-to-9-day-old or missing data as if it were live, so it was pulled from the
-UI rather than left misleading staff. `sql_cost`/`sql_cost_updated_at`
-columns are untouched in the DB if this is ever wired into a real recurring
-sync later (would need a defined source pipeline from SQL Account, same
-shape as `stock_items`'s sync).
+**"Kos SQL Account" badge — REMOVED 2026-08-28, RESTORED 2026-08-30.** The
+Cadangan PO detail card shows `costs.sql_cost` (mgas-pricecheck) next to the
+manual `costs.cost` as a "Kos SQL: RM X (↑/↓ Y%)" comparison — same badge as
+QuotationTab (Sebut Harga), which never had it removed. It was pulled
+2026-08-28 because `sql_cost` was populated **once**, manually, on
+2026-08-19, for only 302 of 898 items, with no recurring sync — see §18 for
+why that was misleading and how it's fixed now. Restored once §18's real
+sync landed and was verified live (944/1503 items with non-null `sql_cost`
+immediately after the first sync run, refreshed daily).
 
 ### 15. Aktiviti / Pengguna / Deals / Senario — Supabase (Apps Script dead)
 
@@ -910,3 +906,91 @@ a "HABIS" badge. A residual ~49 "Others"-pill rows are genuinely orphaned
 historical item codes with no matching `stock_items` row under any known
 alias — a real data-cleanup backlog, not a join bug; don't try to "fix" it
 by loosening the match.
+
+### 18. `costs.sql_cost` recurring sync (2026-08-30) — replaces the 2026-08-19 one-off
+
+Per Wylee: the SQL-cost comparison badge (§14) is wanted, not disposable —
+"why stale, i need it" — so instead of leaving it removed, a real scheduled
+pipeline now keeps `costs.sql_cost` (mgas-pricecheck) fresh, mirroring how
+`stock_items` itself is kept fresh (15-min SQL Account sync via Windows Task
+Scheduler, mgas-crm-side).
+
+**Source & aggregation.** `syncSqlCost()` (run-reconcile.ts, mgas-crm) reads
+`stock_items.unit_cost` (populated by the same 15-min sync as stock qty) and
+groups it by **exact-match** `item_code` — same precedent as
+`reorder_candidates()`, not `familyOf()` family-matching — because every
+sample checked showed `costs.item_code` matches `stock_items.item_code`
+byte-for-byte already. Rows with `unit_cost = 0` are dropped before
+averaging (259/1616 stock_items rows are zero-cost, and 199 of those are
+also zero-qty — SQL Account reporting "no cost basis" for a branch holding
+no stock, not a genuinely free item). Items with stock at more than one
+branch get a qty-weighted average so a high-stock branch's cost dominates a
+near-empty one's. As of the first live run this collapsed 968 positive-cost
+`stock_items` rows into 758 distinct item codes.
+
+**Cross-project push.** Same pattern as `lowStockScan()` → `telegram-bot`:
+`syncSqlCost()` POSTs the computed `{item_code, sql_cost}[]` to
+mgas-pricecheck's `reconcile-proxy` (action `"syncSqlCost"`), authenticated
+with the `x-reconcile-secret` header against `reconcile_config.shared_secret`
+— same shared value on both projects by design. `reconcile-proxy` gained an
+internal-secret branch (checked before the browser-JWT flow, which it
+bypasses entirely) that upserts `{item_code, sql_cost, sql_cost_updated_at}`
+into `costs` in batches of 500, keyed on the `item_code` primary key. This
+only ever writes `sql_cost`/`sql_cost_updated_at` — the manual `cost` and its
+`updated_at` are untouched on an existing row; a brand-new item_code (one
+with SQL cost data but no manual cost yet) gets `cost`'s column default (0)
+until someone sets it by hand.
+
+**Schedule.** `pg_cron` job `sync-sql-cost-daily` on mgas-crm, `45 4 * * *`
+UTC, calls `run-reconcile` action `"syncSqlCost"` — mgas-pricecheck has no
+`pg_cron` installed, so (as with every other cross-project job here) the
+cron lives on the mgas-crm side and pushes out, never the reverse.
+
+**Deploy versions:** run-reconcile v25→v26, reconcile-proxy v11→v12 (deployed
++ byte-diff-verified against the live pulled copy, same procedure as v23's
+`familyOf()` change). First live run: 758 computed, 758 upserted, `costs`
+went from 302→944 rows with non-null `sql_cost` (898→1503 total rows, since
+new item_codes not previously in `costs` are now inserted too, not just
+updated).
+
+**Known gap, not yet addressed:** the stock projection formula (§ above,
+`stockProjection()`) only nets Sales Orders, Delivery Orders, and Purchase
+Orders. It does not account for Cash Sales (`sales_documents` doc_type
+`SL_CS` — 8,671 rows, still occurring daily) or standalone Invoices with no
+linked DO (`sales_document_items.from_doctype IS NULL`, doc_type `SL_IV` —
+~92,662 rows, also still occurring daily). Both bypass the SO→DO chain
+entirely. Whether this actually under/overstates "Stok Sebenar utk Jualan"
+depends on whether Cash Sales deduct stock immediately in SQL Account the
+same way a DO does (unconfirmed — Wylee to verify against actual usage).
+If so, the same sync-gap correction the DO logic already does would need
+extending to these two document types. Flagged 2026-08-31, not yet built.
+
+### 19. Aliran Jualan Sementara (Temp Sales Flow) — 2026-08-31
+
+New tab, `src/TempSalesFlowTab.jsx`, alongside the existing Invois Sementara
+(§ above — invoice-only). Per Wylee: "sales order, picking list, delivery
+order, invoice ... all temporary usage with no relationship to sql" — a
+fuller stopgap for SQL Account outages, covering the whole paper trail
+(SO → Picking List → DO → Invoice) rather than just the final invoice,
+before everything gets re-entered into real SQL Account once the
+connection is back.
+
+One row per transaction in `temp_sales_flow` (mgas-pricecheck) carries a
+single `stage` column (`so`|`picking`|`do`|`invoice`) that advances as
+staff progress it — items/customer are entered once at the SO stage and
+locked from then on, never re-entered per stage. Printing produces the
+stage-appropriate document (SO/Picking List have no visible cost figures;
+DO and Invoice show price and total) with its own per-stage timestamp/by
+columns (`so_at`/`so_by`, `picking_at`/`picking_by`, etc.). All four
+documents for one transaction share a single number from
+`next_temp_flow_no()` (e.g. `2608-001`), prefixed per stage on the printed
+page (`TMPSO-2608-001`, `TMPPL-2608-001`, `TMPDO-2608-001`,
+`TMPINV-2608-001`) — deliberately a separate sequence from Invois
+Sementara's own `TMP2608-###` numbers so the two features never collide.
+`status` (`pending`/`reissued`) mirrors Invois Sementara's own reissue
+tracking — marked reissued once the whole flow has been manually re-entered
+into SQL Account, same owner/senior/manager-only gate. New permission key
+`temp_sales_flow` (default: all active staff, same as `temp_invoice`).
+RLS policies (`tsf_insert`/`tsf_select`/`tsf_update`) and the counter
+function/table are exact mirrors of `temp_invoices`'/`next_temp_invoice_no`'s
+existing pattern.

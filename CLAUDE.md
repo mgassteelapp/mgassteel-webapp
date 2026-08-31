@@ -1014,3 +1014,58 @@ must not be reversible.
 just one commit earlier, one test row at the time) rather than migrating
 for a same-day rename - it now holds CS- numbers, not IV- numbers, despite
 the name.
+
+### 21. Permintaan Pembelian (Purchase Request / PR) — 2026-08-31
+
+Design-first feature (approved via an interactive mockup, 5 rounds of
+feedback) built into `PurchasingTab.jsx` (the item search + "Tambah ke PR"
+mini-form, inside the existing "Cadangan Order" navy decision card, plus a
+running PR items table underneath) and a new `PurchaseRequestsTab.jsx`
+("Senarai PR" — list of saved PRs). New sidebar sub-item under the "AI
+Smart Check" group (§ formerly "Pembelian" before the sidebar reorg):
+Cadangan PO / Senarai PR alongside Check Daily Sales Price / Check Daily
+Purchase Order.
+
+**Pricing model — deliberately NOT the app's `tiers` qty-band pattern.**
+Wylee explicitly rejected qty-tier pricing for this feature ("the tier
+harga is not i wanted, remove it"): each PR line uses List Price + three
+successive percentage discounts (`Disc 1/2/3`), cascading — each discount
+applies to what's left after the prior one, not summed:
+
+```
+finalPrice = round2( listPrice × (1 − disc1/100) × (1 − disc2/100) × (1 − disc3/100) )
+```
+
+See `computeFinalPrice()` in `PurchasingTab.jsx`.
+
+**Weight.** `prices.weight_per_unit` (new nullable numeric column,
+mgas-pricecheck) is mapped client-side as `weightPerUnit` in `loadPrices()`
+(App.jsx). When set, the PR mini-form auto-fills the Berat/unit field and
+shows a green "✓ Berat dari data tersimpan" flag; when absent it shows an
+amber "⚠ Tiada data berat tersimpan — isi manual" flag and staff enter it
+by hand. No automated import pipeline yet — population is manual/one-off
+SQL, the same bootstrap path `sql_cost` used before its real sync (§18)
+existed.
+
+**Kos SQL reference** — owner-only (hard rule, `session.role === 'owner'`,
+same as `canSeeCostMargin` in App.jsx; PurchasingTab had no cost-gating
+before this feature, everything else in that file still renders cost
+unconditionally).
+
+**Persistence** — `purchase_requests` (mgas-pricecheck) is a single table
+with `items` as a jsonb array, mirroring `temp_sales_flow`'s convention
+(§19) rather than a child line-items table: `id, pr_no, status
+('draf'|'dihantar'), supplier_name, items, total_price, total_weight,
+notes, created_by, created_at, status_updated_at, status_updated_by`.
+`next_pr_no()` (`PR-YYMM-NNN`, e.g. `PR-2608-001`) and
+`purchase_request_counters` mirror `next_temp_flow_no()` /
+`temp_sales_flow_counters` exactly. RLS (`pr_insert`/`pr_select`/
+`pr_update`) mirrors `tsf_insert`/`tsf_select`/`tsf_update`: any
+authenticated user can create; only the creator or owner/senior/manager
+can see/edit.
+
+**Navigation between the two tabs** — `App.jsx` holds `openPrId` state.
+Opening a row in Senarai PR sets it and switches to Cadangan PO, which
+loads that PR into the builder; "+ PR Baru" (either page) clears it and
+resets the builder. Existing PO Belum Selesai / 3 Penerimaan Terakhir / Mill
+Price Monitor sections are untouched.

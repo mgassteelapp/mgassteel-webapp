@@ -8,6 +8,7 @@ import QuotationTab from './QuotationTab';
 import TempInvoiceTab from './TempInvoiceTab';
 import TempSalesFlowTab from './TempSalesFlowTab';
 import PurchasingTab from './PurchasingTab';
+import PurchaseRequestsTab from './PurchaseRequestsTab';
 import { C } from './theme';
 
 
@@ -32,6 +33,7 @@ async function loadPrices() {
       retailPrice: r.retail_price,
       bulkPrice: r.bulk_price,
       creditPrice: r.credit_price,
+      weightPerUnit: r.weight_per_unit,
     }));
   } catch (e) {
     return [];
@@ -185,7 +187,7 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 const NAV = [
   { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices"] },
   { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
-  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing"] },
+  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
   { type:"group", key:"chat_center",    label:"Chat Center",     icon:"💬", tabs:["broadcast","queries"] },
@@ -452,6 +454,7 @@ export default function App() {
   const [gsStatus,  setGsStatus]  = useState("connecting"); // connecting | ok | error
   const [openGroups, setOpenGroups] = useState(() => new Set([groupKeyForTab("assistant")])); // sidebar: which nav groups are expanded
   const [mobileNavOpen, setMobileNavOpen] = useState(false); // mobile drawer open/closed
+  const [openPrId, setOpenPrId] = useState(null); // uuid of a PR opened from Senarai PR into the Cadangan PO builder, or null for a fresh PR
 
   // Restore Supabase session on load
   useEffect(() => {
@@ -622,6 +625,7 @@ export default function App() {
     ] : []),
     ...(canAccessPurchasing(session) ? [
       { key:"purchasing", label:"📦 Cadangan PO" },
+      { key:"purchase_requests", label:"📋 Senarai PR" },
     ] : []),
     ...(hasPerm(session, "queries") ? [
       { key:"queries", label:"❓ Pertanyaan Harga" },
@@ -829,7 +833,22 @@ export default function App() {
             {tab==="broadcast" && session.role==="owner" && <BroadcastTab session={session} />}
             {tab==="activity"  && session.role==="owner" && <ActivityTab />}
             {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}
-            {tab==="purchasing" && canAccessPurchasing(session) && <PurchasingTab prices={prices} session={session} />}
+            {tab==="purchasing" && canAccessPurchasing(session) && (
+              <PurchasingTab
+                prices={prices}
+                session={session}
+                openPrId={openPrId}
+                onPrSaved={() => setOpenPrId(null)}
+                onOpenPrList={() => { setOpenPrId(null); goTab("purchase_requests"); }}
+              />
+            )}
+            {tab==="purchase_requests" && canAccessPurchasing(session) && (
+              <PurchaseRequestsTab
+                session={session}
+                onOpenPr={(prId) => { setOpenPrId(prId); goTab("purchasing"); }}
+                onNewPr={() => { setOpenPrId(null); goTab("purchasing"); }}
+              />
+            )}
             {tab==="queries" && canAccessReconcile(session) && <QueriesTab session={session} />}
             {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
             {canAccessReconcile(session) && (

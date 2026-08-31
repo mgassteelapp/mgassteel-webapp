@@ -123,6 +123,20 @@ function isWeighted(product = '') {
   return /\/mt|kg\/m|\bkg\b|rebar|coil|hrc|plate|\bbar\b/i.test(product);
 }
 
+// ── Purchase Request (PR) builder — Wylee 2026-08-31 ────────────────────────
+// Cascading percentage discount off List Price (NOT the qty-tier `tiers`
+// model QuotationTab/TempSalesFlowTab use — Wylee explicitly rejected tiers
+// for this feature): each discount applies to what's left after the prior
+// one, not summed. RM2dp rounding at the end only.
+function computeFinalPrice(listPrice, d1, d2, d3) {
+  let p = Number(listPrice) || 0;
+  for (const d of [d1, d2, d3]) {
+    const n = Number(d) || 0;
+    p = p * (1 - n / 100);
+  }
+  return Math.round(p * 100) / 100;
+}
+
 // ── Stok Rendah — reorder alert (Wylee 2026-08-25, pill redesign 2026-08-26) ─
 // reorder_level = (purata jualan bulanan ÷ 4 minggu) × 2 minggu, dikira
 // bertentangan dengan medan "reorder level" SQL Account (Wylee: tidak tepat).
@@ -272,7 +286,7 @@ function LowStockPanel({ session, onPickCode }) {
   );
 }
 
-export default function PurchasingTab({ prices = [], session }) {
+export default function PurchasingTab({ prices = [], session, openPrId = null, onPrSaved, onOpenPrList }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);   // the chosen price row
   // { qty_6mo, active_months } — the monthly average is derived in `calc` (calc.avgSold),
@@ -290,6 +304,149 @@ export default function PurchasingTab({ prices = [], session }) {
   const [market, setMarket, saveFx, marketUpdatedBy, marketLoaded] = useMarket(session);
   const [showMarketEdit, setShowMarketEdit] = useState(false);
   const [fxFailed, setFxFailed] = useState(false);
+
+  // ── PR (Permintaan Pembelian) builder state ──────────────────────────────
+  const [currentPrId, setCurrentPrId] = useState(null); // null = new PR not yet saved
+  const [prNo, setPrNo] = useState(null);
+  const [prStatus, setPrStatus] = useState('draf');
+  const [prLoading, setPrLoading] = useState(false);
+  const [savingPr, setSavingPr] = useState(false);
+  const [supplierName, setSupplierName] = useState('');
+  const [prItems, setPrItems] = useState([]); // [{itemCode, product, listPrice, disc1, disc2, disc3, finalPrice, qty, weightPerUnit, sqlCost, lineTotal, lineWeight}]
+  const [prNotice, setPrNotice] = useState(null); // {type:'ok'|'error', text}
+  // "Tambah ke PR" mini-form (List Price + 3 cascading discounts + qty + weight)
+  const [fList, setFList] = useState('');
+  const [fDisc1, setFDisc1] = useState('');
+  const [fDisc2, setFDisc2] = useState('');
+  const [fDisc3, setFDisc3] = useState('');
+  const [fQty, setFQty] = useState('');
+  const [fWeight, setFWeight] = useState('');
+  const [fWeightAuto, setFWeightAuto] = useState(false); // true = pre-filled from prices.weight_per_unit
+
+  const canSeeCost = session?.role === 'owner'; // hard owner-only rule, matches App.jsx canSeeCostMargin
+
+  // Load an existing PR into the builder when opened from "Senarai PR"
+  useEffect(() => {
+    if (!openPrId) return;
+    let cancelled = false;
+    (async () => {
+      setPrLoading(true);
+      try {
+        const { data, error } = await supabase.from('purchase_requests').select('*').eq('id', openPrId).maybeSingle();
+        if (error || !data) throw new Error(error?.message || 'PR tidak dijumpai');
+        if (cancelled) return;
+        setCurrentPrId(data.id);
+        setPrNo(data.pr_no);
+        setPrStatus(data.status || 'draf');
+        setSupplierName(data.supplier_name || '');
+        setPrItems(Array.isArray(data.items) ? data.items : []);
+        setPrNotice(null);
+      } catch (e) {
+        if (!cancelled) setPrNotice({ type: 'error', text: 'Gagal buka PR: ' + (e?.message || e) });
+      } finally {
+        if (!cancelled) setPrLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [openPrId]);
+
+  // Prefill the mini-form's List Price + Weight whenever a new item is picked
+  useEffect(() => {
+    if (!selected) return;
+    setFList(selected.listPrice != null ? String(selected.listPrice) : '');
+    setFDisc1(''); setFDisc2(''); setFDisc3(''); setFQty('');
+    if (selected.weightPerUnit != null && selected.weightPerUnit !== '') {
+      setFWeight(String(selected.weightPerUnit));
+      setFWeightAuto(true);
+    } else {
+      setFWeight('');
+      setFWeightAuto(false);
+    }
+  }, [selected]);
+
+  const prTotals = useMemo(() => {
+    const totalQty = prItems.reduce((a, b) => a + (Number(b.qty) || 0), 0);
+    const totalPrice = prItems.reduce((a, b) => a + (Number(b.lineTotal) || 0), 0);
+    const totalWeight = prItems.reduce((a, b) => a + (Number(b.lineWeight) || 0), 0);
+    return { totalQty, totalPrice, totalWeight, totalTonne: totalWeight / 1000 };
+  }, [prItems]);
+
+  const addToPr = () => {
+    if (!selected) return;
+    const qty = safeNum(fQty, 0);
+    if (qty <= 0) { setPrNotice({ type: 'error', text: 'Sila isi kuantiti sebelum tambah ke PR.' }); return; }
+    const listPrice = safeNum(fList, 0);
+    const d1 = safeNum(fDisc1, 0), d2 = safeNum(fDisc2, 0), d3 = safeNum(fDisc3, 0);
+    const weightPerUnit = safeNum(fWeight, 0);
+    const finalPrice = computeFinalPrice(listPrice, d1, d2, d3);
+    const line = {
+      itemCode: selected.itemCode,
+      product: selected.product,
+      listPrice, disc1: d1, disc2: d2, disc3: d3,
+      finalPrice, qty, weightPerUnit,
+      sqlCost: Number(selected.sqlCost) || 0,
+      lineTotal: Math.round(finalPrice * qty * 100) / 100,
+      lineWeight: Math.round(weightPerUnit * qty * 100) / 100,
+    };
+    setPrItems(items => [...items, line]);
+    setPrNotice(null);
+    setSelected(null); setQuery('');
+    setFList(''); setFDisc1(''); setFDisc2(''); setFDisc3(''); setFQty(''); setFWeight(''); setFWeightAuto(false);
+  };
+
+  const removePrLine = (idx) => setPrItems(items => items.filter((_, i) => i !== idx));
+
+  const startNewPr = () => {
+    setCurrentPrId(null); setPrNo(null); setPrStatus('draf');
+    setSupplierName(''); setPrItems([]); setPrNotice(null);
+    if (onPrSaved) onPrSaved();
+  };
+
+  const savePr = async (nextStatus) => {
+    if (prItems.length === 0) { setPrNotice({ type: 'error', text: 'Tambah sekurang-kurangnya satu item dahulu.' }); return; }
+    setSavingPr(true);
+    try {
+      let id = currentPrId, no = prNo;
+      if (!id) {
+        const { data: no_, error: noErr } = await supabase.rpc('next_pr_no');
+        if (noErr) throw noErr;
+        no = no_;
+        const { data, error } = await supabase.from('purchase_requests').insert({
+          pr_no: no,
+          status: nextStatus || 'draf',
+          supplier_name: supplierName || null,
+          items: prItems,
+          total_price: prTotals.totalPrice,
+          total_weight: prTotals.totalWeight,
+          created_by: session?.name || 'Unknown',
+        }).select('id').single();
+        if (error) throw error;
+        id = data.id;
+        setCurrentPrId(id); setPrNo(no); setPrStatus(nextStatus || 'draf');
+      } else {
+        const patch = {
+          supplier_name: supplierName || null,
+          items: prItems,
+          total_price: prTotals.totalPrice,
+          total_weight: prTotals.totalWeight,
+        };
+        if (nextStatus) {
+          patch.status = nextStatus;
+          patch.status_updated_at = new Date().toISOString();
+          patch.status_updated_by = session?.name || null;
+        }
+        const { error } = await supabase.from('purchase_requests').update(patch).eq('id', id);
+        if (error) throw error;
+        if (nextStatus) setPrStatus(nextStatus);
+      }
+      setPrNotice({ type: 'ok', text: `PR ${no} disimpan.` });
+      if (onPrSaved) onPrSaved();
+    } catch (e) {
+      setPrNotice({ type: 'error', text: 'Gagal simpan PR: ' + (e?.message || e) });
+    } finally {
+      setSavingPr(false);
+    }
+  };
 
   // Latest market value, so the fetch below can merge into whatever the user
   // may have edited while it was in flight instead of writing a stale object.
@@ -400,8 +557,20 @@ export default function PurchasingTab({ prices = [], session }) {
 
   return (
     <div>
-      <div style={{ fontSize:13, fontWeight:600, color:C.navy, marginBottom:4 }}>Cadangan PO — Keputusan Pembelian</div>
-      <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>Cari produk → lihat jualan & harga → cadangan kuantiti order</div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:4 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:600, color:C.navy }}>Cadangan PO — Keputusan Pembelian</div>
+          <div style={{ fontSize:12, color:C.muted, marginTop:2 }}>Cari produk → lihat jualan & harga → cadangan kuantiti order</div>
+        </div>
+        {onOpenPrList && (
+          <button onClick={onOpenPrList} style={{
+            background:C.white, border:`1px solid ${C.border}`, borderRadius:8, padding:'8px 14px',
+            fontSize:12, fontWeight:700, color:C.navy, cursor:'pointer', whiteSpace:'nowrap' }}>
+            📋 Senarai PR
+          </button>
+        )}
+      </div>
+      <div style={{ marginBottom:14 }} />
 
       <LowStockPanel session={session} onPickCode={setQuery} />
 
@@ -563,6 +732,49 @@ export default function PurchasingTab({ prices = [], session }) {
               {calc.offerNote && (
                 <div style={{ marginTop:6, fontSize:10.5, fontWeight:600, lineHeight:1.45, color: calc.dealTone==='buy'?'#86efac':calc.dealTone==='hold'?'#fca5a5':'#fde68a' }}>{calc.offerNote}</div>
               )}
+
+              {/* Tambah ke Permintaan Pembelian (PR) — List Price + 3 cascading % discounts */}
+              <div style={{ borderTop:'1px solid #39567a', marginTop:10, paddingTop:10 }}>
+                <div style={{ ...lbl, color:'#9db8d2' }}>Tambah ke Permintaan Pembelian (PR)</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:6, marginBottom:6 }}>
+                  <label style={{ fontSize:9.5, color:'#9db8d2' }}>List Price (RM)
+                    <input value={fList} onChange={e=>setFList(e.target.value)} inputMode="decimal" placeholder="0.00"
+                      style={{ width:'100%', boxSizing:'border-box', marginTop:2, border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:6, padding:'6px 7px', fontSize:12 }} /></label>
+                  <label style={{ fontSize:9.5, color:'#9db8d2' }}>Disc 1 (%)
+                    <input value={fDisc1} onChange={e=>setFDisc1(e.target.value)} inputMode="decimal" placeholder="0"
+                      style={{ width:'100%', boxSizing:'border-box', marginTop:2, border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:6, padding:'6px 7px', fontSize:12 }} /></label>
+                  <label style={{ fontSize:9.5, color:'#9db8d2' }}>+Disc 2 (%)
+                    <input value={fDisc2} onChange={e=>setFDisc2(e.target.value)} inputMode="decimal" placeholder="0"
+                      style={{ width:'100%', boxSizing:'border-box', marginTop:2, border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:6, padding:'6px 7px', fontSize:12 }} /></label>
+                  <label style={{ fontSize:9.5, color:'#9db8d2' }}>+Disc 3 (%)
+                    <input value={fDisc3} onChange={e=>setFDisc3(e.target.value)} inputMode="decimal" placeholder="0"
+                      style={{ width:'100%', boxSizing:'border-box', marginTop:2, border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:6, padding:'6px 7px', fontSize:12 }} /></label>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:6 }}>
+                  <label style={{ fontSize:9.5, color:'#9db8d2' }}>Kuantiti
+                    <input value={fQty} onChange={e=>setFQty(e.target.value)} inputMode="decimal" placeholder="0"
+                      style={{ width:'100%', boxSizing:'border-box', marginTop:2, border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:6, padding:'6px 7px', fontSize:12 }} /></label>
+                  <label style={{ fontSize:9.5, color:'#9db8d2' }}>Berat/unit (kg)
+                    <input value={fWeight} onChange={e=>{ setFWeight(e.target.value); setFWeightAuto(false); }} inputMode="decimal" placeholder="0.00"
+                      style={{ width:'100%', boxSizing:'border-box', marginTop:2, border:'1px solid #39567a', background:'#132f52', color:C.white, borderRadius:6, padding:'6px 7px', fontSize:12 }} /></label>
+                </div>
+                <div style={{ fontSize:10, marginBottom:8, color: fWeightAuto ? '#86efac' : '#fde68a', fontWeight:600 }}>
+                  {fWeightAuto ? '✓ Berat dari data tersimpan' : '⚠ Tiada data berat tersimpan — isi manual'}
+                </div>
+                <div style={{ background:'#132f52', border:'1px solid #39567a', borderRadius:7, padding:'8px 10px', marginBottom:8 }}>
+                  <div style={{ fontSize:9.5, color:'#9db8d2', textTransform:'uppercase', letterSpacing:.4 }}>Harga Akhir</div>
+                  <div style={{ fontSize:18, fontWeight:900 }}>RM{computeFinalPrice(fList, fDisc1, fDisc2, fDisc3).toFixed(2)}</div>
+                  {canSeeCost && calc.sqlCost > 0 && (
+                    <div style={{ fontSize:9.5, color:'#9db8d2', marginTop:2 }}>Rujukan Kos SQL: RM{calc.sqlCost.toFixed(2)}</div>
+                  )}
+                </div>
+                {prNotice && (
+                  <div style={{ fontSize:11, fontWeight:600, marginBottom:6, color: prNotice.type==='error' ? '#fca5a5' : '#86efac' }}>{prNotice.text}</div>
+                )}
+                <button onClick={addToPr} style={{
+                  width:'100%', background:C.accent, color:C.white, border:'none', borderRadius:7,
+                  padding:'9px', fontWeight:800, fontSize:12.5, cursor:'pointer' }}>+ Tambah ke PR</button>
+              </div>
             </div>
           </div>
 
@@ -642,6 +854,101 @@ export default function PurchasingTab({ prices = [], session }) {
           </div>
         </>
       )}
+
+      {/* ── Permintaan Pembelian (PR) semasa — running list of added lines ── */}
+      <div style={{ ...box, marginTop:14 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8, marginBottom:10 }}>
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color:C.navy }}>
+              Permintaan Pembelian (PR) Semasa
+              {prNo && <span style={{ marginLeft:8, fontWeight:600, fontSize:12, color:C.muted }}>{prNo}</span>}
+              {currentPrId && (
+                <span style={{ marginLeft:8, fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20,
+                  background: prStatus==='dihantar' ? C.blueLight : C.gray,
+                  color: prStatus==='dihantar' ? C.blue : C.muted }}>
+                  {prStatus==='dihantar' ? 'Dihantar' : 'Draf'}
+                </span>
+              )}
+            </div>
+            {prLoading && <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>Memuat PR…</div>}
+          </div>
+          {(currentPrId || prItems.length > 0) && (
+            <button onClick={startNewPr} style={{
+              background:'none', border:`1px solid ${C.border}`, borderRadius:7, padding:'6px 12px',
+              fontSize:11.5, fontWeight:700, color:C.accent, cursor:'pointer' }}>+ PR Baru</button>
+          )}
+        </div>
+
+        <label style={{ display:'block', fontSize:11, fontWeight:600, color:C.muted, marginBottom:10 }}>
+          Nama Supplier
+          <input value={supplierName} onChange={e=>setSupplierName(e.target.value)} placeholder="cth: Eastern Pipe & Tube"
+            style={{ width:'100%', boxSizing:'border-box', marginTop:4, border:`1px solid ${C.border}`, borderRadius:8, padding:'9px 11px', fontSize:13 }} />
+        </label>
+
+        {prItems.length === 0 ? (
+          <div style={{ fontSize:12, color:C.muted, padding:'10px 0' }}>Belum ada item — cari produk di atas dan "Tambah ke PR".</div>
+        ) : (
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead>
+                <tr style={{ color:C.muted, textAlign:'left', fontSize:10.5, textTransform:'uppercase' }}>
+                  <th style={{ padding:'0 8px 6px 0' }}>Kod / Nama</th>
+                  <th style={{ textAlign:'right', padding:'0 8px 6px' }}>Harga Akhir</th>
+                  <th style={{ textAlign:'right', padding:'0 8px 6px' }}>Qty</th>
+                  <th style={{ textAlign:'right', padding:'0 8px 6px' }}>Berat (kg)</th>
+                  <th style={{ textAlign:'right', padding:'0 8px 6px' }}>Jumlah RM</th>
+                  <th style={{ padding:'0 0 6px 8px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {prItems.map((it, i) => (
+                  <tr key={i} style={{ borderTop:`1px solid ${C.border}` }}>
+                    <td style={{ padding:'6px 8px 6px 0' }}>
+                      <div style={{ fontWeight:700, color:C.navy }}>{it.itemCode}</div>
+                      <div style={{ fontSize:10.5, color:C.muted }}>{it.product}</div>
+                    </td>
+                    <td style={{ textAlign:'right', padding:'6px 8px' }}>RM{Number(it.finalPrice).toFixed(2)}</td>
+                    <td style={{ textAlign:'right', padding:'6px 8px' }}>{it.qty}</td>
+                    <td style={{ textAlign:'right', padding:'6px 8px' }}>{Number(it.lineWeight).toFixed(1)}</td>
+                    <td style={{ textAlign:'right', padding:'6px 8px', fontWeight:700 }}>{Number(it.lineTotal).toFixed(2)}</td>
+                    <td style={{ padding:'6px 0 6px 8px', textAlign:'right' }}>
+                      <button onClick={()=>removePrLine(i)} style={{ background:'none', border:'none', color:C.red, cursor:'pointer', fontSize:14 }} title="Buang">✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{ borderTop:`2px solid ${C.navy}`, fontWeight:800 }}>
+                  <td style={{ padding:'8px 8px 0 0' }}>Jumlah</td>
+                  <td></td>
+                  <td style={{ textAlign:'right', padding:'8px 8px 0' }}>{prTotals.totalQty}</td>
+                  <td style={{ textAlign:'right', padding:'8px 8px 0' }}>{prTotals.totalWeight.toFixed(1)} kg{prTotals.totalTonne >= 0.1 ? ` (${prTotals.totalTonne.toFixed(2)} MT)` : ''}</td>
+                  <td style={{ textAlign:'right', padding:'8px 8px 0' }}>RM{prTotals.totalPrice.toFixed(2)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+
+        {prNotice && prItems.length > 0 && (
+          <div style={{ fontSize:11.5, fontWeight:600, marginTop:10, color: prNotice.type==='error' ? C.red : C.green }}>{prNotice.text}</div>
+        )}
+
+        <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
+          <button onClick={()=>savePr(currentPrId ? null : 'draf')} disabled={savingPr || prItems.length===0} style={{
+            background:C.white, border:`1px solid ${C.navy}`, color:C.navy, borderRadius:8, padding:'9px 16px',
+            fontWeight:700, fontSize:12.5, cursor: savingPr ? 'default' : 'pointer', opacity: prItems.length===0 ? 0.5 : 1 }}>
+            {savingPr ? 'Menyimpan…' : '💾 Simpan Draf'}
+          </button>
+          <button onClick={()=>savePr('dihantar')} disabled={savingPr || prItems.length===0} style={{
+            background:C.navy, border:'none', color:C.white, borderRadius:8, padding:'9px 16px',
+            fontWeight:700, fontSize:12.5, cursor: savingPr ? 'default' : 'pointer', opacity: prItems.length===0 ? 0.5 : 1,
+            boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
+            {savingPr ? 'Menyimpan…' : '📤 Hantar PR'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

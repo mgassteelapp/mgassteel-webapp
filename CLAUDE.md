@@ -967,7 +967,7 @@ extending to these two document types. Flagged 2026-08-31, not yet built.
 
 ### 19. Aliran Jualan Sementara (Temp Sales Flow) — 2026-08-31
 
-New tab, `src/TempSalesFlowTab.jsx`, alongside the existing Invois Sementara
+New tab, `src/TempSalesFlowTab.jsx`, alongside the existing Cash Sales Sementara
 (§ above — invoice-only). Per Wylee: "sales order, picking list, delivery
 order, invoice ... all temporary usage with no relationship to sql" — a
 fuller stopgap for SQL Account outages, covering the whole paper trail
@@ -987,10 +987,30 @@ documents for one transaction share a single number from
 page (`TMPSO-2608-001`, `TMPPL-2608-001`, `TMPDO-2608-001`,
 `TMPINV-2608-001`) — deliberately a separate sequence from Invois
 Sementara's own `TMP2608-###` numbers so the two features never collide.
-`status` (`pending`/`reissued`) mirrors Invois Sementara's own reissue
+`status` (`pending`/`reissued`) mirrors Cash Sales Sementara's own reissue
 tracking — marked reissued once the whole flow has been manually re-entered
 into SQL Account, same owner/senior/manager-only gate. New permission key
 `temp_sales_flow` (default: all active staff, same as `temp_invoice`).
 RLS policies (`tsf_insert`/`tsf_select`/`tsf_update`) and the counter
 function/table are exact mirrors of `temp_invoices`'/`next_temp_invoice_no`'s
 existing pattern.
+
+### 20. Invois Sementara -> Cash Sales Sementara (2026-08-31)
+
+Per Wylee: real transactions get entered into SQL Account as either an
+Invoice (IV-) or a Cash Sales (CS-), and the temp-document tabs were only
+ever built assuming Invoice. Decision: standardise on Cash Sales, not a
+toggle between the two - both `TempInvoiceTab.jsx` (renamed in the UI to
+"Cash Sales Sementara", tab key stays `temp_invoice` unchanged) and
+`TempSalesFlowTab.jsx`'s final stage (label changed from "Invois" to "Cash
+Sales", tab key/prefix `TMPINV` unchanged) now require staff to key in and
+confirm the real SQL **Cash Sales** number (`CS-` + 8 digits) before
+"Dikeluarkan Semula" locks the record - same two-step input-then-confirm
+modal in both tabs, "Buka semula" removed from both since a locked record
+must not be reversible.
+
+`temp_invoices` gained `sql_cash_sales_no` (new column, mgas-pricecheck).
+`temp_sales_flow` keeps its existing `sql_invoice_no` column name (added
+just one commit earlier, one test row at the time) rather than migrating
+for a same-day rename - it now holds CS- numbers, not IV- numbers, despite
+the name.

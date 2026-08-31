@@ -1,11 +1,19 @@
 // ════════════════════════════════════════════════════════════════════════════
-// INVOIS SEMENTARA (TEMPORARY INVOICE) TAB
+// CASH SALES SEMENTARA (TEMPORARY CASH SALES) TAB
 // For use when the SQL Account connection is down and staff still need to
 // hand a customer a proper-looking document. Same item-search + tier-price
-// pattern as Sebut Harga, but produces a real invoice number (TMP2608-001),
-// carries a clear "temporary — will be reissued as the e-Invoice" notice on
-// every printed copy, and is tracked here so owner/senior/manager can see
-// which ones are still waiting to be reissued once the connection is back.
+// pattern as Sebut Harga, but produces a temp doc number (TMP2608-001),
+// carries a clear "temporary — will be recorded as a real Cash Sales"
+// notice on every printed copy, and is tracked here so owner/senior/manager
+// can see which ones are still waiting to be reissued once the connection
+// is back.
+//
+// Wylee 2026-08-31: was "Invois Sementara" — changed to Cash Sales because
+// that's what these actually get entered as in SQL Account once the
+// connection is back, not an Invoice. Marking one "Dikeluarkan Semula" now
+// requires staff to key in and confirm the real SQL Cash Sales number
+// (CS- + 8 digits) before it locks — same mechanic as Jualan Sementara's
+// reissue flow, see TempSalesFlowTab.jsx.
 //
 // PDF: no extra library — opens a print-formatted window and lets the
 // browser's own "Save as PDF" in the print dialog produce the file.
@@ -23,8 +31,12 @@ const card = { background:C.white, borderRadius:14, border:`1px solid ${C.border
 
 const STATUS_CFG = {
   pending:  { bg:C.amberBg, tx:C.amber, label:'BELUM DIKELUARKAN SEMULA' },
-  reissued: { bg:C.greenBg, tx:C.green, label:'e-INVOIS DIKELUARKAN ✓' },
+  reissued: { bg:C.greenBg, tx:C.green, label:'CASH SALES DIREKOD ✓' },
 };
+
+// Real SQL Account Cash Sales numbers are 'CS-' + 8 digits (e.g. CS-26083100).
+const CS_NO_RE = /^CS-\d{8}$/i;
+const isValidCsNo = (s) => CS_NO_RE.test((s || '').trim());
 
 function tierPrice(p, qty) {
   const bands = (p.tiers || []).filter(t => t.qtyMin > 0 && t.price > 0)
@@ -99,7 +111,7 @@ function printInvoiceHTML(rowRaw) {
   <div class="hdr">
     <div>
       <h1>M GAS STEEL SDN BHD</h1>
-      <div class="sub">INVOIS SEMENTARA / TEMPORARY INVOICE</div>
+      <div class="sub">CASH SALES SEMENTARA / TEMPORARY CASH SALES</div>
     </div>
     <div class="right">
       <div class="no">${esc(row.invoice_no)}</div>
@@ -109,11 +121,11 @@ function printInvoiceHTML(rowRaw) {
   </div>
 
   <div class="notice">
-    ⚠ NOTA: Dokumen ini ialah INVOIS SEMENTARA yang dikeluarkan secara manual kerana
+    ⚠ NOTA: Dokumen ini ialah CASH SALES SEMENTARA yang dikeluarkan secara manual kerana
     sambungan sistem SQL Account sedang terganggu pada masa jualan ini dibuat.
-    Invois e-Invois (LHDN) rasmi akan dikeluarkan semula dan dihantar kepada anda
-    melalui e-mel atau WhatsApp sebaik sahaja sambungan pulih. Sila simpan dokumen
-    ini sebagai rujukan sementara sahaja, bukan invois cukai rasmi.
+    Rekod Cash Sales rasmi akan dimasukkan ke SQL Account sebaik sahaja sambungan
+    pulih. Sila simpan dokumen ini sebagai rujukan sementara sahaja, bukan dokumen
+    Cash Sales rasmi.
   </div>
 
   <div class="cust">
@@ -150,18 +162,29 @@ function printInvoiceHTML(rowRaw) {
 
   <div class="foot">
     Dokumen ini dijana oleh sistem dalaman M Gas Steel Sdn Bhd sebagai rekod sementara sahaja.<br/>
-    No. invois ini (${esc(row.invoice_no)}) adalah rujukan dalaman — bukan nombor e-Invois LHDN.
+    No. dokumen ini (${esc(row.invoice_no)}) adalah rujukan dalaman — bukan nombor Cash Sales rasmi SQL Account.
   </div>
 
   <script>window.onload = () => setTimeout(() => window.print(), 250);</script>
 </body></html>`;
 }
 
-function openInvoicePrint(row) {
+// Split in two so saveInvoice() (which awaits Supabase before the doc is
+// ready) can open the tab BEFORE the await — browsers only allow
+// window.open() without blocking when it's still inside the synchronous
+// click handler. See TempSalesFlowTab.jsx for the same fix, same reason.
+function openBlankPrintWindow() {
   const w = window.open('', '_blank');
-  if (!w) { alert('Pop-up disekat — sila benarkan pop-up untuk cetak invois.'); return; }
+  if (!w) alert('Pop-up disekat — sila benarkan pop-up untuk cetak dokumen.');
+  return w;
+}
+function writeInvoicePrint(w, row) {
+  if (!w) return;
   w.document.write(printInvoiceHTML(row));
   w.document.close();
+}
+function openInvoicePrint(row) {
+  writeInvoicePrint(openBlankPrintWindow(), row);
 }
 
 // ── Draft autosave — the form otherwise unmounts (and loses everything)
@@ -204,6 +227,12 @@ export default function TempInvoiceTab({ session, prices }) {
   const [saving,    setSaving]    = useState(false);
   const [error,     setError]     = useState('');
   const [savedRow,  setSavedRow]  = useState(null);
+
+  // ── reissue confirm modal state ──
+  const [reissueRow,  setReissueRow]  = useState(null); // row being reissued
+  const [csNo,        setCsNo]        = useState('');   // SQL Cash Sales no. staff typed
+  const [reissueStep, setReissueStep] = useState('input'); // 'input' | 'confirm'
+  const [reissueSaving, setReissueSaving] = useState(false);
 
   // ── history state ──
   const [rows,    setRows]    = useState([]);
@@ -315,6 +344,7 @@ export default function TempInvoiceTab({ session, prices }) {
         return;
       }
     }
+    const printWin = openBlankPrintWindow(); // BEFORE any await — see note above
     setSaving(true);
     try {
       const customerFields = {
@@ -343,18 +373,33 @@ export default function TempInvoiceTab({ session, prices }) {
       setSavedRow(saved);
       resetForm();
       load();
-      openInvoicePrint(saved);
+      writeInvoicePrint(printWin, saved);
     } catch (e) {
+      if (printWin) printWin.close();
       setError('Gagal simpan: ' + String(e?.message || e));
     }
     setSaving(false);
   };
 
-  const setStatus = async (row, status) => {
+  // Reissue is a one-way, confirmed action: staff must key in the REAL SQL
+  // Account Cash Sales number, confirm it back, and it locks permanently —
+  // no "buka semula" afterwards, so a wrong number can't quietly get reused.
+  const startReissue = (row) => { setReissueRow(row); setCsNo(''); setReissueStep('input'); };
+  const cancelReissue = () => { setReissueRow(null); setCsNo(''); setReissueStep('input'); };
+  const confirmReissue = async () => {
+    if (!reissueRow || !isValidCsNo(csNo)) return;
+    const no = csNo.trim().toUpperCase();
+    setReissueSaving(true);
     const { error: e } = await supabase.from('temp_invoices').update({
-      status, status_updated_at: new Date().toISOString(), status_updated_by: session.name,
-    }).eq('id', row.id);
-    if (!e) setRows(rs => rs.map(r => r.id === row.id ? { ...r, status, status_updated_by: session.name } : r));
+      status: 'reissued', sql_cash_sales_no: no,
+      status_updated_at: new Date().toISOString(), status_updated_by: session.name,
+    }).eq('id', reissueRow.id);
+    setReissueSaving(false);
+    if (e) { alert('Gagal kemaskini: ' + e.message); return; }
+    setRows(rs => rs.map(r => r.id === reissueRow.id
+      ? { ...r, status: 'reissued', sql_cash_sales_no: no, status_updated_by: session.name }
+      : r));
+    cancelReissue();
   };
 
   const filteredRows = rows.filter(r => statusFilter === 'ALL' || r.status === statusFilter);
@@ -368,17 +413,17 @@ export default function TempInvoiceTab({ session, prices }) {
 
       <div style={{ background:C.amberBg, border:`1.5px solid #eab308`, color:C.amber,
                      borderRadius:10, padding:'10px 14px', marginBottom:14, fontSize:12.5, fontWeight:600, lineHeight:1.6 }}>
-        ⚠ Guna ciri ini HANYA semasa sambungan SQL Account terputus. Invois yang dijana di sini
-        adalah rujukan dalaman sementara — bukan e-Invois LHDN rasmi. e-Invois sebenar mesti
-        dikeluarkan semula dan dihantar kepada pelanggan sebaik sambungan pulih (tandakan
-        "Dikeluarkan Semula" di bawah selepas itu dibuat).
+        ⚠ Guna ciri ini HANYA semasa sambungan SQL Account terputus. Dokumen yang dijana di sini
+        adalah rujukan dalaman sementara — bukan dokumen Cash Sales rasmi SQL Account. Rekod Cash
+        Sales sebenar mesti dimasukkan semula sebaik sambungan pulih, kemudian tandakan "Dikeluarkan
+        Semula" di bawah dan sahkan nombor CS- sebenar.
       </div>
 
       {/* ── Create / edit temp invoice ── */}
       <div style={card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
           <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
-            {editing ? `✏️ Mengedit ${editing.invoice_no}` : '🧾 Invois Sementara Baru'}
+            {editing ? `✏️ Mengedit ${editing.invoice_no}` : '🧾 Cash Sales Sementara Baru'}
           </div>
           {editing && (
             <button onClick={cancelEdit}
@@ -475,7 +520,7 @@ export default function TempInvoiceTab({ session, prices }) {
           <button onClick={saveInvoice} disabled={saving}
             style={{ padding:'10px 24px', background:saving ? C.border : C.navy, color:C.white,
                      border:'none', borderRadius:10, fontWeight:800, fontSize:13.5, cursor:saving ? 'not-allowed' : 'pointer' }}>
-            {saving ? 'Menyimpan…' : editing ? `✏️ Kemaskini & Cetak ${editing.invoice_no}` : '🧾 Simpan & Cetak Invois Sementara'}
+            {saving ? 'Menyimpan…' : editing ? `✏️ Kemaskini & Cetak ${editing.invoice_no}` : '🧾 Simpan & Cetak Cash Sales Sementara'}
           </button>
         </div>
         {error && <div style={{ marginTop:8, color:C.red, fontSize:12.5, fontWeight:600 }}>{error}</div>}
@@ -497,7 +542,7 @@ export default function TempInvoiceTab({ session, prices }) {
       <div style={card}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexWrap:'wrap', gap:8 }}>
           <div style={{ fontWeight:700, fontSize:14, color:C.navy }}>
-            📋 Senarai Invois Sementara {pendingCount > 0 && (
+            📋 Senarai Cash Sales Sementara {pendingCount > 0 && (
               <span style={{ marginLeft:6, background:C.amberBg, color:C.amber, borderRadius:20,
                              padding:'2px 10px', fontSize:11.5, fontWeight:800 }}>
                 {pendingCount} belum dikeluarkan semula
@@ -518,7 +563,7 @@ export default function TempInvoiceTab({ session, prices }) {
 
         {loading ? <div style={{ color:C.muted, fontSize:12.5 }}>Memuatkan…</div>
           : loadError ? <div style={{ color:C.red, fontSize:12.5 }}>Gagal memuatkan senarai.</div>
-          : filteredRows.length === 0 ? <div style={{ color:C.muted, fontSize:12.5 }}>Tiada invois sementara.</div>
+          : filteredRows.length === 0 ? <div style={{ color:C.muted, fontSize:12.5 }}>Tiada Cash Sales sementara.</div>
           : (
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12.5 }}>
@@ -542,6 +587,11 @@ export default function TempInvoiceTab({ session, prices }) {
                         <span style={{ background:cfg.bg, color:cfg.tx, borderRadius:6, padding:'3px 8px', fontSize:10.5, fontWeight:800 }}>
                           {cfg.label}
                         </span>
+                        {r.sql_cash_sales_no && (
+                          <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:700 }}>
+                            SQL: {r.sql_cash_sales_no}
+                          </div>
+                        )}
                       </td>
                       <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
                         <button onClick={() => openInvoicePrint(r)}
@@ -557,17 +607,10 @@ export default function TempInvoiceTab({ session, prices }) {
                           </button>
                         )}
                         {isManager && r.status === 'pending' && (
-                          <button onClick={() => setStatus(r, 'reissued')}
+                          <button onClick={() => startReissue(r)}
                             style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',
                                      borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>
                             ✓ Dikeluarkan Semula
-                          </button>
-                        )}
-                        {isManager && r.status === 'reissued' && (
-                          <button onClick={() => setStatus(r, 'pending')}
-                            style={{ padding:'4px 9px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
-                                     borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer' }}>
-                            Buka semula
                           </button>
                         )}
                       </td>
@@ -579,6 +622,87 @@ export default function TempInvoiceTab({ session, prices }) {
           </div>
         )}
       </div>
+
+      {/* ── Reissue confirmation modal — locks in the real SQL Cash Sales no. ── */}
+      {reissueRow && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(15,39,68,0.55)', zIndex:100,
+                       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+          <div style={{ background:C.white, borderRadius:14, padding:'22px 24px', width:420, maxWidth:'100%',
+                        boxShadow:'0 12px 40px rgba(0,0,0,0.25)' }}>
+            {reissueStep === 'input' ? (
+              <>
+                <div style={{ fontWeight:800, fontSize:15, color:C.navy, marginBottom:4 }}>
+                  Sahkan Nombor Cash Sales SQL Account
+                </div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>
+                  {reissueRow.invoice_no} — {reissueRow.customer_name}
+                </div>
+                <div style={{ background:C.amberBg, border:`1px solid #eab308`, color:C.amber, borderRadius:8,
+                              padding:'8px 12px', fontSize:11.5, fontWeight:600, lineHeight:1.5, marginBottom:12 }}>
+                  ⚠ Wajib masukkan nombor Cash Sales SEBENAR yang dikeluarkan dalam SQL Account bagi
+                  jualan ini. Nombor ini TIDAK BOLEH diubah selepas disahkan.
+                </div>
+                <input value={csNo} onChange={e => setCsNo(e.target.value)} autoFocus
+                  placeholder="cth: CS-26083100"
+                  style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:8,
+                           border:`1.5px solid ${csNo.trim() && !isValidCsNo(csNo) ? C.red : C.border}`,
+                           fontSize:14, fontFamily:'inherit', marginBottom:6 }} />
+                <div style={{ fontSize:11, marginBottom:16,
+                              color: csNo.trim() && !isValidCsNo(csNo) ? C.red : C.muted,
+                              fontWeight: csNo.trim() && !isValidCsNo(csNo) ? 700 : 500 }}>
+                  {csNo.trim() && !isValidCsNo(csNo)
+                    ? 'Format salah — mesti CS- diikuti 8 digit, cth: CS-26083100'
+                    : 'Format: CS- diikuti 8 digit (cth: CS-26083100)'}
+                </div>
+                <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
+                  <button onClick={cancelReissue}
+                    style={{ padding:'9px 16px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
+                             borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                    Batal
+                  </button>
+                  <button onClick={() => isValidCsNo(csNo) && setReissueStep('confirm')} disabled={!isValidCsNo(csNo)}
+                    style={{ padding:'9px 18px', background: isValidCsNo(csNo) ? C.navy : C.border,
+                             color:C.white, border:'none', borderRadius:8, fontWeight:700, fontSize:13,
+                             cursor: isValidCsNo(csNo) ? 'pointer' : 'not-allowed' }}>
+                    Seterusnya
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight:800, fontSize:15, color:C.navy, marginBottom:4 }}>
+                  Adakah nombor ini BETUL?
+                </div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>
+                  {reissueRow.invoice_no} — {reissueRow.customer_name}
+                </div>
+                <div style={{ textAlign:'center', background:C.gray, border:`1.5px solid ${C.border}`,
+                              borderRadius:10, padding:'16px 12px', fontSize:22, fontWeight:900,
+                              color:C.navy, letterSpacing:1, marginBottom:12 }}>
+                  {csNo.trim().toUpperCase()}
+                </div>
+                <div style={{ background:C.redBg, border:`1px solid #fca5a5`, color:C.red, borderRadius:8,
+                              padding:'8px 12px', fontSize:11.5, fontWeight:700, lineHeight:1.5, marginBottom:16 }}>
+                  ⚠ Selepas disahkan, rekod ini akan DIKUNCI — nombor ini TIDAK BOLEH diubah lagi.
+                  Sila semak dengan teliti sebelum sahkan.
+                </div>
+                <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
+                  <button onClick={() => setReissueStep('input')} disabled={reissueSaving}
+                    style={{ padding:'9px 16px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
+                             borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                    Kembali
+                  </button>
+                  <button onClick={confirmReissue} disabled={reissueSaving}
+                    style={{ padding:'9px 18px', background:C.green, color:C.white, border:'none',
+                             borderRadius:8, fontWeight:700, fontSize:13, cursor: reissueSaving ? 'not-allowed' : 'pointer' }}>
+                    {reissueSaving ? 'Menyimpan…' : '✓ Ya, Sahkan & Kunci'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

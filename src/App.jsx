@@ -108,7 +108,7 @@ const PERM_FEATURES = [
   { key: "purchasing", label: "Cadangan PO",       def: (r) => ["owner","manager"].includes(r) },
   { key: "queries",    label: "Pertanyaan Harga",  def: (r) => ["owner","senior","manager"].includes(r) },
   { key: "quote",      label: "Sebut Harga",       def: () => true },
-  { key: "temp_invoice", label: "Invois Sementara", def: () => true },
+  { key: "temp_invoice", label: "Cash Sales Sementara", def: () => true },
   { key: "temp_sales_flow", label: "Jualan Sementara", def: () => true },
 ];
 function hasPerm(sess, key) {
@@ -557,7 +557,7 @@ export default function App() {
       { key:"quote", label:"📝 Sebut Harga" },
     ] : []),
     ...(hasPerm(session, "temp_invoice") ? [
-      { key:"temp_invoice", label:"🧾 Invois Sementara" },
+      { key:"temp_invoice", label:"🧾 Cash Sales Sementara" },
     ] : []),
     ...(hasPerm(session, "temp_sales_flow") ? [
       { key:"temp_sales_flow", label:"📝 Jualan Sementara" },

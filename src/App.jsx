@@ -175,26 +175,36 @@ const GRADES     = ["MS","SS304","SS316","GI","Galvanised","Other"];
 const UNITS      = ["length","kg","meter","sheet","pc"];
 
 // ── Sidebar nav groups ───────────────────────────────────────────────────────
-// Two-level sidebar (2026-08-31, replacing the flat top tab bar). Purely a
-// navigation grouping — every TABS key below must appear in exactly one
-// group here, or it silently disappears from the sidebar. Order matches the
-// approved mockup (sidebar-nav-mockup.html).
-const GROUPS = [
-  { key:"harga_stok", label:"Harga & Stok", icon:"🔍", tabs:["assistant","prices","daily"] },
-  { key:"jualan",     label:"Jualan",       icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","queries"] },
-  { key:"pembelian",  label:"Pembelian",    icon:"📦", tabs:["purchasing","reconcile"] },
-  { key:"alat",       label:"Alat",         icon:"🛠️", tabs:["plate","katalog"] },
-  { key:"admin",      label:"Admin",        icon:"🔐", tabs:["activity","users"] },
+// Two-level sidebar (2026-08-31, replacing the flat top tab bar; Service
+// Center & Katalog un-grouped into standalone items on 2026-08-31). Purely a
+// navigation layout — every TABS key below must appear exactly once, either
+// inside a group's `tabs` list or as a standalone `{ type:"link" }` entry, or
+// it silently disappears from the sidebar. Order matches the approved
+// mockup (sidebar-nav-mockup.html), with the two standalone items sitting
+// where the old "Alat" group used to be.
+const NAV = [
+  { type:"group", key:"harga_stok", label:"Harga & Stok", icon:"🔍", tabs:["assistant","prices","daily"] },
+  { type:"group", key:"jualan",     label:"Jualan",       icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","queries"] },
+  { type:"group", key:"pembelian",  label:"Pembelian",    icon:"📦", tabs:["purchasing","reconcile"] },
+  { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
+  { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
+  { type:"group", key:"admin",      label:"Admin",        icon:"🔐", tabs:["activity","users"] },
 ];
+const GROUPS = NAV.filter(n => n.type === "group");
 function groupKeyForTab(key) {
   const g = GROUPS.find(g => g.tabs.includes(key));
-  return g ? g.key : GROUPS[0].key;
+  return g ? g.key : null; // null = standalone item, no parent group to expand
 }
 // Sidebar sub-items show the tab label without its leading emoji (the group
-// header already carries an icon) — strips the first whitespace-delimited
-// token, which is always the emoji in every TABS label below.
+// header, or the standalone item itself, already carries an icon) — strips
+// the first whitespace-delimited token, which is always the emoji in every
+// TABS label below.
 function stripLabelIcon(label) {
   return String(label || "").replace(/^\S+\s+/, "");
+}
+function labelIconOf(label) {
+  const m = String(label || "").match(/^\S+/);
+  return m ? m[0] : "";
 }
 function initialsOf(name) {
   const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
@@ -544,6 +554,7 @@ export default function App() {
   // happens programmatically (e.g. the rcAlert banner, DailyCheckReminder).
   useEffect(() => {
     const gk = groupKeyForTab(tab);
+    if (!gk) return; // standalone item — no parent group to expand
     setOpenGroups(prev => (prev.has(gk) ? prev : new Set(prev).add(gk)));
   }, [tab]);
 
@@ -635,7 +646,20 @@ export default function App() {
 
   const sidebarNav = (
     <>
-      {GROUPS.map(g => {
+      {NAV.map(item => {
+        if (item.type === "link") {
+          const t = TABS.find(x => x.key === item.key);
+          if (!t) return null; // permission-gated out (not currently the case for plate/katalog, but stay safe)
+          const isActive = tab === t.key;
+          return (
+            <a key={t.key} href="#" className={`sb-link${isActive ? " active" : ""}`}
+               onClick={(e)=>{ e.preventDefault(); goTab(t.key); }}>
+              <span className="sb-group-icon">{labelIconOf(t.label)}</span>
+              <span className="sb-group-label">{stripLabelIcon(t.label)}</span>
+            </a>
+          );
+        }
+        const g = item;
         const groupTabs = TABS.filter(t => g.tabs.includes(t.key));
         if (groupTabs.length === 0) return null;
         const isOpen = openGroups.has(g.key);
@@ -706,6 +730,11 @@ export default function App() {
         .sb-sub a.active{ background:${C.accentSoft}; color:${C.navy}; font-weight:700; border-left:2px solid ${C.accent}; }
         .sb-badge{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:20px; font-size:9.5px;
           font-weight:800; background:${C.red}; color:#fff; vertical-align:1px; }
+        .sb-link{ width:100%; display:flex; align-items:center; gap:9px; padding:9px 10px; margin-bottom:2px;
+          border-radius:8px; text-decoration:none; font-family:inherit; font-size:12.5px; font-weight:600;
+          color:${C.text}; text-align:left; cursor:pointer; box-sizing:border-box; }
+        .sb-link:hover{ background:${C.gray}; }
+        .sb-link.active{ background:${C.accentSoft}; color:${C.navy}; }
         .sb-foot{ border-top:0.5px solid ${C.border}; padding:12px 14px; display:flex; align-items:center; gap:9px; flex:0 0 auto; }
         .sb-avatar{ width:28px; height:28px; border-radius:50%; background:${C.gray}; color:${C.navy}; font-weight:700;
           font-size:11.5px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; border:0.5px solid ${C.border}; }
@@ -768,8 +797,10 @@ export default function App() {
 
         <div className="main-col">
           <div className="main-topbar">
-            <div className="mt-crumb">{activeGroup?.label}</div>
-            <div className="mt-crumb">/</div>
+            {activeGroup && <>
+              <div className="mt-crumb">{activeGroup.label}</div>
+              <div className="mt-crumb">/</div>
+            </>}
             <div className="mt-title">{stripLabelIcon(activeTabObj?.label || "")}</div>
             <div className="mt-right">
               <SyncStatusBadge status={syncStatus} />

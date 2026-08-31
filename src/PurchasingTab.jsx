@@ -312,6 +312,8 @@ export default function PurchasingTab({ prices = [], session, openPrId = null, o
   const [prLoading, setPrLoading] = useState(false);
   const [savingPr, setSavingPr] = useState(false);
   const [supplierName, setSupplierName] = useState('');
+  const [supplierPool, setSupplierPool] = useState([]); // distinct supplier names seen across every item searched this session (from CRM PO/receiving history)
+  const [supplierDropdownOpen, setSupplierDropdownOpen] = useState(false);
   const [prItems, setPrItems] = useState([]); // [{itemCode, product, listPrice, disc1, disc2, disc3, finalPrice, qty, weightPerUnit, sqlCost, lineTotal, lineWeight}]
   const [prNotice, setPrNotice] = useState(null); // {type:'ok'|'error', text}
   // "Tambah ke PR" mini-form (List Price + 3 cascading discounts + qty + weight)
@@ -515,6 +517,29 @@ export default function PurchasingTab({ prices = [], session, openPrId = null, o
     })();
     return () => { cancelled = true; };
   }, [selected]);
+
+  // Accumulate distinct supplier names seen across every item searched this
+  // session (from that item's CRM PO/receiving history) — feeds the
+  // supplier-name autocomplete below, per Wylee: sync it with real suppliers
+  // instead of free typing from scratch.
+  useEffect(() => {
+    const names = [...openPOs, ...received]
+      .map(r => (r.supplier || '').trim())
+      .filter(Boolean);
+    if (names.length === 0) return;
+    setSupplierPool(pool => {
+      const next = new Set(pool);
+      let changed = false;
+      names.forEach(n => { if (!next.has(n)) { next.add(n); changed = true; } });
+      return changed ? Array.from(next).sort() : pool;
+    });
+  }, [openPOs, received]);
+
+  const supplierSuggestions = useMemo(() => {
+    const q = supplierName.trim().toLowerCase();
+    const pool = q ? supplierPool.filter(s => s.toLowerCase().includes(q)) : supplierPool;
+    return pool.slice(0, 8);
+  }, [supplierName, supplierPool]);
 
   const weighted = selected ? isWeighted(selected.product) : false;
   const mk = marketVerdict(market, weighted);
@@ -879,11 +904,33 @@ export default function PurchasingTab({ prices = [], session, openPrId = null, o
           )}
         </div>
 
-        <label style={{ display:'block', fontSize:11, fontWeight:600, color:C.muted, marginBottom:10 }}>
-          Nama Supplier
-          <input value={supplierName} onChange={e=>setSupplierName(e.target.value)} placeholder="cth: Eastern Pipe & Tube"
-            style={{ width:'100%', boxSizing:'border-box', marginTop:4, border:`1px solid ${C.border}`, borderRadius:8, padding:'9px 11px', fontSize:13 }} />
-        </label>
+        <div style={{ marginBottom:10, position:'relative' }}>
+          <label style={{ display:'block', fontSize:11, fontWeight:600, color:C.muted, marginBottom:4 }}>Nama Supplier</label>
+          <input value={supplierName}
+            onChange={e=>setSupplierName(e.target.value)}
+            onFocus={()=>setSupplierDropdownOpen(true)}
+            onBlur={()=>setTimeout(()=>setSupplierDropdownOpen(false), 150)}
+            placeholder="cth: Eastern Pipe & Tube — taip atau pilih dari sejarah PO"
+            style={{ width:'100%', boxSizing:'border-box', border:`1px solid ${C.border}`, borderRadius:8, padding:'9px 11px', fontSize:13 }} />
+          {supplierDropdownOpen && supplierSuggestions.length > 0 && (
+            <div style={{ position:'absolute', top:'100%', left:0, right:0, zIndex:5, marginTop:2,
+              background:C.white, border:`1px solid ${C.border}`, borderRadius:8, boxShadow:'0 4px 12px rgba(26,22,24,0.12)', overflow:'hidden' }}>
+              {supplierSuggestions.map(s => (
+                <div key={s} onMouseDown={()=>{ setSupplierName(s); setSupplierDropdownOpen(false); }}
+                  style={{ padding:'8px 11px', fontSize:12.5, cursor:'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.gray}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+          {supplierPool.length === 0 && (
+            <div style={{ fontSize:10.5, color:C.muted, marginTop:4 }}>
+              Cari & pilih produk di atas dahulu — cadangan supplier diambil dari sejarah PO/penerimaan CRM item tersebut.
+            </div>
+          )}
+        </div>
 
         {prItems.length === 0 ? (
           <div style={{ fontSize:12, color:C.muted, padding:'10px 0' }}>Belum ada item — cari produk di atas dan "Tambah ke PR".</div>

@@ -1047,6 +1047,21 @@ by hand. No automated import pipeline yet — population is manual/one-off
 SQL, the same bootstrap path `sql_cost` used before its real sync (§18)
 existed.
 
+**Supplier name — autocomplete synced from CRM PO history (2026-08-31).**
+Wylee: the "Nama Supplier" field should sync with real supplier names
+instead of free typing from scratch. Every time an item is searched, its
+`open_pos`/`received_last` supplier names (already fetched via the
+existing `invokeReconcile({action:'purchasing'})` call for that item) are
+merged into a running `supplierPool` for the session — so as staff search
+multiple items while building one PR, the pool accumulates every supplier
+who has actually supplied one of those items. The Nama Supplier input
+shows a click-to-fill dropdown (`supplierSuggestions`, filtered by what's
+typed) on focus; picking one just fills the text field, it stays a free
+text input otherwise (no FK to a supplier master table — none exists).
+Deliberately item-history-scoped rather than pulling from all suppliers
+ever seen system-wide or from past PRs' `supplier_name` values — Wylee
+picked "sync with the item's own PO history" over those alternatives.
+
 **Kos SQL reference** — owner-only (hard rule, `session.role === 'owner'`,
 same as `canSeeCostMargin` in App.jsx; PurchasingTab had no cost-gating
 before this feature, everything else in that file still renders cost

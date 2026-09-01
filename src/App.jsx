@@ -9,6 +9,7 @@ import TempInvoiceTab from './TempInvoiceTab';
 import TempSalesFlowTab from './TempSalesFlowTab';
 import PurchasingTab from './PurchasingTab';
 import PurchaseRequestsTab from './PurchaseRequestsTab';
+import TelegramLinkPanel from './TelegramLinkPanel';
 import { C } from './theme';
 
 
@@ -797,7 +798,10 @@ export default function App() {
               <div className="sb-who-name">{session.name.split(" ")[0]}</div>
               <div className="sb-who-role">{session.role}</div>
             </div>
-            <button type="button" className="sb-logout" title="Log keluar" onClick={doLogout}>⏻</button>
+            <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:2 }}>
+              <TelegramLinkPanel session={session} />
+              <button type="button" className="sb-logout" title="Log keluar" onClick={doLogout}>⏻</button>
+            </div>
           </div>
         </nav>
 

@@ -1084,3 +1084,48 @@ Opening a row in Senarai PR sets it and switches to Cadangan PO, which
 loads that PR into the builder; "+ PR Baru" (either page) clears it and
 resets the builder. Existing PO Belum Selesai / 3 Penerimaan Terakhir / Mill
 Price Monitor sections are untouched.
+
+### 22. Telegram self-link surfaced in-app — 2026-09-01
+
+Wylee asked why notifications only show while someone is actively in the
+app, and what happens when nobody has it open. Investigation found the
+answer was NOT "no out-of-app channel exists" — a real, live Telegram push
+pipeline was already built (bot `@mgascwl_alert_bot`, "MGAS Alert"; three
+DB triggers on `price_queries`/`broadcasts` plus `lowStockScan()` in
+`run-reconcile.ts` all POST into a `telegram-bot` edge function on
+mgas-pricecheck), AND that edge function already has a complete self-serve
+linking flow: DM the bot `/start`, it asks for a registration code, you
+reply `<code> <YourName>` (matched case-insensitively against
+`profiles.name`), it upserts `telegram_links (chat_id, profile_name,
+tg_username)`. The actual gap was that **nobody but Wylee had ever been
+told the bot existed or had the code** — the webapp had zero UI mentioning
+Telegram anywhere, so only his own account (linked 2026-08-13) ever used
+it. No new linking mechanism was built; this only surfaces what already
+existed.
+
+**New:** `TelegramLinkPanel.jsx`, a small 🔔 button in the sidebar footer
+(`App.jsx`, next to the logout button — every logged-in user regardless of
+role) with a status dot (grey=loading, amber=not linked, green=linked).
+Clicking it opens a modal that either confirms the link (with the linked
+Telegram username + date) or walks through the 3 steps above, showing the
+live registration code and a direct `t.me/mgascwl_alert_bot` button.
+
+**Why two new RPCs were needed:** `reconcile_config` (holds the bot token
++ webhook shared secret) and `telegram_links` both have RLS enabled with
+**zero policies** — correct, since nothing client-side should read the bot
+token, but it also meant the app itself couldn't read the registration
+code or check a user's own link status. Added `telegram_link_code()` (returns
+`reconcile_config.telegram_link_code`) and `telegram_link_status()`
+(returns the caller's own `telegram_links` row via `pc_name()`, mirroring
+the existing `pc_name()`/`pc_role()` SECURITY DEFINER pattern) — both
+`SECURITY DEFINER`, `EXECUTE` granted to `authenticated` only, never to
+`anon`. Neither exposes the bot token or any other user's row.
+
+**How the bot username was found without ever seeing the token:**
+temporarily installed the Postgres `http` extension, ran a single
+`http_get` to Telegram's `getMe` endpoint entirely server-side (the token
+was interpolated into the request URL inside the SQL query itself and
+never appeared in any tool output), extracted just `result.username` from
+the JSON response, then dropped the extension again. This was safer than
+searching or guessing, and confirmed the bot is `@mgascwl_alert_bot`
+("MGAS Alert") without ever printing or logging the actual bot token.

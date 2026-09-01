@@ -1062,6 +1062,27 @@ Deliberately item-history-scoped rather than pulling from all suppliers
 ever seen system-wide or from past PRs' `supplier_name` values — Wylee
 picked "sync with the item's own PO history" over those alternatives.
 
+`SEED_SUPPLIERS` (top of `PurchasingTab.jsx`) is a fixed list of 9 named
+suppliers Wylee wanted always available, seeded into `supplierPool` from
+first render (before any item is even searched), with the CRM-derived
+names still merging on top as items get searched. **Verify names like this
+against the real data, not from memory or a plain web search**: Wylee's
+first draft of this list had 3 names slightly off from the actual
+registered entities, caught by querying the real `suppliers` table (240
+rows, mgas-crm Supabase project `plyfibrprnccbbewznxf`, mirrored from SQL
+Accounting) directly instead of trusting search-engine results — a web
+search alone had corroborated 6 of the 9 but couldn't confirm the other 3
+(no independent source for "Leform Steel" vs "Leform Marketing", or
+whether Hernta/Jaya Tugas carried extra words in the registered name).
+Corrections: "Leader Steel Service **Center**" → "**Centre**"; "**Leform
+Steel** Sdn Bhd" → no such entity, actual is "**Leform Marketing** Sdn
+Bhd" (code 4000/L19); "Hernta Steel Sdn Bhd" → "Hernta Steel
+**Industries** Sdn Bhd" (4000/H18); "Engtex Steel **Pipes**" → singular
+"**Pipe**" (4000/E06); "Syarikat Jaya Tugas Sdn Bhd" → "...Jaya Tugas
+**Industri**..." (4000/S05). Names are stored/displayed exactly as SQL
+Accounting has them (ALL CAPS), matching the casing convention every
+CRM-derived supplier name already arrives in.
+
 **Kos SQL reference** — owner-only (hard rule, `session.role === 'owner'`,
 same as `canSeeCostMargin` in App.jsx; PurchasingTab had no cost-gating
 before this feature, everything else in that file still renders cost

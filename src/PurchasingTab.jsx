@@ -123,6 +123,30 @@ function isWeighted(product = '') {
   return /\/mt|kg\/m|\bkg\b|rebar|coil|hrc|plate|\bbar\b/i.test(product);
 }
 
+// Wylee-requested starter suppliers for the "Nama Supplier" autocomplete
+// (2026-08-31) — always suggested regardless of item search history, on top
+// of whatever the live CRM PO-history pool adds. Verified verbatim against
+// the real supplier master (suppliers table, mgas-crm Supabase project,
+// mirrored from SQL Accounting) — several of Wylee's original spellings
+// didn't match what's actually on file there and were corrected:
+//   "Leader Steel Service Center" → "...Centre" (code 4000/L03)
+//   "Leform Steel Sdn Bhd" → no such entity on file; real one is
+//     "Leform Marketing Sdn Bhd" (code 4000/L19)
+//   "Hernta Steel Sdn Bhd" → "Hernta Steel Industries Sdn Bhd" (4000/H18)
+//   "Engtex Steel Pipes Sdn Bhd" → "...Pipe" singular (4000/E06)
+//   "Syarikat Jaya Tugas Sdn Bhd" → "...Jaya Tugas Industri..." (4000/S05)
+const SEED_SUPPLIERS = [
+  'LEADER STEEL SERVICE CENTRE SDN. BHD.',
+  'TASHIN STEEL SDN BHD',
+  'TASHIN HARDWARE SDN BHD',
+  'XINSTEEL SDN BHD',
+  'LEFORM MARKETING SDN BHD',
+  'HERNTA STEEL INDUSTRIES SDN BHD',
+  'ENGTEX STEEL PIPE SDN BHD',
+  'TSA INDUSTRIES SDN BHD',
+  'SYARIKAT JAYA TUGAS INDUSTRI SDN BHD',
+];
+
 // ── Purchase Request (PR) builder — Wylee 2026-08-31 ────────────────────────
 // Cascading percentage discount off List Price (NOT the qty-tier `tiers`
 // model QuotationTab/TempSalesFlowTab use — Wylee explicitly rejected tiers
@@ -312,7 +336,7 @@ export default function PurchasingTab({ prices = [], session, openPrId = null, o
   const [prLoading, setPrLoading] = useState(false);
   const [savingPr, setSavingPr] = useState(false);
   const [supplierName, setSupplierName] = useState('');
-  const [supplierPool, setSupplierPool] = useState([]); // distinct supplier names seen across every item searched this session (from CRM PO/receiving history)
+  const [supplierPool, setSupplierPool] = useState(() => [...SEED_SUPPLIERS]); // SEED_SUPPLIERS + distinct supplier names seen across every item searched this session (from CRM PO/receiving history)
   const [supplierDropdownOpen, setSupplierDropdownOpen] = useState(false);
   const [prItems, setPrItems] = useState([]); // [{itemCode, product, listPrice, disc1, disc2, disc3, finalPrice, qty, weightPerUnit, sqlCost, lineTotal, lineWeight}]
   const [prNotice, setPrNotice] = useState(null); // {type:'ok'|'error', text}
@@ -538,7 +562,7 @@ export default function PurchasingTab({ prices = [], session, openPrId = null, o
   const supplierSuggestions = useMemo(() => {
     const q = supplierName.trim().toLowerCase();
     const pool = q ? supplierPool.filter(s => s.toLowerCase().includes(q)) : supplierPool;
-    return pool.slice(0, 8);
+    return pool.slice(0, 15); // comfortably fits all SEED_SUPPLIERS + a few CRM-derived ones before filtering narrows it
   }, [supplierName, supplierPool]);
 
   const weighted = selected ? isWeighted(selected.product) : false;
@@ -925,11 +949,9 @@ export default function PurchasingTab({ prices = [], session, openPrId = null, o
               ))}
             </div>
           )}
-          {supplierPool.length === 0 && (
-            <div style={{ fontSize:10.5, color:C.muted, marginTop:4 }}>
-              Cari & pilih produk di atas dahulu — cadangan supplier diambil dari sejarah PO/penerimaan CRM item tersebut.
-            </div>
-          )}
+          <div style={{ fontSize:10.5, color:C.muted, marginTop:4 }}>
+            Cari & pilih produk di atas untuk tambah lagi cadangan supplier daripada sejarah PO/penerimaan CRM item tersebut.
+          </div>
         </div>
 
         {prItems.length === 0 ? (

@@ -1106,6 +1106,16 @@ loads that PR into the builder; "+ PR Baru" (either page) clears it and
 resets the builder. Existing PO Belum Selesai / 3 Penerimaan Terakhir / Mill
 Price Monitor sections are untouched.
 
+**Pre-existing sidebar bug, fixed independently (2026-09-01):** the
+"Cadangan PO" sidebar sub-item label had no leading emoji, so
+`stripLabelIcon()` (which strips the first whitespace token, assuming it's
+always an icon) was silently rendering it as just "PO" in the sidebar.
+It's fixed now — `{ key:"purchasing", label:"📦 Cadangan PO" }` in the
+`TABS` array in `App.jsx` — but not by any patch in this PR-feature or
+Telegram-linking chain; whoever applied it did so separately and picked a
+different emoji than what those patches proposed (🛒). Noted here only so
+the fix has a paper trail — no further action needed, it's live.
+
 ### 22. Telegram self-link surfaced in-app — 2026-09-01
 
 Wylee asked why notifications only show while someone is actively in the

@@ -818,7 +818,7 @@ export default function App() {
             </div>
           </div>
 
-          <div style={{ maxWidth: tab==="daily" || tab==="reconcile" || tab==="katalog" || tab==="purchasing" || tab==="assistant" ? "100%" : 960, margin:"0 auto", padding:"18px 14px 60px" }}>
+          <div style={{ maxWidth:"100%", margin:"0 auto", padding:"18px 14px 60px" }}>
             {rcAlert && tab !== "reconcile" && (
               <div onClick={() => setTab("reconcile")}
                 style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", color:"#991b1b",

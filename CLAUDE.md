@@ -1160,3 +1160,28 @@ never appeared in any tool output), extracted just `result.username` from
 the JSON response, then dropped the extension again. This was safer than
 searching or guessing, and confirmed the bot is `@mgascwl_alert_bot`
 ("MGAS Alert") without ever printing or logging the actual bot token.
+
+### 23. Sebut Harga "Notis" button — 2026-09-02
+
+Wylee wanted a way to ask about a pending quotation's status. Clarified
+via Q&A that this should be internal-app only (no WhatsApp/Telegram),
+shown only on `status = 'pending'` rows, tracked (not fire-and-forget),
+and directed at the quote's creator specifically — a manager (or the
+agent themself) flagging that a pending quote needs a status check.
+
+**New:** `quotations` gained `notis_sent_at timestamptz` and
+`notis_sent_by text` (mgas-pricecheck, migration
+`quotations_notis_fields`). No RLS change needed — the existing
+`q_update` policy already allows the creator OR owner/senior/manager to
+update any row, which is exactly who should be able to send a notis.
+
+**UI (`QuotationTab.jsx`):** a 🔔 Notis button sits next to
+✓ Berjaya / ✗ Gagal on every pending row. Clicking it stamps
+`notis_sent_at`/`notis_sent_by` (re-sending just refreshes the
+timestamp — no lock, no confirmation step, it's a soft internal flag,
+not an audit-critical record like the CS/Invois reissue number). Once
+sent, the row shows "🔔 Notis untuk {created_by} · {time}" under the
+status pill — visible to the creator (their own list) and to any
+manager (who sees everyone's), so it reads as "you were asked to check
+this" rather than an anonymous marker. Disappears once the quote moves
+to Berjaya/Gagal, same as the Berjaya/Gagal buttons themselves.

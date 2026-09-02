@@ -4,6 +4,11 @@
 // editable), save it (auto number Q2608-001), export/share a compact PNG for
 // WhatsApp, and track every quotation to a success/fail outcome.
 // Staff see their own quotes; owner/senior/manager see everyone's.
+//
+// "Notis" on a pending quote is internal-app only — no WhatsApp/Telegram. It
+// just stamps notis_sent_at/notis_sent_by and shows "Notis untuk {agent}" on
+// the row, aimed at the quote's creator so they (or a manager checking the
+// full list later) can see it's been flagged for a status follow-up.
 // ════════════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useMemo } from 'react';
 import { supabase, invokeReconcile } from './supabase';
@@ -29,6 +34,8 @@ function tierPrice(p, qty) {
 }
 const fmt = (n) => (Number(n) || 0).toFixed(2);
 const fmtRM = (n) => 'RM ' + (Number(n) || 0).toLocaleString('en-MY', { minimumFractionDigits:2, maximumFractionDigits:2 });
+const fmtT = (ts) => ts ? new Date(ts).toLocaleString('en-MY', { timeZone:'Asia/Kuala_Lumpur',
+  day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
 
 // ── PNG renderer — pure canvas, no dependencies, small file ─────────────────
 function renderQuotePNG(q) {
@@ -330,6 +337,17 @@ export default function QuotationTab({ session, prices }) {
       status, status_updated_at: new Date().toISOString(), status_updated_by: session.name,
     }).eq('id', row.id);
     if (!e) setRows(rs => rs.map(r => r.id === row.id ? { ...r, status, status_updated_by: session.name } : r));
+  };
+
+  // Internal-only nudge — no WhatsApp/Telegram, just a flag on the row aimed
+  // at whoever created the quote, so they (or a manager checking later) can
+  // see it's been chased. Re-sending just refreshes the timestamp.
+  const sendNotis = async (row) => {
+    const now = new Date().toISOString();
+    const { error: e } = await supabase.from('quotations').update({
+      notis_sent_at: now, notis_sent_by: session.name,
+    }).eq('id', row.id);
+    if (!e) setRows(rs => rs.map(r => r.id === row.id ? { ...r, notis_sent_at: now, notis_sent_by: session.name } : r));
   };
 
   const filteredRows = rows.filter(r => statusFilter === 'ALL' || r.status === statusFilter);
@@ -635,6 +653,11 @@ export default function QuotationTab({ session, prices }) {
                                        borderRadius:12, fontSize:11, fontWeight:800, whiteSpace:'nowrap' }}>
                           {st.label}
                         </span>
+                        {r.status === 'pending' && r.notis_sent_at && (
+                          <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:700, whiteSpace:'nowrap' }}>
+                            🔔 Notis untuk {r.created_by} · {fmtT(r.notis_sent_at)}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding:'7px 10px', whiteSpace:'nowrap' }}>
                         {r.status === 'pending' ? (
@@ -648,6 +671,12 @@ export default function QuotationTab({ session, prices }) {
                               style={{ background:'#dc2626', color:'#fff', border:'none', borderRadius:6,
                                        padding:'4px 10px', fontSize:10, fontWeight:700, cursor:'pointer' }}>
                               ✗ Gagal
+                            </button>
+                            <button onClick={() => sendNotis(r)}
+                              title={`Hantar notis kepada ${r.created_by} untuk semak status`}
+                              style={{ background:C.amberBg, color:C.amber, border:'none', borderRadius:6,
+                                       padding:'4px 10px', fontSize:10, fontWeight:700, cursor:'pointer' }}>
+                              🔔 Notis
                             </button>
                           </span>
                         ) : (

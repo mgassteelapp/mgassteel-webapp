@@ -595,7 +595,7 @@ export default function TempSalesFlowTab({ session, prices }) {
                         <button onClick={() => openFlowPrint(r, r.stage)}
                           style={{ padding:'4px 9px', background:C.gray, color:C.text, border:`1px solid ${C.border}`,
                                    borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', marginRight:6 }}>
-                          🖨️ Cetak {scfg.short}
+                          🖨️ Cetak{r.stage === 'invoice' ? '' : ` ${scfg.short}`}
                         </button>
                         {scfg.next && r.status === 'pending' && (r.created_by === session.name || isManager) && (
                           <button onClick={() => advance(r)}

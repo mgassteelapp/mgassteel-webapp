@@ -32,12 +32,12 @@ const STAGES = ['so', 'picking', 'do', 'invoice'];
 const STAGE_CFG = {
   so:       { label:'Pesanan Jualan (SO)', short:'SO',   prefix:'TMPSO',  next:'picking', nextLabel:'→ Teruskan ke Picking List', bg:'#e0e7ff', tx:'#3730a3' },
   picking:  { label:'Senarai Picking',     short:'PL',   prefix:'TMPPL',  next:'do',      nextLabel:'→ Teruskan ke DO',           bg:'#fef3c7', tx:'#92400e' },
-  do:       { label:'Delivery Order (DO)', short:'DO',   prefix:'TMPDO',  next:'invoice', nextLabel:'→ Teruskan ke Cash Sales',   bg:'#dbeafe', tx:'#1e40af' },
-  invoice:  { label:'Cash Sales',         short:'CS',   prefix:'TMPINV', next:null,      nextLabel:null,                          bg:'#dcfce7', tx:'#166534' },
+  do:       { label:'Delivery Order (DO)', short:'DO',   prefix:'TMPDO',  next:'invoice', nextLabel:'→ Teruskan ke Invois',   bg:'#dbeafe', tx:'#1e40af' },
+  invoice:  { label:'Invois',             short:'INV',  prefix:'TMPINV', next:null,      nextLabel:null,                          bg:'#dcfce7', tx:'#166534' },
 };
 const STATUS_CFG = {
   pending:  { bg:C.amberBg, tx:C.amber, label:'BELUM DIKELUARKAN SEMULA' },
-  reissued: { bg:C.greenBg, tx:C.green, label:'CASH SALES DIREKOD ✓' },
+  reissued: { bg:C.greenBg, tx:C.green, label:'INVOIS DIREKOD ✓' },
 };
 
 function tierPrice(p, qty) {
@@ -52,13 +52,14 @@ const fmt = (n) => (Number(n) || 0).toFixed(2);
 const fmtRM = (n) => 'RM ' + (Number(n) || 0).toLocaleString('en-MY', { minimumFractionDigits:2, maximumFractionDigits:2 });
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const docNoFor = (row, stage) => `${STAGE_CFG[stage].prefix}${row.flow_no}`;
-// Real SQL Account Cash Sales numbers are 'CS-' + 8 digits (e.g. CS-26083100).
+// This flow always ends in a DO, so the real SQL Account document it produces
+// is an Invoice — 'IV-' + 8 digits (e.g. IV-26083100), not a Cash Sales.
 // Wylee: getting this exact number right matters more than anything else in
 // this flow, so it's format-checked before staff can even reach the confirm
 // step, not just free text. (Column is still named sql_invoice_no in the DB —
-// kept as-is rather than migrating for a same-day rename.)
-const CS_NO_RE = /^CS-\d{8}$/i;
-const isValidCsNo = (s) => CS_NO_RE.test((s || '').trim());
+// kept as-is, it was already named for an invoice number.)
+const IV_NO_RE = /^IV-\d{8}$/i;
+const isValidIvNo = (s) => IV_NO_RE.test((s || '').trim());
 
 function stampFor(row, stage) {
   const at = row[`${stage}_at`], by = row[`${stage}_by`];
@@ -91,14 +92,14 @@ function printFlowHTML(rowRaw, stage) {
     so:      'Dokumen ini ialah PESANAN JUALAN SEMENTARA yang direkodkan secara manual kerana sambungan sistem SQL Account sedang terganggu. SO ini mesti dimasukkan semula ke SQL Account sebaik sambungan pulih.',
     picking: 'Senarai ini untuk kegunaan gudang mengeluarkan barang bagi pesanan sementara di atas. Sila semak kuantiti dengan teliti sebelum menghantar untuk penghantaran.',
     do:      'Dokumen ini ialah DELIVERY ORDER SEMENTARA — bukti penghantaran barang secara manual kerana sambungan sistem SQL Account sedang terganggu. DO rasmi mesti dikeluarkan semula sebaik sambungan pulih.',
-    invoice: 'Dokumen ini ialah CASH SALES SEMENTARA yang dikeluarkan secara manual kerana sambungan sistem SQL Account sedang terganggu semasa jualan ini dibuat. Rekod Cash Sales rasmi akan dimasukkan ke SQL Account sebaik sambungan pulih. Sila simpan dokumen ini sebagai rujukan sementara sahaja, bukan dokumen Cash Sales rasmi.',
+    invoice: 'Dokumen ini ialah INVOIS SEMENTARA yang dikeluarkan secara manual kerana sambungan sistem SQL Account sedang terganggu semasa jualan ini dibuat. Rekod Invois rasmi akan dimasukkan ke SQL Account sebaik sambungan pulih. Sila simpan dokumen ini sebagai rujukan sementara sahaja, bukan dokumen Invois rasmi.',
   }[stage];
 
   const subtitle = {
     so: 'PESANAN JUALAN SEMENTARA / TEMPORARY SALES ORDER',
     picking: 'SENARAI PICKING SEMENTARA / TEMPORARY PICKING LIST',
     do: 'DELIVERY ORDER SEMENTARA / TEMPORARY DELIVERY ORDER',
-    invoice: 'CASH SALES SEMENTARA / TEMPORARY CASH SALES',
+    invoice: 'INVOIS SEMENTARA / TEMPORARY INVOICE',
   }[stage];
 
   const signBlocks = stage === 'picking'
@@ -389,7 +390,7 @@ export default function TempSalesFlowTab({ session, prices }) {
   const startReissue = (row) => { setReissueRow(row); setReissueNo(''); setReissueStep('input'); };
   const cancelReissue = () => { setReissueRow(null); setReissueNo(''); setReissueStep('input'); };
   const confirmReissue = async () => {
-    if (!reissueRow || !isValidCsNo(reissueNo)) return;
+    if (!reissueRow || !isValidIvNo(reissueNo)) return;
     const csNo = reissueNo.trim().toUpperCase();
     setReissueSaving(true);
     const { error: e } = await supabase.from('temp_sales_flow').update({
@@ -416,7 +417,7 @@ export default function TempSalesFlowTab({ session, prices }) {
       <div style={{ background:C.amberBg, border:`1.5px solid #eab308`, color:C.amber,
                      borderRadius:10, padding:'10px 14px', marginBottom:14, fontSize:12.5, fontWeight:600, lineHeight:1.6 }}>
         ⚠ Guna ciri ini HANYA semasa sambungan SQL Account terputus, apabila anda perlu paparan
-        penuh SO → Picking List → DO → Cash Sales. Semua dokumen di sini adalah rujukan dalaman
+        penuh SO → Picking List → DO → Invois. Semua dokumen di sini adalah rujukan dalaman
         sementara sahaja — bukan dokumen rasmi SQL Account. Untuk Cash Sales sahaja tanpa
         peringkat lain, guna tab Cash Sales Sementara.
       </div>
@@ -629,7 +630,7 @@ export default function TempSalesFlowTab({ session, prices }) {
             {reissueStep === 'input' ? (
               <>
                 <div style={{ fontWeight:800, fontSize:15, color:C.navy, marginBottom:4 }}>
-                  Sahkan Nombor Cash Sales SQL Account
+                  Sahkan Nombor Invois SQL Account
                 </div>
                 <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>
                   {reissueRow.flow_no} — {reissueRow.customer_name}
@@ -640,16 +641,16 @@ export default function TempSalesFlowTab({ session, prices }) {
                   Nombor ini TIDAK BOLEH diubah selepas disahkan.
                 </div>
                 <input value={reissueNo} onChange={e => setReissueNo(e.target.value)} autoFocus
-                  placeholder="cth: CS-26083100"
+                  placeholder="cth: IV-26083100"
                   style={{ width:'100%', boxSizing:'border-box', padding:'10px 12px', borderRadius:8,
-                           border:`1.5px solid ${reissueNo.trim() && !isValidCsNo(reissueNo) ? C.red : C.border}`,
+                           border:`1.5px solid ${reissueNo.trim() && !isValidIvNo(reissueNo) ? C.red : C.border}`,
                            fontSize:14, fontFamily:'inherit', marginBottom:6 }} />
                 <div style={{ fontSize:11, marginBottom:16,
-                              color: reissueNo.trim() && !isValidCsNo(reissueNo) ? C.red : C.muted,
-                              fontWeight: reissueNo.trim() && !isValidCsNo(reissueNo) ? 700 : 500 }}>
-                  {reissueNo.trim() && !isValidCsNo(reissueNo)
-                    ? 'Format salah — mesti CS- diikuti 8 digit, cth: CS-26083100'
-                    : 'Format: CS- diikuti 8 digit (cth: CS-26083100)'}
+                              color: reissueNo.trim() && !isValidIvNo(reissueNo) ? C.red : C.muted,
+                              fontWeight: reissueNo.trim() && !isValidIvNo(reissueNo) ? 700 : 500 }}>
+                  {reissueNo.trim() && !isValidIvNo(reissueNo)
+                    ? 'Format salah — mesti IV- diikuti 8 digit, cth: IV-26083100'
+                    : 'Format: IV- diikuti 8 digit (cth: IV-26083100)'}
                 </div>
                 <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
                   <button onClick={cancelReissue}
@@ -657,10 +658,10 @@ export default function TempSalesFlowTab({ session, prices }) {
                              borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
                     Batal
                   </button>
-                  <button onClick={() => isValidCsNo(reissueNo) && setReissueStep('confirm')} disabled={!isValidCsNo(reissueNo)}
-                    style={{ padding:'9px 18px', background: isValidCsNo(reissueNo) ? C.navy : C.border,
+                  <button onClick={() => isValidIvNo(reissueNo) && setReissueStep('confirm')} disabled={!isValidIvNo(reissueNo)}
+                    style={{ padding:'9px 18px', background: isValidIvNo(reissueNo) ? C.navy : C.border,
                              color:C.white, border:'none', borderRadius:8, fontWeight:700, fontSize:13,
-                             cursor: isValidCsNo(reissueNo) ? 'pointer' : 'not-allowed' }}>
+                             cursor: isValidIvNo(reissueNo) ? 'pointer' : 'not-allowed' }}>
                     Seterusnya
                   </button>
                 </div>

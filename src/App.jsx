@@ -9,6 +9,7 @@ import TempInvoiceTab from './TempInvoiceTab';
 import TempSalesFlowTab from './TempSalesFlowTab';
 import PurchasingTab from './PurchasingTab';
 import PurchaseRequestsTab from './PurchaseRequestsTab';
+import UnbilledDOTab from './UnbilledDOTab';
 import TelegramLinkPanel from './TelegramLinkPanel';
 import { C } from './theme';
 
@@ -114,6 +115,11 @@ const PERM_FEATURES = [
   { key: "quote",      label: "Sebut Harga",       def: () => true },
   { key: "temp_invoice", label: "Cash Sales Sementara", def: () => true },
   { key: "temp_sales_flow", label: "SO/DO/INV Sementara", def: () => true },
+  // Unbilled DO alert + pricing assistance (Wylee 2026-09-05 brief: "Owner
+  // and accounts only") — owner-only by default, grantable per staff via
+  // Pengguna like every other key here. Must stay in sync with
+  // reconcile-proxy's PERM_DEFAULTS.unbilled.
+  { key: "unbilled",   label: "DO Belum Bil",      def: () => false },
 ];
 function hasPerm(sess, key) {
   if (!sess) return false;
@@ -188,7 +194,7 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 const NAV = [
   { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices"] },
   { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
-  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests"] },
+  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","unbilled"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
   { type:"group", key:"chat_center",    label:"Chat Center",     icon:"💬", tabs:["broadcast","queries"] },
@@ -628,6 +634,9 @@ export default function App() {
       { key:"purchasing", label:"📦 Cadangan PO" },
       { key:"purchase_requests", label:"📋 Senarai PR" },
     ] : []),
+    ...(hasPerm(session, "unbilled") ? [
+      { key:"unbilled", label:"🧾 DO Belum Bil" },
+    ] : []),
     ...(hasPerm(session, "queries") ? [
       { key:"queries", label:"❓ Pertanyaan Harga" },
     ] : []),
@@ -853,6 +862,7 @@ export default function App() {
                 onNewPr={() => { setOpenPrId(null); goTab("purchasing"); }}
               />
             )}
+            {tab==="unbilled" && hasPerm(session, "unbilled") && <UnbilledDOTab session={session} />}
             {tab==="queries" && canAccessReconcile(session) && <QueriesTab session={session} />}
             {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
             {canAccessReconcile(session) && (

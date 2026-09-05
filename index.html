@@ -13,6 +13,15 @@
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: "Segoe UI", system-ui, sans-serif; -webkit-user-select:none; user-select:none; }
       @media print { body { display:none !important; } }
+      /* iOS Safari auto-zooms the whole page on focus for any input/select/
+         textarea rendered under 16px, and often fails to zoom back out
+         cleanly afterwards — exactly the "screen enlarges and doesn't fit
+         back" report (Wylee 2026-09-06). Many fields in App.jsx use 12-15px
+         inline styles for layout density; this overrides just the effective
+         font size (not padding/layout) so typing never triggers the zoom.
+         !important is required: it's the only thing that outranks an inline
+         style="font-size:...". Desktop is unaffected either way. */
+      input, select, textarea { font-size: 16px !important; }
     </style>
   </head>
   <body style="background:#0f2744;margin:0;"><div id="splash" style="position:fixed;inset:0;background:#0f2744;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s"><div style="color:white;font-family:sans-serif;font-size:18px;letter-spacing:2px">M GAS STEEL</div></div>

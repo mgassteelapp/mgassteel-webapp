@@ -310,8 +310,12 @@ function LowStockPanel({ session, onPickCode }) {
   );
 }
 
-export default function PurchasingTab({ prices = [], session, openPrId = null, onPrSaved, onOpenPrList }) {
-  const [query, setQuery] = useState('');
+export default function PurchasingTab({ prices = [], session, openPrId = null, onPrSaved, onOpenPrList, initialQuery = '' }) {
+  // Prefilled when arriving from an approved "Minta Stok" request (Wylee
+  // 2026-09-08) — each tab switch remounts this component (see App.jsx's
+  // {tab==="purchasing" && <PurchasingTab .../>}), so a plain initial value
+  // is enough; no effect needed to keep it in sync afterwards.
+  const [query, setQuery] = useState(initialQuery);
   const [selected, setSelected] = useState(null);   // the chosen price row
   // { qty_6mo, active_months } — the monthly average is derived in `calc` (calc.avgSold),
   // NOT read from the view's own avg_qty_per_month, so there is a single velocity number.

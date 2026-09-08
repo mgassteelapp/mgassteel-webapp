@@ -9,6 +9,7 @@ import TempInvoiceTab from './TempInvoiceTab';
 import TempSalesFlowTab from './TempSalesFlowTab';
 import PurchasingTab from './PurchasingTab';
 import PurchaseRequestsTab from './PurchaseRequestsTab';
+import StockRequestsTab from './StockRequestsTab';
 import UnbilledDOTab from './UnbilledDOTab';
 import TelegramLinkPanel from './TelegramLinkPanel';
 import { C } from './theme';
@@ -111,6 +112,10 @@ const PERM_FEATURES = [
   { key: "daily",      label: "Daily Sales Price", def: (r) => ["owner","senior","manager"].includes(r) },
   { key: "reconcile",  label: "Daily PO Check",    def: (r) => ["owner","senior","manager"].includes(r) },
   { key: "purchasing", label: "Cadangan PO",       def: (r) => ["owner","manager"].includes(r) },
+  // Minta Stok (Wylee 2026-09-08) — everyone can submit a request; approving
+  // is hard-limited to owner/manager in the component itself (matches
+  // stock_requests' RLS exactly), not permission-matrix overridable here.
+  { key: "stock_requests", label: "Minta Stok",    def: () => true },
   { key: "queries",    label: "Pertanyaan Harga",  def: (r) => ["owner","senior","manager"].includes(r) },
   { key: "quote",      label: "Sebut Harga",       def: () => true },
   { key: "temp_invoice", label: "Cash Sales Sementara", def: () => true },
@@ -194,7 +199,7 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 const NAV = [
   { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices"] },
   { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
-  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","unbilled"] },
+  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","stock_requests","unbilled"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
   { type:"group", key:"chat_center",    label:"Chat Center",     icon:"💬", tabs:["broadcast","queries"] },
@@ -454,6 +459,7 @@ export default function App() {
   const [dcResults, setDcResults] = useState([]);
   const [rcResults, setRcResults] = useState(null);
   const [rcAlert,   setRcAlert]   = useState(null); // {count, runAt} — auto-reconcile discrepancy alert
+  const [srPending, setSrPending] = useState(0); // count of stock_requests still status='baru' — sidebar badge for owner/manager
   const [syncStatus, setSyncStatus] = useState(null); // {status:'green'|'red', tables, problems, checked_at} — top-bar sync health badge
   const [accessNotice, setAccessNotice] = useState(""); // shown on login screen (no browser alert)
   const [dcRan,     setDcRan]     = useState(false);
@@ -462,6 +468,7 @@ export default function App() {
   const [openGroups, setOpenGroups] = useState(() => new Set([groupKeyForTab("assistant")])); // sidebar: which nav groups are expanded
   const [mobileNavOpen, setMobileNavOpen] = useState(false); // mobile drawer open/closed
   const [openPrId, setOpenPrId] = useState(null); // uuid of a PR opened from Senarai PR into the Cadangan PO builder, or null for a fresh PR
+  const [stockReqPrefillCode, setStockReqPrefillCode] = useState(''); // item code handed off from an approved Minta Stok request into Cadangan PO
 
   // Restore Supabase session on load
   useEffect(() => {
@@ -561,6 +568,23 @@ export default function App() {
     }
   }, [tab, rcAlert]);
 
+  // ── Minta Stok: sidebar badge for owner/manager showing requests still
+  // awaiting a decision (Wylee 2026-09-08). Polls rather than realtime to
+  // keep this consistent with the rest of the app's badges (reconcile above).
+  useEffect(() => {
+    if (!session || !(session.role === 'owner' || session.role === 'manager')) { setSrPending(0); return; }
+    let stop = false;
+    const check = async () => {
+      try {
+        const { count } = await supabase.from('stock_requests').select('id', { count: 'exact', head: true }).eq('status', 'baru');
+        if (!stop) setSrPending(count || 0);
+      } catch { /* stay silent — badge just won't update this tick */ }
+    };
+    check();
+    const iv = setInterval(check, 60 * 1000);
+    return () => { stop = true; clearInterval(iv); };
+  }, [session, tab]);
+
   // Keep the active tab's sidebar group expanded, even when navigation to it
   // happens programmatically (e.g. the rcAlert banner, DailyCheckReminder).
   useEffect(() => {
@@ -634,6 +658,9 @@ export default function App() {
       { key:"purchasing", label:"📦 Cadangan PO" },
       { key:"purchase_requests", label:"📋 Senarai PR" },
     ] : []),
+    ...(hasPerm(session, "stock_requests") ? [
+      { key:"stock_requests", label:"🙋 Minta Stok" },
+    ] : []),
     ...(hasPerm(session, "unbilled") ? [
       { key:"unbilled", label:"🧾 DO Belum Bil" },
     ] : []),
@@ -699,6 +726,9 @@ export default function App() {
                     {stripLabelIcon(t.label)}
                     {t.key === "reconcile" && rcAlert ? (
                       <span className="sb-badge">{rcAlert.count}</span>
+                    ) : null}
+                    {t.key === "stock_requests" && srPending > 0 ? (
+                      <span className="sb-badge">{srPending}</span>
                     ) : null}
                   </a>
                 </li>
@@ -853,6 +883,7 @@ export default function App() {
                 openPrId={openPrId}
                 onPrSaved={() => setOpenPrId(null)}
                 onOpenPrList={() => { setOpenPrId(null); goTab("purchase_requests"); }}
+                initialQuery={stockReqPrefillCode}
               />
             )}
             {tab==="purchase_requests" && canAccessPurchasing(session) && (
@@ -860,6 +891,15 @@ export default function App() {
                 session={session}
                 onOpenPr={(prId) => { setOpenPrId(prId); goTab("purchasing"); }}
                 onNewPr={() => { setOpenPrId(null); goTab("purchasing"); }}
+              />
+            )}
+            {tab==="stock_requests" && hasPerm(session, "stock_requests") && (
+              <StockRequestsTab
+                session={session}
+                prices={prices}
+                onOpenPurchasing={canAccessPurchasing(session) ? (code) => {
+                  setOpenPrId(null); setStockReqPrefillCode(code); goTab("purchasing");
+                } : undefined}
               />
             )}
             {tab==="unbilled" && hasPerm(session, "unbilled") && <UnbilledDOTab session={session} />}

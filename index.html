@@ -20,8 +20,13 @@
          inline styles for layout density; this overrides just the effective
          font size (not padding/layout) so typing never triggers the zoom.
          !important is required: it's the only thing that outranks an inline
-         style="font-size:...". Desktop is unaffected either way. */
-      input, select, textarea { font-size: 16px !important; }
+         style="font-size:...". Scoped to the app's own mobile breakpoint
+         (matches the @media (max-width: 880px) already used for the sidebar
+         in App.jsx) so desktop keeps its intentional 12-14px field sizes and
+         the login PIN field keeps its 20px letter-spaced styling. */
+      @media (max-width: 880px) {
+        input, select, textarea { font-size: 16px !important; }
+      }
     </style>
   </head>
   <body style="background:#0f2744;margin:0;"><div id="splash" style="position:fixed;inset:0;background:#0f2744;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s"><div style="color:white;font-family:sans-serif;font-size:18px;letter-spacing:2px">M GAS STEEL</div></div>

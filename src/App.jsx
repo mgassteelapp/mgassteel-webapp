@@ -12,6 +12,7 @@ import PurchaseRequestsTab from './PurchaseRequestsTab';
 import StockRequestsTab from './StockRequestsTab';
 import UnbilledDOTab from './UnbilledDOTab';
 import TelegramLinkPanel from './TelegramLinkPanel';
+import PushNotifPanel from './PushNotifPanel';
 import { C } from './theme';
 
 
@@ -840,6 +841,7 @@ export default function App() {
             </div>
             <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:2 }}>
               <TelegramLinkPanel session={session} />
+              <PushNotifPanel session={session} />
               <button type="button" className="sb-logout" title="Log keluar" onClick={doLogout}>⏻</button>
             </div>
           </div>

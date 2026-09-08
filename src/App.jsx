@@ -809,6 +809,7 @@ export default function App() {
 
       <AgentQueryPopup session={session} />
       <BroadcastPopup session={session} />
+      <StockRequestToast session={session} goTab={goTab} />
       {session.role === "manager" && <DailyCheckReminder session={session} goCheck={() => setTab("reconcile")} />}
 
       <div className="mobile-topbar">
@@ -2608,6 +2609,73 @@ function pqBeep() {
     o.frequency.value = 880; g.gain.value = 0.15;
     o.start(); o.stop(ctx.currentTime + 0.45);
   } catch { /* audio blocked — popup still shows */ }
+}
+
+// ── Minta Stok live toast: instant corner alert for owner/manager ──────────
+// Wylee 2026-09-08: wanted a live pop-up (not just the 60s-polled sidebar
+// badge) the moment a new stock request comes in. Deliberately NOT a
+// blocking modal like BroadcastPopup/AgentQueryPopup below — a stock
+// request doesn't need an immediate forced answer the way a broadcast ack
+// or a live price query does, so this is a dismissible corner card instead,
+// same live-subscription + beep mechanism as those two. No catch-up-on-
+// mount query on purpose: the sidebar badge already covers "what's still
+// pending since before I opened the app"; this is only for "just happened
+// while I'm here", so reloading the page doesn't re-spam toasts for a
+// backlog that's already visible as a badge count.
+function StockRequestToast({ session, goTab }) {
+  const canApprove = session.role === 'owner' || session.role === 'manager';
+  const [queue, setQueue] = useState([]);
+
+  useEffect(() => {
+    if (!canApprove) return;
+    const ch = supabase.channel('sr-live')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'stock_requests' },
+        (payload) => {
+          const row = payload.new;
+          if (row && row.status === 'baru' && row.requested_by !== session.name) {
+            setQueue(q => q.some(x => x.id === row.id) ? q : [...q, row]);
+            pqBeep();
+          }
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [canApprove, session.name]);
+
+  if (!canApprove || queue.length === 0) return null;
+  const dismiss = (id) => setQueue(q => q.filter(x => x.id !== id));
+  const shown = queue.slice(0, 4);
+
+  return (
+    <div style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 9998,
+                  display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 340, width: 'calc(100% - 32px)' }}>
+      {shown.map(r => (
+        <div key={r.id} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12,
+                                  boxShadow: '0 12px 32px rgba(15,23,42,0.18)', padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ fontSize: 18, lineHeight: 1 }}>🙋</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 12.5, color: C.navy }}>Permintaan stok baharu</div>
+              <div style={{ fontSize: 12, color: C.text, marginTop: 2 }}>
+                {r.requested_by} · {r.qty} {r.uom || ''} {r.item_code}
+                {r.urgency === 'segera' && <span style={{ color: C.red, fontWeight: 800 }}> · SEGERA</span>}
+              </div>
+            </div>
+            <button type="button" onClick={() => dismiss(r.id)} aria-label="Tutup"
+              style={{ border: 'none', background: 'transparent', color: C.muted, cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>✕</button>
+          </div>
+          <button type="button" onClick={() => { dismiss(r.id); goTab('stock_requests'); }}
+            style={{ marginTop: 8, width: '100%', padding: '7px', border: 'none', borderRadius: 7,
+                     fontWeight: 700, fontSize: 12, cursor: 'pointer', background: C.navy, color: '#fff' }}>
+            Lihat →
+          </button>
+        </div>
+      ))}
+      {queue.length > shown.length && (
+        <div style={{ fontSize: 11, color: C.muted, textAlign: 'center' }}>+{queue.length - shown.length} lagi</div>
+      )}
+    </div>
+  );
 }
 
 /// ── Broadcast popup: owner announcements that EVERY user must acknowledge ──

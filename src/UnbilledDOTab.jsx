@@ -126,6 +126,24 @@ function SuggestionBlock({ pricing }) {
   );
 }
 
+// Cross-uom price-gap caution (Wylee 2026-09-08: purata shown as RM196.01 on
+// a line whose true market price was ~RM2,853.54 — the item is also sold
+// under a bundle uom at a wildly different price, and the DO line's own uom
+// was very likely mis-keyed in SQL Accounting). Deliberately placed ABOVE
+// the suggestion, in red, so it's seen before the price below it is trusted
+// — never auto-corrects anything, only names the discrepancy for a human to
+// check. uom_caution is built server-side in reconcile-proxy; basis text
+// rendered verbatim, same convention as SuggestionBlock's pricing.basis.
+function UomCautionBlock({ caution }) {
+  if (!caution) return null;
+  return (
+    <div style={{ background: C.redLight, border: `1px solid ${C.red}33`, borderRadius: 8, padding: '9px 12px', marginBottom: 8 }}>
+      <div style={{ fontWeight: 800, fontSize: 12.5, color: C.red, marginBottom: 3 }}>⚠ Semak uom — mungkin silap taip</div>
+      <div style={{ fontSize: 11.5, color: C.text, opacity: 0.9 }}>{caution.basis}</div>
+    </div>
+  );
+}
+
 function LineRow({ line }) {
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, marginBottom: 8, background: C.white }}>
@@ -144,6 +162,7 @@ function LineRow({ line }) {
           </div>
         </div>
       </div>
+      <UomCautionBlock caution={line.uom_caution} />
       <FactsBlock line={line} />
       <SuggestionBlock pricing={line.pricing} />
     </div>
@@ -152,6 +171,7 @@ function LineRow({ line }) {
 
 function DoCard({ doc, expanded, onToggle }) {
   const over = (doc.days_waiting || 0) > THRESHOLD_LABEL_DAYS;
+  const hasCaution = doc.lines.some((li) => li.uom_caution);
   return (
     <div style={{
       background: C.white, border: `1px solid ${over ? '#fca5a5' : C.border}`, borderRadius: 12,
@@ -172,6 +192,12 @@ function DoCard({ doc, expanded, onToggle }) {
           <div style={{ fontWeight: 600, fontSize: 12.5 }}>{doc.customer}</div>
           <div style={{ fontSize: 11, color: C.muted }}>{doc.agent || '—'} · {doc.lines.length} baris</div>
         </div>
+        {hasCaution && (
+          <span title="Ada baris dengan uom yang perlu disemak" style={{
+            fontSize: 11, fontWeight: 800, color: C.red, background: C.redLight,
+            borderRadius: 999, padding: '3px 8px',
+          }}>⚠ Semak uom</span>
+        )}
         <div style={{ fontWeight: 800, fontSize: 13.5, color: C.text, minWidth: 90, textAlign: 'right' }}>
           {fmtRM(doc.docamt)}
         </div>

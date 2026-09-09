@@ -13,6 +13,7 @@ import StockRequestsTab from './StockRequestsTab';
 import UnbilledDOTab from './UnbilledDOTab';
 import TelegramLinkPanel from './TelegramLinkPanel';
 import PushNotifPanel from './PushNotifPanel';
+import EasternSteelTab from './EasternSteelTab';
 import { C } from './theme';
 
 
@@ -198,7 +199,7 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 // mockup (sidebar-nav-mockup.html), with the two standalone items sitting
 // where the old "Alat" group used to be.
 const NAV = [
-  { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices"] },
+  { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices","eastern_steel"] },
   { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
   { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","stock_requests","unbilled"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
@@ -649,6 +650,9 @@ export default function App() {
     ...(hasPerm(session, "prices") ? [
       { key:"prices", label:"💰 Senarai Harga" },
     ] : []),
+    ...(session.role==="owner" ? [
+      { key:"eastern_steel", label:"🏭 Harga Eastern Steel" },
+    ] : []),
     ...(canAccessDaily(session) ? [
       { key:"daily", label:"📋 Check Daily Sales Price" },
     ] : []),
@@ -876,6 +880,7 @@ export default function App() {
             {tab==="temp_invoice" && hasPerm(session, "temp_invoice") && <TempInvoiceTab session={session} prices={prices} />}
             {tab==="temp_sales_flow" && hasPerm(session, "temp_sales_flow") && <TempSalesFlowTab session={session} prices={prices} />}
             {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
+            {tab==="eastern_steel" && session.role==="owner" && <EasternSteelTab session={session} />}
             {tab==="broadcast" && session.role==="owner" && <BroadcastTab session={session} />}
             {tab==="activity"  && session.role==="owner" && <ActivityTab />}
             {tab==="users"     && session.role==="owner" && <UsersTab session={session} />}

@@ -171,6 +171,20 @@ function sessionExpired(session) {
   return !withinStaffWindow(session.name);
 }
 
+// ── Idle auto-logout (shared-device hygiene) ────────────────────────────────
+// Wylee 2026-09-21: separate from the staff working-hours window above, and
+// not a revival of the old 15-min idle timeout abolished in Aug 2026 (that
+// one force-logged-out staff mid-shift purely for being briefly idle). This
+// is a much longer, gentler timeout aimed at a different problem: the app
+// runs on a shared tablet passed between staff all day, and a screen left
+// logged in but untouched for a long stretch is exactly the condition that
+// let a Supabase login go stale underneath a still-"logged in" UI (the
+// Minta Stok row-level-security bug). Applies to every role, not just
+// staff — it's about the device sitting idle, not who's allowed to work
+// when.
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const IDLE_MSG = "Sesi tamat kerana tiada aktiviti melebihi 30 minit — sila log masuk semula.";
+
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
 }
@@ -471,6 +485,7 @@ export default function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false); // mobile drawer open/closed
   const [openPrId, setOpenPrId] = useState(null); // uuid of a PR opened from Senarai PR into the Cadangan PO builder, or null for a fresh PR
   const [stockReqPrefillCode, setStockReqPrefillCode] = useState(''); // item code handed off from an approved Minta Stok request into Cadangan PO
+  const lastActivityRef = useRef(Date.now()); // 30-min idle auto-logout — see IDLE_TIMEOUT_MS above
 
   // Restore Supabase session on load
   useEffect(() => {
@@ -526,6 +541,18 @@ export default function App() {
     };
     run();
   }, [session]);
+  // Track activity for the 30-min idle auto-logout below. Resets on session
+  // change too, so a fresh login (or restore) doesn't start the clock from
+  // whenever the tab was actually last touched before that.
+  useEffect(() => {
+    if (!session) return;
+    lastActivityRef.current = Date.now();
+    const bump = () => { lastActivityRef.current = Date.now(); };
+    const evts = ["mousedown", "keydown", "touchstart", "scroll"];
+    evts.forEach(e => window.addEventListener(e, bump, { passive: true }));
+    return () => evts.forEach(e => window.removeEventListener(e, bump));
+  }, [session]);
+
   useEffect(() => {
     if (!session) return;
     const check = async () => {
@@ -534,6 +561,13 @@ export default function App() {
         await supabase.auth.signOut();
         setSession_(null);
         setAccessNotice(accessMsgFor(session.name));
+        return;
+      }
+      if (Date.now() - lastActivityRef.current > IDLE_TIMEOUT_MS) {
+        localStorage.removeItem("mgas_login_time");
+        await supabase.auth.signOut();
+        setSession_(null);
+        setAccessNotice(IDLE_MSG);
       }
     };
     check(); // immediate — covers session restore outside the window

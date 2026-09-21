@@ -107,6 +107,27 @@ export default function StockRequestsTab({ session, prices = [], onOpenPurchasin
     if (!q || q <= 0) { setSubmitError('Sila isi kuantiti yang sah.'); return; }
     setSubmitting(true);
     try {
+      // Wylee 2026-09-20 ("under minta stok, the error message?"): this used
+      // to insert straight off session.name with no check that the
+      // underlying Supabase login was still alive. On a shared tablet the
+      // login can go stale for reasons that have nothing to do with the
+      // staff access-hours window (long idle in the background, site data
+      // cleared, etc.) while the screen still shows the person as logged
+      // in — the insert then reaches Postgres with no matching identity and
+      // gets blocked by the stock_requests row-level-security policy, which
+      // surfaced as a confusing raw database error instead of an
+      // actionable one. Confirm (and if needed silently refresh) the live
+      // session right before sending — same recover-quietly pattern
+      // invokeReconcile already uses elsewhere in the app.
+      let { data: { session: liveSession } } = await supabase.auth.getSession();
+      if (!liveSession) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        liveSession = refreshed?.session || null;
+      }
+      if (!liveSession) {
+        setSubmitError('Sesi log masuk tamat tempoh — sila log keluar dan log masuk semula.');
+        return;
+      }
       const { error } = await supabase.from('stock_requests').insert({
         requested_by: session.name,
         branch,

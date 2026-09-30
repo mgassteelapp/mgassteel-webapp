@@ -100,24 +100,33 @@ function FactsBlock({ line }) {
 // (never a bare number — "a number without its reasoning gets accepted
 // without thinking"). basis is built server-side in reconcile-proxy;
 // rendered verbatim here.
+//
+// Wylee 2026-09-30 ("cadangan rm29.66-rm30.49 , this row can be remove"):
+// the generic cost+7%-to-10% range box (no_history_with_cost) is now
+// redundant with the three new Cadangan #1/#2/#3 cards below
+// (PriceSuggestionsBlock) — Cadangan #2's fixed-margin chips already cover
+// this exact "cost + X%" idea, so that ONE type is dropped here.
+// has_history and no_data are both kept: has_history is the only place
+// "this exact customer's own last price, nudged up if cost has since eroded
+// the margin below 7%" shows up; no_data is the only place the "why there's
+// no suggestion at all" reasoning shows up (no history + no cost recorded,
+// or the September unit-basis-mismatch guard — e.g. cost recorded per metre
+// on a per-piece line). Caught in review: an earlier version of this dropped
+// no_data too, which silently hid that reasoning whenever the item also had
+// no curated `prices` row (PriceSuggestionsBlock renders nothing either in
+// that case) — left the line with facts and no explanation at all.
 function SuggestionBlock({ pricing }) {
-  if (!pricing) return null;
-  const tone = pricing.type === 'no_data' ? 'gray' : pricing.type === 'has_history' ? (pricing.adjusted ? 'amber' : 'green') : 'blue';
+  if (!pricing || pricing.type === 'no_history_with_cost') return null;
+  const tone = pricing.type === 'no_data' ? 'gray' : (pricing.adjusted ? 'amber' : 'green');
   const toneMap = {
     green: { bg: C.greenLight, text: C.green },
     amber: { bg: C.yellowLight, text: C.yellow },
-    blue: { bg: C.blueLight, text: C.blue },
     gray: { bg: '#f1f5f9', text: C.muted },
   };
   const s = toneMap[tone];
-  let headline;
-  if (pricing.type === 'has_history') {
-    headline = `Cadangan: RM${pricing.suggested_price.toFixed(2)}${pricing.adjusted ? ' (dilaraskan)' : ''}`;
-  } else if (pricing.type === 'no_history_with_cost') {
-    headline = `Cadangan: RM${pricing.suggested_price_low.toFixed(2)} – RM${pricing.suggested_price_high.toFixed(2)}`;
-  } else {
-    headline = 'Tiada cadangan';
-  }
+  const headline = pricing.type === 'has_history'
+    ? `Cadangan: RM${pricing.suggested_price.toFixed(2)}${pricing.adjusted ? ' (dilaraskan)' : ''}`
+    : 'Tiada cadangan';
   return (
     <div style={{ background: s.bg, borderRadius: 8, padding: '9px 12px', marginTop: 8 }}>
       <div style={{ fontWeight: 800, fontSize: 12.5, color: s.text, marginBottom: 3 }}>{headline}</div>
@@ -196,11 +205,16 @@ function PriceSuggestionsBlock({ suggestions }) {
           <div style={{ fontWeight: 800, fontSize: 11, color: C.green, textTransform: 'uppercase', letterSpacing: 0.03, marginBottom: 6 }}>
             Cadangan #2 · Margin tetap
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {/* Wylee 2026-09-30 ("add one more +18% and +20%, all within one
+              row from existing"): now 6 chips (8/10/13/15/18/20%) — kept on
+              one row (no wrap) with horizontal scroll as the fallback on a
+              narrow screen, rather than wrapping to a second row. */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto' }}>
             {fixed_margins.map((m) => (
               <div key={m.pct} style={{
-                border: `1px solid ${C.green}33`, borderRadius: 8, padding: '6px 10px',
-                fontSize: 12, fontWeight: 700, color: C.green, background: C.white,
+                border: `1px solid ${C.green}33`, borderRadius: 8, padding: '6px 9px',
+                fontSize: 11.5, fontWeight: 700, color: C.green, background: C.white,
+                whiteSpace: 'nowrap', flex: '0 0 auto',
               }}>
                 +{m.pct}% · {fmtRM(m.price)}
               </div>

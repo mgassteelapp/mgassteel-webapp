@@ -55,6 +55,20 @@ function fmtDate(d) {
     return new Date(d + 'T00:00:00Z').toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' });
   } catch { return d; }
 }
+// Wylee 2026-09-30 ("have the sql cost display alongside the supabase cost
+// and have the stock level display too, all in the same row"): stock comes
+// from reconcile-proxy's best-effort CRM stockBulk lookup — { qty,
+// damaged_qty, uom } or null when the item has no stock record / the lookup
+// failed. Usable qty already excludes damaged stock server-side; damaged is
+// only called out here when there's some, as a caution.
+function fmtStock(stock) {
+  if (!stock || stock.qty == null) return null;
+  const qty = Number(stock.qty);
+  const uom = stock.uom ? String(stock.uom).trim() : '';
+  const base = `${Number.isFinite(qty) ? qty.toLocaleString('ms-MY', { maximumFractionDigits: 2 }) : '—'}${uom ? ` ${uom}` : ''}`;
+  const damaged = Number(stock.damaged_qty) || 0;
+  return damaged > 0 ? `${base} (${damaged.toLocaleString('ms-MY', { maximumFractionDigits: 2 })} rosak)` : base;
+}
 
 // Days-waiting pill — over-threshold reads red, within-threshold reads a
 // calmer amber/grey so the eye lands on what's actually stuck, per the
@@ -80,6 +94,7 @@ function DaysPill({ days }) {
 function FactsBlock({ line }) {
   const hasCustHistory = line.customer_last_price != null;
   const hasMarket = (line.market_count_90d || 0) > 0;
+  const stockStr = fmtStock(line.stock);
   return (
     <div style={{ fontSize: 12, color: C.text, lineHeight: 1.7 }}>
       <div>
@@ -97,8 +112,23 @@ function FactsBlock({ line }) {
           : <span style={{ color: C.muted }}>tiada jualan lain dalam 30 hari</span>}
       </div>
       <div>
-        <b>Kos semasa:</b>{' '}
-        {line.pricing?.cost != null ? fmtRM(line.pricing.cost) : <span style={{ color: C.muted }}>tiada kos direkodkan</span>}
+        <b>Kos:</b>{' '}
+        {line.app_cost != null || line.sql_cost != null ? (
+          <>
+            {line.app_cost != null
+              ? <>App {fmtRM(line.app_cost)}</>
+              : <span style={{ color: C.muted }}>App —</span>}
+            <span style={{ color: C.muted }}> &middot; </span>
+            {line.sql_cost != null
+              ? <>SQL {fmtRM(line.sql_cost)}</>
+              : <span style={{ color: C.muted }}>SQL —</span>}
+          </>
+        ) : (
+          <span style={{ color: C.muted }}>tiada kos direkodkan</span>
+        )}
+        {stockStr && (
+          <span style={{ color: C.muted }}> &middot; Stok {stockStr}</span>
+        )}
       </div>
       {line.pricing?.margin_at_last_price_pct != null && (
         <div><b>Margin pada harga lalu:</b> {line.pricing.margin_at_last_price_pct}%</div>

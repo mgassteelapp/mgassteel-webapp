@@ -78,12 +78,12 @@ function FactsBlock({ line }) {
           : <span style={{ color: C.muted }}>tiada sejarah pelanggan ini</span>}
       </div>
       <div>
-        <b>Purata pasaran (90 hari, semua pelanggan):</b>{' '}
+        <b>Purata pasaran (30 hari, semua pelanggan):</b>{' '}
         {hasMarket
           ? <>{fmtRM(line.market_avg_90d)} <span style={{ color: C.muted }}>
               (RM{Number(line.market_min_90d).toFixed(2)}–RM{Number(line.market_max_90d).toFixed(2)}, {line.market_count_90d} jualan)
             </span></>
-          : <span style={{ color: C.muted }}>tiada jualan lain dalam 90 hari</span>}
+          : <span style={{ color: C.muted }}>tiada jualan lain dalam 30 hari</span>}
       </div>
       <div>
         <b>Kos semasa:</b>{' '}
@@ -122,6 +122,127 @@ function SuggestionBlock({ pricing }) {
     <div style={{ background: s.bg, borderRadius: 8, padding: '9px 12px', marginTop: 8 }}>
       <div style={{ fontWeight: 800, fontSize: 12.5, color: s.text, marginBottom: 3 }}>{headline}</div>
       <div style={{ fontSize: 11.5, color: C.text, opacity: 0.85 }}>{pricing.basis}</div>
+    </div>
+  );
+}
+
+// Cadangan #1/#2/#3 (Wylee 2026-09-29 — "if you can study the customer
+// pricing based on previous data, you can actually propose your pricing
+// too. different customer have different pricing.. some below 10%, some
+// above 15%"): three additional, independent suggestion sets built
+// server-side in reconcile-proxy (price_suggestions on each line), all
+// additive to SuggestionBlock above (unchanged) — never replacing it, since
+// that one still carries this specific customer's own last-price history
+// when there is any.
+//   Cadangan #1 — the app's own curated `prices` tiers (Runcit/Bulk/Kredit
+//   from the `prices` table), each shown WITH its margin over cost so the
+//   reasoning is never hidden behind a bare number. The picker defaults to
+//   whichever tier matches this DO's own customer bucket (cash/COD/tunai ->
+//   Runcit, 14/30-day credit -> Kredit) but never auto-applies — clicking
+//   another tier is free, and the default is just a starting highlight.
+//   Cadangan #2 — flat cost+8/10/13/15% chips, covering the fixed-margin
+//   range Wylee called out directly.
+//   Cadangan #3 — the cash-vs-credit historical-margin insight: verified
+//   against 4.5 years of real sales that cash/COD/tunai customers
+//   historically pay a noticeably higher margin than 14/30-day credit-term
+//   customers for the same items. This DO's own customer bucket is
+//   highlighted; a bucket backed by fewer than 3 distinct customers carries
+//   an explicit small-sample caution rather than being presented as solid.
+function PriceSuggestionsBlock({ suggestions }) {
+  const [selectedTier, setSelectedTier] = useState(null);
+  if (!suggestions) return null;
+  const { supabase_tiers = [], recommended_tier, fixed_margins = [], terms_insight } = suggestions;
+  if (!supabase_tiers.length && !fixed_margins.length && !(terms_insight && (terms_insight.cash || terms_insight.credit))) {
+    return null;
+  }
+  const activeTier = selectedTier || recommended_tier;
+
+  return (
+    <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {supabase_tiers.length > 0 && (
+        <div style={{ background: C.blueLight, borderRadius: 8, padding: '9px 12px' }}>
+          <div style={{ fontWeight: 800, fontSize: 11, color: C.blue, textTransform: 'uppercase', letterSpacing: 0.03, marginBottom: 6 }}>
+            Cadangan #1 · Harga tersenarai
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {supabase_tiers.map((t) => {
+              const active = t.key === activeTier;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setSelectedTier(t.key)}
+                  style={{
+                    border: `1.5px solid ${active ? C.blue : C.border}`,
+                    background: active ? C.blue : C.white,
+                    color: active ? C.white : C.text,
+                    borderRadius: 8, padding: '6px 10px', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 700, textAlign: 'left', lineHeight: 1.4,
+                  }}
+                >
+                  <div>{t.label} · {fmtRM(t.price)}</div>
+                  {t.margin_pct != null && (
+                    <div style={{ fontSize: 10.5, fontWeight: 600, opacity: 0.85 }}>margin {t.margin_pct}%</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {fixed_margins.length > 0 && (
+        <div style={{ background: C.greenLight, borderRadius: 8, padding: '9px 12px' }}>
+          <div style={{ fontWeight: 800, fontSize: 11, color: C.green, textTransform: 'uppercase', letterSpacing: 0.03, marginBottom: 6 }}>
+            Cadangan #2 · Margin tetap
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {fixed_margins.map((m) => (
+              <div key={m.pct} style={{
+                border: `1px solid ${C.green}33`, borderRadius: 8, padding: '6px 10px',
+                fontSize: 12, fontWeight: 700, color: C.green, background: C.white,
+              }}>
+                +{m.pct}% · {fmtRM(m.price)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {terms_insight && (terms_insight.cash || terms_insight.credit) && (
+        <div style={{ background: '#f1f5f9', borderRadius: 8, padding: '9px 12px' }}>
+          <div style={{ fontWeight: 800, fontSize: 11, color: C.navy, textTransform: 'uppercase', letterSpacing: 0.03, marginBottom: 6 }}>
+            Cadangan #3 · Margin ikut terma
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {['cash', 'credit'].map((g) => {
+              const bucket = terms_insight[g];
+              if (!bucket) return null;
+              const own = terms_insight.own_group === g;
+              return (
+                <div key={g} style={{
+                  border: `1.5px solid ${own ? C.navy : C.border}`,
+                  background: own ? C.accentSoft : C.white,
+                  borderRadius: 8, padding: '6px 10px', fontSize: 12, minWidth: 130,
+                }}>
+                  <div style={{ fontWeight: 700, color: C.text }}>
+                    {g === 'cash' ? 'Tunai / COD' : 'Kredit'}{own ? ' (pelanggan ini)' : ''}
+                  </div>
+                  <div style={{ fontWeight: 800, color: C.navy }}>{fmtRM(bucket.avg)}</div>
+                  <div style={{ fontSize: 10.5, color: C.muted }}>
+                    {bucket.n_lines} jualan · {bucket.n_customers} pelanggan
+                  </div>
+                  {bucket.low_sample && (
+                    <div style={{ fontSize: 10, color: C.red, fontWeight: 700, marginTop: 2 }}>
+                      ⚠ sampel kecil
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -165,6 +286,7 @@ function LineRow({ line }) {
       <UomCautionBlock caution={line.uom_caution} />
       <FactsBlock line={line} />
       <SuggestionBlock pricing={line.pricing} />
+      <PriceSuggestionsBlock suggestions={line.price_suggestions} />
     </div>
   );
 }

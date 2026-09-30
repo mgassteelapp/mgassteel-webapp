@@ -38,6 +38,17 @@ function fmtRM(n) {
   const v = Number(n);
   return Number.isFinite(v) ? `RM${v.toFixed(2)}` : '—';
 }
+// Wylee 2026-09-30 ("listed price... you have it in price search as rrp"):
+// same field (prices.list_price) and same "/mt"/"/kg" unit-tag convention as
+// fmtRrp() in App.jsx's Semak Harga screen — the RRP figure mixes flat RM,
+// per-MT and per-KG values with no separate unit column, so the tag Wylee
+// appends to the item's description is what decides how to read the number.
+function fmtRrp(listPrice, desc) {
+  const n = Number(listPrice) || 0;
+  const m = String(desc || '').match(/\/(mt|kg)\b/i);
+  if (!m) return `RM${n.toFixed(2)}`;
+  return `${n.toFixed(3)}/${m[1].toUpperCase()}`;
+}
 function fmtDate(d) {
   if (!d) return '—';
   try {
@@ -284,7 +295,18 @@ function LineRow({ line }) {
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, marginBottom: 8, background: C.white }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 13, color: C.navy }}>{line.itemcode}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ fontWeight: 700, fontSize: 13, color: C.navy }}>{line.itemcode}</span>
+            {line.list_price > 0 && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', background: '#EEF2F7',
+                border: '1px solid #CBD5E1', color: '#475569', borderRadius: 999,
+                padding: '2.5px 8px', fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap',
+              }}>
+                RRP MYR {fmtRrp(line.list_price, [line.description, line.description2].filter(Boolean).join(' '))}
+              </span>
+            )}
+          </div>
           {(line.description || line.description2) && (
             <div style={{ fontSize: 11.5, color: C.muted }}>{[line.description, line.description2].filter(Boolean).join(' · ')}</div>
           )}

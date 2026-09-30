@@ -102,6 +102,20 @@ export default function PushNotifPanel({ session }) {
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        // Wylee 2026-09-25: "can i know who switch off the notification" —
+        // this delete used to leave no trace at all. Logging it to
+        // activity_log (same table Logout/Semak Harga/chat questions already
+        // use) so a manual switch-off is now answerable, same as the
+        // auto-expiry half already logged server-side in telegram-bot.
+        try {
+          await supabase.from('activity_log').insert({
+            name: session.name,
+            role: session.role,
+            action: 'Push Dinyahaktifkan',
+            detail: 'Dinyahaktifkan secara manual oleh pengguna.',
+            device: navigator.userAgent,
+          });
+        } catch { /* logging must never block the actual unsubscribe */ }
         await sub.unsubscribe();
       }
       setSubscribed(false);

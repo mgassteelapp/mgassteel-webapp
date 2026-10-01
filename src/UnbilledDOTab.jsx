@@ -95,12 +95,23 @@ function FactsBlock({ line }) {
   const hasCustHistory = line.customer_last_price != null;
   const hasMarket = (line.market_count_90d || 0) > 0;
   const stockStr = fmtStock(line.stock);
+  // Wylee 2026-10-01 ("the last price taken by customer, it is better to
+  // include the item description and description 2, on the same row"):
+  // description of THAT historical transaction itself (reconcile-proxy/
+  // run-reconcile v47 — item_customer_last_price_v2), not this line's own
+  // description — lets a reader see when the last price was for a
+  // different variant (length/colour/spec) under the same item code.
+  const lastPriceDesc = [line.customer_last_description, line.customer_last_description2]
+    .filter(Boolean).join(' ');
   return (
     <div style={{ fontSize: 12, color: C.text, lineHeight: 1.7 }}>
       <div>
         <b>Pelanggan ini bayar akhir:</b>{' '}
         {hasCustHistory
-          ? <>{fmtRM(line.customer_last_price)} <span style={{ color: C.muted }}>({fmtDate(line.customer_last_date)})</span></>
+          ? <>
+              {fmtRM(line.customer_last_price)} <span style={{ color: C.muted }}>({fmtDate(line.customer_last_date)})</span>
+              {lastPriceDesc && <span style={{ color: C.muted }}> — {lastPriceDesc}</span>}
+            </>
           : <span style={{ color: C.muted }}>tiada sejarah pelanggan ini</span>}
       </div>
       <div>

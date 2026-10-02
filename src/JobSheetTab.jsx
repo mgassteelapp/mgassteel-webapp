@@ -118,8 +118,15 @@ export default function JobSheetTab({ session }) {
         body: {
           action: 'listEntries',
           status: status === 'all' ? undefined : status,
-          from: from ? `${from}T00:00:00` : undefined,
-          to: to ? `${to}T23:59:59` : undefined,
+          // The date pickers are plain yyyy-mm-dd — a bare "T00:00:00" with
+          // no offset gets parsed as UTC, not Malaysia time, which shifts
+          // pay-period boundaries by 8 hours (caught in review: picking
+          // "October" would miss the first 8 hours of the 1st and pull in
+          // the first 8 hours of the 1st of the following month). Anchor
+          // explicitly to +08:00 so the boundary matches what the date
+          // picker actually shows.
+          from: from ? `${from}T00:00:00+08:00` : undefined,
+          to: to ? `${to}T23:59:59+08:00` : undefined,
         },
       });
       if (error) throw new Error(error.message || 'Ralat sambungan');
@@ -186,23 +193,31 @@ export default function JobSheetTab({ session }) {
         </div>
       )}
 
-      {(statusFilter === 'submitted' || statusFilter === 'all') && perWorker.length > 0 && (
+      {/* Split from perWorker.length > 0: the needs-rate warning must still
+          show even when EVERY entry in range lacks a rate (perWorker would
+          then be empty and the whole box — warning included — used to
+          vanish with it, per review). */}
+      {(statusFilter === 'submitted' || statusFilter === 'all') && (perWorker.length > 0 || needsRateCount > 0) && (
         <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 16, marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontWeight: 700, fontSize: 13.5, color: C.navy }}>Jumlah Mengikut Pekerja (Disahkan)</div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: C.navy }}>{fmtRM(grandTotal)}</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {perWorker.map(w => (
-              <div key={w.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
-                <span>{w.name} <span style={{ color: C.muted }}>({w.count} rekod)</span></span>
-                <span style={{ fontWeight: 700 }}>{fmtRM(w.total)}</span>
+          {perWorker.length > 0 && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: C.navy }}>Jumlah Mengikut Pekerja (Disahkan)</div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: C.navy }}>{fmtRM(grandTotal)}</div>
               </div>
-            ))}
-          </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {perWorker.map(w => (
+                  <div key={w.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+                    <span>{w.name} <span style={{ color: C.muted }}>({w.count} rekod)</span></span>
+                    <span style={{ fontWeight: 700 }}>{fmtRM(w.total)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           {needsRateCount > 0 && (
-            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.border}`, fontSize: 12, color: C.yellow, fontWeight: 600 }}>
-              ⚠ {needsRateCount} rekod tiada kadar ditetapkan — TIDAK termasuk dalam jumlah di atas. Semak senarai di bawah.
+            <div style={{ marginTop: perWorker.length > 0 ? 10 : 0, paddingTop: perWorker.length > 0 ? 10 : 0, borderTop: perWorker.length > 0 ? `1px dashed ${C.border}` : 'none', fontSize: 12, color: C.yellow, fontWeight: 600 }}>
+              ⚠ {needsRateCount} rekod tiada kadar ditetapkan — TIDAK termasuk dalam jumlah{perWorker.length > 0 ? ' di atas' : ''}. Semak senarai di bawah.
             </div>
           )}
         </div>

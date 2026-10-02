@@ -489,7 +489,7 @@ function JobTypeRow({ jobType, onEdit, onChanged }) {
     <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 14, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
       <div>
         <div style={{ fontWeight: 700, fontSize: 13.5 }}>{jobType.name}</div>
-        <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{rateDisplay(jobType)} &middot; susunan {jobType.sort_order}</div>
+        <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{rateDisplay(jobType)}</div>
         <div style={{ marginTop: 6 }}>
           <span style={{ background: jobType.active ? C.greenLight : C.gray, color: jobType.active ? C.green : C.muted, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>
             {jobType.active ? 'Aktif' : 'Tidak Aktif'}

@@ -354,6 +354,16 @@ const TOP_VIEWS = [
 ];
 
 export default function JobSheetTab({ session }) {
+  // Worker management (listWorkers/setWorker/setWorkerActive) is
+  // owner/manager only server-side as of 2026-10-02 -- creating a worker or
+  // resetting a PIN is more sensitive than voiding an entry, since it's how
+  // someone could impersonate a worker going forward. Mirroring that here
+  // (same philosophy as the rest of this file: a role that can't call the
+  // backend action never sees a button that can't work) so a "senior"
+  // supervisor sees no "Pekerja" tab at all, rather than one that opens into
+  // a generic-looking error.
+  const canManageWorkers = session?.role === 'owner' || session?.role === 'manager';
+  const topViews = TOP_VIEWS.filter(v => v.key !== 'workers' || canManageWorkers);
   const [view, setView] = useState('entries');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -421,7 +431,7 @@ export default function JobSheetTab({ session }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-        {TOP_VIEWS.map(v => (
+        {topViews.map(v => (
           <button key={v.key} onClick={() => setView(v.key)} style={{
             padding: '8px 16px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
             background: view === v.key ? C.navy : C.gray, color: view === v.key ? C.white : C.muted,
@@ -431,7 +441,7 @@ export default function JobSheetTab({ session }) {
         ))}
       </div>
 
-      {view === 'workers' ? (
+      {view === 'workers' && canManageWorkers ? (
         <WorkerManager />
       ) : (
       <>

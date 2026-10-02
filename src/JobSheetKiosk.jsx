@@ -123,6 +123,7 @@ function LoginForm({ onLoggedIn }) {
 function EntryForm({ worker, onLogout }) {
   const [jobTypes, setJobTypes] = useState([]);
   const [jobTypesErr, setJobTypesErr] = useState('');
+  const [jobTypesLoaded, setJobTypesLoaded] = useState(false);
   const [jobTypeId, setJobTypeId] = useState('');
   const [qty, setQty] = useState('');
   const [orderRef, setOrderRef] = useState('');
@@ -147,6 +148,7 @@ function EntryForm({ worker, onLogout }) {
       if (stop) return;
       if (error || !data?.types) { setJobTypesErr('Gagal memuatkan senarai jenis kerja — sila cuba semula.'); return; }
       setJobTypes(data.types);
+      setJobTypesLoaded(true);
     })();
     return () => { stop = true; };
   }, []);
@@ -236,6 +238,22 @@ function EntryForm({ worker, onLogout }) {
         <div style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Sila log masuk semula untuk teruskan.</div>
         <button onClick={onLogout} style={{ padding: '12px 20px', background: C.navy, color: C.white, border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
           Log Masuk Semula
+        </button>
+      </div>
+    );
+  }
+
+  // No active job types at all (e.g. the office hasn't set any up yet) --
+  // an empty dropdown with no explanation would just look broken. Nothing
+  // below this (qty, photo, submit) is reachable without a job type picked
+  // anyway, so the whole form is replaced rather than shown half-working.
+  if (jobTypesLoaded && jobTypes.length === 0) {
+    return (
+      <div style={{ background: C.white, borderRadius: 14, border: `0.5px solid ${C.border}`, padding: 24, textAlign: 'center' }}>
+        <div style={{ fontWeight: 700, color: C.navy, marginBottom: 10 }}>Tiada Jenis Kerja</div>
+        <div style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Hubungi penyelia untuk tetapkan senarai jenis kerja.</div>
+        <button onClick={onLogout} style={{ padding: '10px 18px', background: C.gray, color: C.text, border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
+          Log Keluar
         </button>
       </div>
     );

@@ -27,6 +27,14 @@
 //     into a correct-looking RM0 with no flag — i.e. a worker could be
 //     silently underpaid whenever a job type's price wasn't set yet. Now
 //     excluded from the sum and counted separately as "needs a rate".
+//
+// Added 2026-10-02: a "Pekerja" sub-view (WorkerManager below) for adding
+// and managing workers from the UI. Before this, a staff code + PIN could
+// only be created via a raw SQL call to job_sheet_set_worker — fine for the
+// single test worker so far, but there was no way for anyone without direct
+// Supabase access to onboard the real workshop staff. Gated the same way as
+// the rest of this tab (requireSupervisor server-side; this screen simply
+// isn't reachable by a role that can't call the backend action).
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabase';
@@ -99,7 +107,249 @@ function VoidControl({ entry, onVoided }) {
   );
 }
 
+// ── Worker management (Add Worker screen) ──────────────────────────────────
+// See the file header note above for why this exists. setWorker both adds a
+// new worker and resets an existing one's PIN (it's the same upsert either
+// way); setWorkerActive only toggles `active`, leaving the PIN untouched.
+
+function AddWorkerForm({ existingCodes, onDone, onCancel }) {
+  const [staffCode, setStaffCode] = useState('');
+  const [name, setName] = useState('');
+  const [pin, setPin] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+
+  const trimmedCode = staffCode.trim();
+  const codeExists = !!trimmedCode && existingCodes.has(trimmedCode);
+
+  const submit = async () => {
+    setErr('');
+    if (!trimmedCode) { setErr('Sila isi kod staff.'); return; }
+    if (!name.trim()) { setErr('Sila isi nama.'); return; }
+    if (!/^\d{4,8}$/.test(pin.trim())) { setErr('PIN mesti 4-8 digit nombor.'); return; }
+    // Adding and resetting a PIN both go through the same upsert server-side
+    // (see setWorker in the edge function), so a code that already exists
+    // needs an explicit second confirmation before it silently overwrites
+    // that worker's name/PIN.
+    if (codeExists && !confirmOverwrite) { setConfirmOverwrite(true); return; }
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('job-sheet', {
+        body: { action: 'setWorker', staff_code: trimmedCode, name: name.trim(), pin: pin.trim(), active: true },
+      });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal menyimpan pekerja.'); return; }
+      onDone();
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 16, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 340 }}>
+      <div style={{ fontWeight: 700, fontSize: 13.5, color: C.navy }}>Tambah Pekerja</div>
+      <div>
+        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Kod Staff</label>
+        <input value={staffCode} onChange={e => { setStaffCode(e.target.value); setConfirmOverwrite(false); setErr(''); }} placeholder="cth. W01"
+          style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      </div>
+      <div>
+        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Nama</label>
+        <input value={name} onChange={e => { setName(e.target.value); setErr(''); }} placeholder="Nama pekerja"
+          style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      </div>
+      <div>
+        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>PIN (4-8 digit)</label>
+        <input value={pin} onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setErr(''); setConfirmOverwrite(false); }} inputMode="numeric" placeholder="cth. 2468"
+          style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      </div>
+      {codeExists && (
+        <div style={{ background: C.yellowLight, color: C.yellow, borderRadius: 8, padding: '8px 10px', fontSize: 11.5, fontWeight: 600 }}>
+          ⚠ Kod staff "{trimmedCode}" sudah wujud — menghantar akan menetapkan semula nama &amp; PIN pekerja ini.
+        </div>
+      )}
+      {err && <div style={{ color: C.red, fontSize: 11.5 }}>{err}</div>}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={submit} disabled={busy} style={{ flex: 1, padding: '8px 12px', background: busy ? C.muted : (codeExists ? C.yellow : C.navy), color: C.white, border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+          {busy ? '…' : (codeExists ? (confirmOverwrite ? 'Sahkan Tetapkan Semula' : 'Tetapkan Semula') : 'Simpan')}
+        </button>
+        <button onClick={onCancel} disabled={busy} style={{ padding: '8px 12px', background: C.gray, color: C.muted, border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+          Batal
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ResetPinControl({ worker, onDone }) {
+  const [open, setOpen] = useState(false);
+  const [pin, setPin] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = async () => {
+    if (!/^\d{4,8}$/.test(pin.trim())) { setErr('PIN mesti 4-8 digit nombor.'); return; }
+    setBusy(true); setErr('');
+    try {
+      // Reuses setWorker (add-or-reset upsert) — name/active are passed back
+      // unchanged so this call only actually changes the PIN.
+      const { data, error } = await supabase.functions.invoke('job-sheet', {
+        body: { action: 'setWorker', staff_code: worker.staff_code, name: worker.name, pin: pin.trim(), active: worker.active },
+      });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal menetapkan semula PIN.'); return; }
+      setOpen(false); setPin('');
+      onDone();
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} style={{ padding: '5px 10px', background: C.gray, color: C.text, border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+        Tetapkan Semula PIN
+      </button>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 180 }}>
+      <input value={pin} onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setErr(''); }} inputMode="numeric" placeholder="PIN baharu (4-8 digit)"
+        style={{ padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12, fontFamily: 'inherit' }} />
+      {err && <div style={{ color: C.red, fontSize: 11 }}>{err}</div>}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button onClick={submit} disabled={busy} style={{ flex: 1, padding: '6px 10px', background: busy ? C.muted : C.navy, color: C.white, border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+          {busy ? '…' : 'Sahkan'}
+        </button>
+        <button onClick={() => { setOpen(false); setPin(''); setErr(''); }} style={{ padding: '6px 10px', background: C.gray, color: C.muted, border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+          Batal
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ActiveToggle({ worker, onDone }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const toggle = async () => {
+    setBusy(true); setErr('');
+    try {
+      const { data, error } = await supabase.functions.invoke('job-sheet', {
+        body: { action: 'setWorkerActive', staff_code: worker.staff_code, active: !worker.active },
+      });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal mengemas kini status.'); return; }
+      onDone();
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+      <button onClick={toggle} disabled={busy} style={{
+        padding: '5px 10px', border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer',
+        background: worker.active ? C.redLight : C.greenLight, color: worker.active ? C.red : C.green,
+      }}>
+        {busy ? '…' : (worker.active ? 'Nyahaktifkan' : 'Aktifkan')}
+      </button>
+      {err && <div style={{ color: C.red, fontSize: 11 }}>{err}</div>}
+    </div>
+  );
+}
+
+function WorkerRow({ worker, onChanged }) {
+  return (
+    <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 14, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>
+          {worker.name} <span style={{ color: C.muted, fontWeight: 400 }}>({worker.staff_code})</span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+          <span style={{ background: worker.active ? C.greenLight : C.gray, color: worker.active ? C.green : C.muted, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>
+            {worker.active ? 'Aktif' : 'Tidak Aktif'}
+          </span>
+          {worker.locked && (
+            <span style={{ background: C.yellowLight, color: C.yellow, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>Dikunci Sementara</span>
+          )}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <ResetPinControl worker={worker} onDone={onChanged} />
+        <ActiveToggle worker={worker} onDone={onChanged} />
+      </div>
+    </div>
+  );
+}
+
+function WorkerManager() {
+  const [workers, setWorkers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+
+  const load = async () => {
+    setLoading(true); setLoadError('');
+    try {
+      const { data, error } = await supabase.functions.invoke('job-sheet', { body: { action: 'listWorkers' } });
+      if (error) throw new Error(error.message || 'Ralat sambungan');
+      if (data?.error) throw new Error(data.error);
+      setWorkers(data?.workers || []);
+    } catch (e) {
+      setLoadError('Gagal memuatkan senarai pekerja — cuba sekali lagi. (' + (e?.message || e) + ')');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  const existingCodes = useMemo(() => new Set(workers.map(w => w.staff_code)), [workers]);
+
+  return (
+    <div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
+        Urus kod staff dan PIN pekerja bengkel yang log masuk ke Job Sheet kiosk.
+      </div>
+
+      {!formOpen && (
+        <button onClick={() => setFormOpen(true)} style={{ marginBottom: 14, padding: '8px 16px', background: C.navy, color: C.white, border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+          + Tambah Pekerja
+        </button>
+      )}
+      {formOpen && (
+        <AddWorkerForm existingCodes={existingCodes} onDone={() => { setFormOpen(false); load(); }} onCancel={() => setFormOpen(false)} />
+      )}
+
+      {loading && <div style={{ color: C.muted, fontSize: 13 }}>Memuatkan…</div>}
+      {loadError && (
+        <div style={{ background: C.redLight, color: C.red, borderRadius: 8, padding: '10px 14px', fontSize: 12.5, fontWeight: 600, marginBottom: 12 }}>
+          {loadError}
+        </div>
+      )}
+      {!loading && !loadError && workers.length === 0 && (
+        <div style={{ color: C.muted, fontSize: 13 }}>Tiada pekerja lagi.</div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {workers.map(w => (
+          <WorkerRow key={w.staff_code} worker={w} onChanged={load} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const TOP_VIEWS = [
+  { key: 'entries', label: 'Senarai Kerja' },
+  { key: 'workers', label: 'Pekerja' },
+];
+
 export default function JobSheetTab({ session }) {
+  const [view, setView] = useState('entries');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -165,6 +415,21 @@ export default function JobSheetTab({ session }) {
 
   return (
     <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        {TOP_VIEWS.map(v => (
+          <button key={v.key} onClick={() => setView(v.key)} style={{
+            padding: '8px 16px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            background: view === v.key ? C.navy : C.gray, color: view === v.key ? C.white : C.muted,
+          }}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'workers' ? (
+        <WorkerManager />
+      ) : (
+      <>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
         Rekod kerja bengkel yang dihantar oleh pekerja melalui Job Sheet kiosk — untuk semakan dan pengiraan bayaran kerja.
       </div>
@@ -288,6 +553,8 @@ export default function JobSheetTab({ session }) {
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }

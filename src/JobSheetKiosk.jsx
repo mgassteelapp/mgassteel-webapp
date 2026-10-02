@@ -72,7 +72,16 @@ function LoginForm({ onLoggedIn }) {
         body: { action: 'login', staff_code: staffCode.trim(), pin: pin.trim() },
       });
       if (error) { setErr('Ralat sambungan — sila cuba lagi.'); return; }
-      if (!data?.ok) { setErr(data?.error || 'Kod staff atau PIN salah.'); setPin(''); return; }
+      if (!data?.ok) {
+        // Backend signals lockout state via `locked` rather than a message
+        // string, so wording here stays consistent with the rest of the
+        // screen (Bahasa Malaysia) regardless of what the function returns.
+        setErr(data?.locked
+          ? 'Terlalu banyak percubaan — sila cuba lagi selepas beberapa minit.'
+          : (data?.error || 'Kod staff atau PIN salah.'));
+        setPin('');
+        return;
+      }
       onLoggedIn({ workerId: data.worker_id, name: data.name, token: data.token, expiresAt: data.expires_at });
     } catch {
       setErr('Ralat sambungan — sila cuba lagi.');

@@ -15,6 +15,18 @@
 // Data: the job-sheet edge function's listEntries/voidEntry actions (NOT a
 // direct table read — the photo needs a signed URL minted server-side
 // since job-sheet-photos is a private bucket with no client-facing RLS).
+//
+// Revised 2026-10-02 after an independent review of the v1 backend+frontend
+// caught two correctness gaps here specifically:
+//   - listEntries had no date range and a silent 500-row cap, so payroll
+//     totals covered "whatever fits" rather than a pay period and could
+//     quietly drop older rows with no indication. Added from/to filters
+//     (the edge function now accepts them) and a `truncated` warning.
+//   - An entry whose job type has no rate set stores amount = null, and the
+//     old per-worker total did `Number(e.amount) || 0`, which folds null
+//     into a correct-looking RM0 with no flag — i.e. a worker could be
+//     silently underpaid whenever a job type's price wasn't set yet. Now
+//     excluded from the sum and counted separately as "needs a rate".
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabase';
@@ -91,39 +103,55 @@ export default function JobSheetTab({ session }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [truncated, setTruncated] = useState(false);
   const [statusFilter, setStatusFilter] = useState('submitted');
+  // Date range scopes the list (and therefore the payroll totals) to a pay
+  // period — blank means "all time", same as before this fix, but now an
+  // explicit choice rather than the only option.
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
-  const load = async (status) => {
+  const load = async (status, from, to) => {
     setLoading(true); setLoadError('');
     try {
       const { data, error } = await supabase.functions.invoke('job-sheet', {
-        body: { action: 'listEntries', status: status === 'all' ? undefined : status },
+        body: {
+          action: 'listEntries',
+          status: status === 'all' ? undefined : status,
+          from: from ? `${from}T00:00:00` : undefined,
+          to: to ? `${to}T23:59:59` : undefined,
+        },
       });
       if (error) throw new Error(error.message || 'Ralat sambungan');
       if (data?.error) throw new Error(data.error);
       setEntries(data?.entries || []);
+      setTruncated(!!data?.truncated);
     } catch (e) {
       setLoadError('Gagal memuatkan senarai — cuba sekali lagi. (' + (e?.message || e) + ')');
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => { load(statusFilter); }, [statusFilter]);
+  useEffect(() => { load(statusFilter, fromDate, toDate); }, [statusFilter, fromDate, toDate]);
 
   // Per-worker totals — the actual costing/paying-workers number the brief
   // was built around. Computed over "submitted" entries only regardless of
-  // the current filter, so a void never silently counts toward pay.
-  const perWorker = useMemo(() => {
+  // the current filter, so a void never silently counts toward pay. Entries
+  // with no rate (amount === null) are tallied separately rather than
+  // folded into the total as RM0 — see the file header note.
+  const { perWorker, needsRateCount } = useMemo(() => {
     const base = statusFilter === 'all' ? entries.filter(e => e.status === 'submitted') : (statusFilter === 'submitted' ? entries : []);
     const map = new Map();
+    let needsRate = 0;
     base.forEach(e => {
+      if (e.amount == null) { needsRate += 1; return; }
       const key = e.staff_code || e.worker_name || '—';
       const cur = map.get(key) || { name: e.worker_name || key, count: 0, total: 0 };
       cur.count += 1;
-      cur.total += Number(e.amount) || 0;
+      cur.total += Number(e.amount);
       map.set(key, cur);
     });
-    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+    return { perWorker: Array.from(map.values()).sort((a, b) => b.total - a.total), needsRateCount: needsRate };
   }, [entries, statusFilter]);
 
   const grandTotal = perWorker.reduce((s, w) => s + w.total, 0);
@@ -133,6 +161,30 @@ export default function JobSheetTab({ session }) {
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
         Rekod kerja bengkel yang dihantar oleh pekerja melalui Job Sheet kiosk — untuk semakan dan pengiraan bayaran kerja.
       </div>
+
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Dari</label>
+          <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
+            style={{ padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit' }} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Hingga</label>
+          <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
+            style={{ padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit' }} />
+        </div>
+        {(fromDate || toDate) && (
+          <button onClick={() => { setFromDate(''); setToDate(''); }} style={{ alignSelf: 'flex-end', padding: '7px 12px', background: C.gray, color: C.muted, border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            Kosongkan tarikh
+          </button>
+        )}
+      </div>
+
+      {truncated && (
+        <div style={{ background: C.yellowLight, color: C.yellow, borderRadius: 8, padding: '9px 12px', fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+          Senarai dipotong pada 500 rekod — sempitkan julat tarikh di atas untuk lihat semua.
+        </div>
+      )}
 
       {(statusFilter === 'submitted' || statusFilter === 'all') && perWorker.length > 0 && (
         <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 16, marginBottom: 16 }}>
@@ -148,6 +200,11 @@ export default function JobSheetTab({ session }) {
               </div>
             ))}
           </div>
+          {needsRateCount > 0 && (
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.border}`, fontSize: 12, color: C.yellow, fontWeight: 600 }}>
+              ⚠ {needsRateCount} rekod tiada kadar ditetapkan — TIDAK termasuk dalam jumlah di atas. Semak senarai di bawah.
+            </div>
+          )}
         </div>
       )}
 
@@ -175,8 +232,9 @@ export default function JobSheetTab({ session }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {entries.map(e => {
           const badge = STATUS_BADGE[e.status] || STATUS_BADGE.submitted;
+          const needsRate = e.status === 'submitted' && e.amount == null;
           return (
-            <div key={e.id} style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 14 }}>
+            <div key={e.id} style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${needsRate ? '#f5c78e' : C.border}`, padding: 14 }}>
               <div style={{ display: 'flex', gap: 12 }}>
                 {e.photo_url && (
                   <a href={e.photo_url} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}>
@@ -186,7 +244,12 @@ export default function JobSheetTab({ session }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                     <div style={{ fontWeight: 700, fontSize: 13.5 }}>{e.worker_name || '—'} <span style={{ color: C.muted, fontWeight: 400 }}>({e.staff_code || '—'})</span></div>
-                    <span style={{ background: badge.bg, color: badge.text, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>{badge.label}</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {needsRate && (
+                        <span style={{ background: '#fef3e2', color: '#9a4d00', borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>Tiada Kadar</span>
+                      )}
+                      <span style={{ background: badge.bg, color: badge.text, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>{badge.label}</span>
+                    </div>
                   </div>
                   <div style={{ fontSize: 12.5, color: C.text, marginTop: 4 }}>{e.job_type || '—'}</div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
@@ -194,13 +257,15 @@ export default function JobSheetTab({ session }) {
                   </div>
                   {e.order_ref && <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Rujukan: {e.order_ref}</div>}
                   <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{fmtDate(e.created_at)}</div>
-                  {e.status === 'void' && e.void_reason && (
-                    <div style={{ fontSize: 11.5, color: C.red, marginTop: 4 }}>Sebab batal: {e.void_reason}</div>
+                  {e.status === 'void' && (
+                    <div style={{ fontSize: 11.5, color: C.red, marginTop: 4 }}>
+                      Dibatalkan{e.voided_by_name ? ` oleh ${e.voided_by_name}` : ''}{e.void_reason ? ` — ${e.void_reason}` : ''}
+                    </div>
                   )}
                 </div>
                 {e.status === 'submitted' && (
                   <div style={{ flex: '0 0 auto' }}>
-                    <VoidControl entry={e} onVoided={() => load(statusFilter)} />
+                    <VoidControl entry={e} onVoided={() => load(statusFilter, fromDate, toDate)} />
                   </div>
                 )}
               </div>

@@ -518,6 +518,15 @@ function JobTypeManager() {
   const [loadError, setLoadError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null); // job type being edited, or null
+  // Inactive types (the retired bending matrix, or anything else switched
+  // off) stay hidden by default -- Wylee: "the deactivated bending rows
+  // should be removed". They're kept rather than hard-deleted (job_type_id
+  // is foreign-keyed from job_sheet_entries, and deleting one that's ever
+  // been logged against would break that entry's record, or simply be
+  // rejected by the database) but there's no reason to clutter this list
+  // with them day to day. This toggle is how to find one again -- to
+  // reactivate it, or just to see what used to be here.
+  const [showInactive, setShowInactive] = useState(false);
 
   const load = async () => {
     setLoading(true); setLoadError('');
@@ -536,6 +545,8 @@ function JobTypeManager() {
 
   const nextSortOrder = useMemo(() => (types.length ? Math.max(...types.map(t => t.sort_order || 0)) + 1 : 1), [types]);
   const closeForm = () => { setFormOpen(false); setEditing(null); };
+  const visibleTypes = showInactive ? types : types.filter(t => t.active);
+  const inactiveCount = types.length - types.filter(t => t.active).length;
 
   return (
     <div>
@@ -543,11 +554,19 @@ function JobTypeManager() {
         Urus senarai "Jenis Kerja" yang dipaparkan di Job Sheet kiosk, dan kadar bayaran setiap satu.
       </div>
 
-      {!formOpen && (
-        <button onClick={() => { setEditing(null); setFormOpen(true); }} style={{ marginBottom: 14, padding: '8px 16px', background: C.navy, color: C.white, border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
-          + Tambah Jenis Kerja
-        </button>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
+        {!formOpen && (
+          <button onClick={() => { setEditing(null); setFormOpen(true); }} style={{ padding: '8px 16px', background: C.navy, color: C.white, border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            + Tambah Jenis Kerja
+          </button>
+        )}
+        {inactiveCount > 0 && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.muted, cursor: 'pointer' }}>
+            <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} />
+            Tunjuk yang tidak aktif ({inactiveCount})
+          </label>
+        )}
+      </div>
       {formOpen && (
         // key forces React to remount (fresh useState) whenever the edit
         // target changes -- without it, clicking Edit on a second row while
@@ -566,12 +585,14 @@ function JobTypeManager() {
           {loadError}
         </div>
       )}
-      {!loading && !loadError && types.length === 0 && (
-        <div style={{ color: C.muted, fontSize: 13 }}>Tiada jenis kerja lagi.</div>
+      {!loading && !loadError && visibleTypes.length === 0 && (
+        <div style={{ color: C.muted, fontSize: 13 }}>
+          {types.length === 0 ? 'Tiada jenis kerja lagi.' : 'Tiada jenis kerja aktif. Tandakan "Tunjuk yang tidak aktif" di atas untuk lihat semua.'}
+        </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {types.map(t => (
+        {visibleTypes.map(t => (
           <JobTypeRow key={t.id} jobType={t} onEdit={() => { setEditing(t); setFormOpen(true); }} onChanged={load} />
         ))}
       </div>

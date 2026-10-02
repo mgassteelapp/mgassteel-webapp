@@ -550,7 +550,15 @@ function JobTypeManager() {
         </button>
       )}
       {formOpen && (
-        <JobTypeForm existing={editing} nextSortOrder={nextSortOrder} onDone={() => { closeForm(); load(); }} onCancel={closeForm} />
+        // key forces React to remount (fresh useState) whenever the edit
+        // target changes -- without it, clicking Edit on a second row while
+        // the form is already open for a first row reuses the same mounted
+        // instance, so the still-typed values from the first row get saved
+        // against the second row's id (caught in review before this ever
+        // shipped: edit "Memotong" RM2.50, then edit "Kimpal" RM8.00 without
+        // closing the form in between, Simpan would silently overwrite
+        // Kimpal's rate with Memotong's 2.50).
+        <JobTypeForm key={editing?.id ?? 'new'} existing={editing} nextSortOrder={nextSortOrder} onDone={() => { closeForm(); load(); }} onCancel={closeForm} />
       )}
 
       {loading && <div style={{ color: C.muted, fontSize: 13 }}>Memuatkan…</div>}

@@ -348,22 +348,248 @@ function WorkerManager() {
   );
 }
 
+// ── Jenis Kerja (job type) self-service ────────────────────────────────────
+// Added 2026-10-02 (Wylee: "allow me to key in the list from time to
+// time"). Before this, the kiosk's job-type list was a 42-row bending
+// thickness×length matrix that had been auto-generated per bend_rates row
+// — never the real list Wylee wanted — and the only way to change it was a
+// raw SQL call. This screen lets owner/manager add/edit/retire job types
+// themselves going forward. A row whose rate_basis is "bend_rate" (that
+// matrix) can only have its name/order/active status changed here — not
+// its basis or its linked rate — since that matrix is seeded directly
+// against bend_rates, not something to key in free-form.
+const RATE_BASIS_LABEL = { flat: 'Kadar Tetap (RM)', percent_of_price: 'Peratus Harga Jualan (%)', bend_rate: 'Kadar Bengkokan (tetap)' };
+
+function rateDisplay(t) {
+  if (t.rate_basis === 'flat') return t.flat_rate != null ? `RM${Number(t.flat_rate).toFixed(2)}` : 'kadar belum ditetapkan';
+  if (t.rate_basis === 'percent_of_price') return t.rate_percent != null ? `${Number(t.rate_percent).toFixed(1)}% harga jualan` : 'kadar belum ditetapkan';
+  if (t.rate_basis === 'bend_rate') return t.bend_rate != null ? `RM${Number(t.bend_rate).toFixed(2)} (matriks bengkokan)` : '—';
+  return '—';
+}
+
+function JobTypeForm({ existing, nextSortOrder, onDone, onCancel }) {
+  const isBendRate = existing?.rate_basis === 'bend_rate';
+  const [name, setName] = useState(existing?.name || '');
+  const [rateBasis, setRateBasis] = useState(existing?.rate_basis || 'flat');
+  const [rateValue, setRateValue] = useState(
+    existing?.rate_basis === 'flat' ? (existing.flat_rate ?? '') : existing?.rate_basis === 'percent_of_price' ? (existing.rate_percent ?? '') : ''
+  );
+  const [sortOrder, setSortOrder] = useState(existing ? existing.sort_order : nextSortOrder);
+  const [active, setActive] = useState(existing ? existing.active : true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = async () => {
+    setErr('');
+    if (!name.trim()) { setErr('Sila isi nama jenis kerja.'); return; }
+    if (!isBendRate) {
+      if (rateValue !== '' && (!Number.isFinite(Number(rateValue)) || Number(rateValue) < 0)) {
+        setErr(rateBasis === 'flat' ? 'Kadar tidak sah.' : 'Peratus tidak sah.');
+        return;
+      }
+      if (rateBasis === 'percent_of_price' && Number(rateValue) > 100) { setErr('Peratus mesti antara 0-100.'); return; }
+    }
+    setBusy(true);
+    try {
+      const payload = {
+        action: 'setJobType',
+        id: existing?.id,
+        name: name.trim(),
+        rate_basis: rateBasis,
+        sort_order: Number(sortOrder) || 0,
+        active,
+      };
+      if (!isBendRate) {
+        if (rateBasis === 'flat') payload.flat_rate = rateValue;
+        if (rateBasis === 'percent_of_price') payload.rate_percent = rateValue;
+      }
+      const { data, error } = await supabase.functions.invoke('job-sheet', { body: payload });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal menyimpan jenis kerja.'); return; }
+      onDone();
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 16, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 380 }}>
+      <div style={{ fontWeight: 700, fontSize: 13.5, color: C.navy }}>{existing ? 'Edit Jenis Kerja' : 'Tambah Jenis Kerja'}</div>
+      <div>
+        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Nama</label>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="cth. Memotong"
+          style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      </div>
+      {isBendRate ? (
+        <div style={{ background: C.gray, color: C.muted, borderRadius: 8, padding: '8px 10px', fontSize: 11.5 }}>
+          Jenis kadar bengkokan — kekal, hanya nama/susunan/status boleh diubah di sini.
+        </div>
+      ) : (
+        <>
+          <div>
+            <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Jenis Kadar</label>
+            <select value={rateBasis} onChange={e => { setRateBasis(e.target.value); setRateValue(''); }}
+              style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box', appearance: 'auto' }}>
+              <option value="flat">Kadar Tetap (RM setiap unit)</option>
+              <option value="percent_of_price">Peratus Harga Jualan Item</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>
+              {rateBasis === 'flat' ? 'Kadar (RM setiap unit)' : 'Peratus (%)'}
+            </label>
+            <input value={rateValue} onChange={e => setRateValue(e.target.value)} inputMode="decimal"
+              placeholder={rateBasis === 'flat' ? 'cth. 2.50 (kosongkan jika belum tetap)' : 'cth. 5 (kosongkan jika belum tetap)'}
+              style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+          </div>
+        </>
+      )}
+      <div>
+        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Susunan Paparan</label>
+        <input value={sortOrder} onChange={e => setSortOrder(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
+          style={{ width: 100, padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.text, cursor: 'pointer' }}>
+        <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Aktif (muncul di kiosk)
+      </label>
+      {err && <div style={{ color: C.red, fontSize: 11.5 }}>{err}</div>}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={submit} disabled={busy} style={{ flex: 1, padding: '8px 12px', background: busy ? C.muted : C.navy, color: C.white, border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+          {busy ? '…' : 'Simpan'}
+        </button>
+        <button onClick={onCancel} disabled={busy} style={{ padding: '8px 12px', background: C.gray, color: C.muted, border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+          Batal
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function JobTypeRow({ jobType, onEdit, onChanged }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const toggleActive = async () => {
+    setBusy(true); setErr('');
+    try {
+      // Only id + active are sent — setJobType falls back to every other
+      // existing field (name, rate, sort order) server-side, so this can
+      // never accidentally change the rate.
+      const { data, error } = await supabase.functions.invoke('job-sheet', {
+        body: { action: 'setJobType', id: jobType.id, active: !jobType.active },
+      });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal mengemas kini status.'); return; }
+      onChanged();
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div style={{ background: C.white, borderRadius: 12, border: `0.5px solid ${C.border}`, padding: 14, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>{jobType.name}</div>
+        <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{rateDisplay(jobType)} &middot; susunan {jobType.sort_order}</div>
+        <div style={{ marginTop: 6 }}>
+          <span style={{ background: jobType.active ? C.greenLight : C.gray, color: jobType.active ? C.green : C.muted, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 800 }}>
+            {jobType.active ? 'Aktif' : 'Tidak Aktif'}
+          </span>
+        </div>
+        {err && <div style={{ color: C.red, fontSize: 11, marginTop: 4 }}>{err}</div>}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button onClick={onEdit} style={{ padding: '5px 10px', background: C.gray, color: C.text, border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+          Edit
+        </button>
+        <button onClick={toggleActive} disabled={busy} style={{
+          padding: '5px 10px', border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer',
+          background: jobType.active ? C.redLight : C.greenLight, color: jobType.active ? C.red : C.green,
+        }}>
+          {busy ? '…' : (jobType.active ? 'Nyahaktifkan' : 'Aktifkan')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function JobTypeManager() {
+  const [types, setTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState(null); // job type being edited, or null
+
+  const load = async () => {
+    setLoading(true); setLoadError('');
+    try {
+      const { data, error } = await supabase.functions.invoke('job-sheet', { body: { action: 'listJobTypesAdmin' } });
+      if (error) throw new Error(error.message || 'Ralat sambungan');
+      if (data?.error) throw new Error(data.error);
+      setTypes(data?.types || []);
+    } catch (e) {
+      setLoadError('Gagal memuatkan senarai jenis kerja — cuba sekali lagi. (' + (e?.message || e) + ')');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  const nextSortOrder = useMemo(() => (types.length ? Math.max(...types.map(t => t.sort_order || 0)) + 1 : 1), [types]);
+  const closeForm = () => { setFormOpen(false); setEditing(null); };
+
+  return (
+    <div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
+        Urus senarai "Jenis Kerja" yang dipaparkan di Job Sheet kiosk, dan kadar bayaran setiap satu.
+      </div>
+
+      {!formOpen && (
+        <button onClick={() => { setEditing(null); setFormOpen(true); }} style={{ marginBottom: 14, padding: '8px 16px', background: C.navy, color: C.white, border: 'none', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+          + Tambah Jenis Kerja
+        </button>
+      )}
+      {formOpen && (
+        <JobTypeForm existing={editing} nextSortOrder={nextSortOrder} onDone={() => { closeForm(); load(); }} onCancel={closeForm} />
+      )}
+
+      {loading && <div style={{ color: C.muted, fontSize: 13 }}>Memuatkan…</div>}
+      {loadError && (
+        <div style={{ background: C.redLight, color: C.red, borderRadius: 8, padding: '10px 14px', fontSize: 12.5, fontWeight: 600, marginBottom: 12 }}>
+          {loadError}
+        </div>
+      )}
+      {!loading && !loadError && types.length === 0 && (
+        <div style={{ color: C.muted, fontSize: 13 }}>Tiada jenis kerja lagi.</div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {types.map(t => (
+          <JobTypeRow key={t.id} jobType={t} onEdit={() => { setEditing(t); setFormOpen(true); }} onChanged={load} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const TOP_VIEWS = [
   { key: 'entries', label: 'Senarai Kerja' },
   { key: 'workers', label: 'Pekerja' },
+  { key: 'types', label: 'Jenis Kerja' },
 ];
 
 export default function JobSheetTab({ session }) {
-  // Worker management (listWorkers/setWorker/setWorkerActive) is
-  // owner/manager only server-side as of 2026-10-02 -- creating a worker or
-  // resetting a PIN is more sensitive than voiding an entry, since it's how
-  // someone could impersonate a worker going forward. Mirroring that here
-  // (same philosophy as the rest of this file: a role that can't call the
-  // backend action never sees a button that can't work) so a "senior"
-  // supervisor sees no "Pekerja" tab at all, rather than one that opens into
-  // a generic-looking error.
-  const canManageWorkers = session?.role === 'owner' || session?.role === 'manager';
-  const topViews = TOP_VIEWS.filter(v => v.key !== 'workers' || canManageWorkers);
+  // Worker management AND job-type/rate management are both owner/manager
+  // only server-side as of 2026-10-02 -- creating a worker, resetting a PIN,
+  // or changing a job's rate are all more sensitive than voiding an entry
+  // (impersonation risk / payroll-rate risk respectively), not something
+  // "senior" needs. Mirroring that here (same philosophy as the rest of
+  // this file: a role that can't call the backend action never sees a
+  // button that can't work) so a "senior" supervisor sees neither the
+  // "Pekerja" nor "Jenis Kerja" tab, rather than one that opens into a
+  // generic-looking error.
+  const canManageSettings = session?.role === 'owner' || session?.role === 'manager';
+  const topViews = TOP_VIEWS.filter(v => (v.key !== 'workers' && v.key !== 'types') || canManageSettings);
   const [view, setView] = useState('entries');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -441,8 +667,10 @@ export default function JobSheetTab({ session }) {
         ))}
       </div>
 
-      {view === 'workers' && canManageWorkers ? (
+      {view === 'workers' && canManageSettings ? (
         <WorkerManager />
+      ) : view === 'types' && canManageSettings ? (
+        <JobTypeManager />
       ) : (
       <>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
@@ -550,6 +778,11 @@ export default function JobSheetTab({ session }) {
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
                     Kuantiti {e.qty ?? '—'} &middot; Kadar {fmtRM(e.rate_applied)} &middot; Jumlah <b style={{ color: C.text }}>{fmtRM(e.amount)}</b>
                   </div>
+                  {e.item_price != null && (
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
+                      Item: {e.item_code || '—'} &middot; Harga dikunci masuk: {fmtRM(e.item_price)}
+                    </div>
+                  )}
                   {e.order_ref && <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Rujukan: {e.order_ref}</div>}
                   <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{fmtDate(e.created_at)}</div>
                   {e.status === 'void' && (

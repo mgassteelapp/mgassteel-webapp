@@ -126,6 +126,12 @@ function EntryForm({ worker, onLogout }) {
   const [jobTypeId, setJobTypeId] = useState('');
   const [qty, setQty] = useState('');
   const [orderRef, setOrderRef] = useState('');
+  // percent_of_price jobs price off an item's selling price, keyed in by
+  // hand for now rather than looked up automatically (Wylee 2026-10-02:
+  // "the price, let me key in myself for the time being") — item code here
+  // is a loose text reference only, same as orderRef, not validated.
+  const [itemCode, setItemCode] = useState('');
+  const [itemPrice, setItemPrice] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [busy, setBusy] = useState(false);
@@ -146,9 +152,14 @@ function EntryForm({ worker, onLogout }) {
   }, []);
 
   const selectedType = jobTypes.find(t => t.id === jobTypeId);
+  const isPercentType = selectedType?.rate_basis === 'percent_of_price';
   const qtyNum = Number(qty);
-  const previewAmount = selectedType && selectedType.rate != null && Number.isFinite(qtyNum) && qtyNum > 0
-    ? selectedType.rate * qtyNum : null;
+  const itemPriceNum = Number(itemPrice);
+  const previewAmount = !Number.isFinite(qtyNum) || qtyNum <= 0 ? null
+    : isPercentType
+      ? (selectedType.rate_percent != null && Number.isFinite(itemPriceNum) && itemPriceNum > 0
+          ? itemPriceNum * (selectedType.rate_percent) * qtyNum : null)
+      : (selectedType && selectedType.rate != null ? selectedType.rate * qtyNum : null);
 
   const onPickPhoto = (e) => {
     const file = e.target.files?.[0];
@@ -161,8 +172,17 @@ function EntryForm({ worker, onLogout }) {
 
   const resetForm = () => {
     setJobTypeId(''); setQty(''); setOrderRef('');
+    setItemCode(''); setItemPrice('');
     setPhotoFile(null); setPhotoPreview('');
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Switching job type clears any price already keyed in — a stale price
+  // from a different job silently carrying over would misprice the new
+  // one without any sign something's wrong.
+  const onPickJobType = (newId) => {
+    setJobTypeId(newId);
+    setItemCode(''); setItemPrice('');
   };
 
   const submit = async () => {
@@ -170,6 +190,7 @@ function EntryForm({ worker, onLogout }) {
     setErr('');
     if (!jobTypeId) { setErr('Sila pilih jenis kerja.'); return; }
     if (!Number.isFinite(qtyNum) || qtyNum <= 0) { setErr('Sila isi kuantiti yang sah.'); return; }
+    if (isPercentType && (!Number.isFinite(itemPriceNum) || itemPriceNum <= 0)) { setErr('Sila isi harga jualan item.'); return; }
     if (!photoFile) { setErr('Sila ambil atau pilih gambar.'); return; }
     if (photoFile.size > 9 * 1024 * 1024) { setErr('Saiz gambar terlalu besar (maks 9MB) — cuba ambil semula.'); return; }
 
@@ -189,6 +210,7 @@ function EntryForm({ worker, onLogout }) {
         body: {
           action: 'submitEntry', token: worker.token, job_type_id: jobTypeId,
           qty: qtyNum, order_ref: orderRef.trim() || null,
+          ...(isPercentType ? { item_code: itemCode.trim() || null, item_price: itemPriceNum } : {}),
           photo_base64: photoBase64, photo_mime: photoMime,
         },
       });
@@ -243,11 +265,13 @@ function EntryForm({ worker, onLogout }) {
           {jobTypesErr ? (
             <div style={{ color: C.red, fontSize: 12.5 }}>{jobTypesErr}</div>
           ) : (
-            <select value={jobTypeId} onChange={e => setJobTypeId(e.target.value)} style={{ ...inputStyle, appearance: 'auto' }}>
+            <select value={jobTypeId} onChange={e => onPickJobType(e.target.value)} style={{ ...inputStyle, appearance: 'auto' }}>
               <option value="">— Pilih jenis kerja —</option>
               {jobTypes.map(t => (
                 <option key={t.id} value={t.id}>
-                  {t.name}{t.rate != null ? ` (RM${Number(t.rate).toFixed(2)})` : ' (kadar belum ditetapkan)'}
+                  {t.name}{t.rate_basis === 'percent_of_price'
+                    ? (t.rate_percent != null ? ` (${(t.rate_percent * 100).toFixed(1)}% harga jualan)` : ' (kadar belum ditetapkan)')
+                    : (t.rate != null ? ` (RM${Number(t.rate).toFixed(2)})` : ' (kadar belum ditetapkan)')}
                 </option>
               ))}
             </select>
@@ -258,10 +282,25 @@ function EntryForm({ worker, onLogout }) {
           <label style={labelStyle}>Kuantiti</label>
           <input type="number" inputMode="decimal" min="0" step="any" value={qty}
             onChange={e => setQty(e.target.value)} placeholder="0" style={inputStyle} />
-          {previewAmount != null && (
-            <div style={{ fontSize: 12.5, color: C.muted, marginTop: 6 }}>≈ {fmtRM(previewAmount)}</div>
-          )}
         </div>
+
+        {isPercentType && (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Harga Jualan Item (RM)</label>
+              <input type="number" inputMode="decimal" min="0" step="any" value={itemPrice}
+                onChange={e => setItemPrice(e.target.value)} placeholder="0.00" style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Kod / Nama Item (jika ada)</label>
+              <input value={itemCode} onChange={e => setItemCode(e.target.value)} placeholder="Cth: I102152-9-6" style={inputStyle} />
+            </div>
+          </>
+        )}
+
+        {previewAmount != null && (
+          <div style={{ fontSize: 12.5, color: C.muted, marginTop: -6, marginBottom: 16 }}>≈ {fmtRM(previewAmount)}</div>
+        )}
 
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>No. DO / SO / Invois (jika ada)</label>

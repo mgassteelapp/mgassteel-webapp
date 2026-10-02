@@ -374,7 +374,11 @@ function JobTypeForm({ existing, nextSortOrder, onDone, onCancel }) {
   const [rateValue, setRateValue] = useState(
     existing?.rate_basis === 'flat' ? (existing.flat_rate ?? '') : existing?.rate_basis === 'percent_of_price' ? (existing.rate_percent ?? '') : ''
   );
-  const [sortOrder, setSortOrder] = useState(existing ? existing.sort_order : nextSortOrder);
+  // Display order isn't something to hand-key per type (Wylee: "why you
+  // need it, confusing") -- a new type is just appended to the end of the
+  // list; an existing one keeps its current position. Reordering, if it's
+  // ever needed, belongs on the row list (e.g. up/down), not this form.
+  const sortOrder = existing ? existing.sort_order : nextSortOrder;
   const [active, setActive] = useState(existing ? existing.active : true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -423,7 +427,7 @@ function JobTypeForm({ existing, nextSortOrder, onDone, onCancel }) {
       </div>
       {isBendRate ? (
         <div style={{ background: C.gray, color: C.muted, borderRadius: 8, padding: '8px 10px', fontSize: 11.5 }}>
-          Jenis kadar bengkokan — kekal, hanya nama/susunan/status boleh diubah di sini.
+          Jenis kadar bengkokan — kekal, hanya nama/status boleh diubah di sini.
         </div>
       ) : (
         <>
@@ -445,11 +449,6 @@ function JobTypeForm({ existing, nextSortOrder, onDone, onCancel }) {
           </div>
         </>
       )}
-      <div>
-        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Susunan Paparan</label>
-        <input value={sortOrder} onChange={e => setSortOrder(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
-          style={{ width: 100, padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
-      </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.text, cursor: 'pointer' }}>
         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Aktif (muncul di kiosk)
       </label>

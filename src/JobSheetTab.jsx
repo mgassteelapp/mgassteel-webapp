@@ -120,7 +120,12 @@ function AddWorkerForm({ existingCodes, onDone, onCancel }) {
   const [err, setErr] = useState('');
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
 
-  const trimmedCode = staffCode.trim();
+  // Uppercased to match the server (staff_code is case-sensitive in the
+  // database, and the edge function now uppercases it too) -- without this,
+  // typing "w01" here would miss an existing "W01" in existingCodes and skip
+  // the overwrite warning, even though the server would still silently
+  // reset that worker's PIN.
+  const trimmedCode = staffCode.trim().toUpperCase();
   const codeExists = !!trimmedCode && existingCodes.has(trimmedCode);
 
   const submit = async () => {
@@ -152,7 +157,7 @@ function AddWorkerForm({ existingCodes, onDone, onCancel }) {
       <div style={{ fontWeight: 700, fontSize: 13.5, color: C.navy }}>Tambah Pekerja</div>
       <div>
         <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Kod Staff</label>
-        <input value={staffCode} onChange={e => { setStaffCode(e.target.value); setConfirmOverwrite(false); setErr(''); }} placeholder="cth. W01"
+        <input value={staffCode} onChange={e => { setStaffCode(e.target.value.toUpperCase()); setConfirmOverwrite(false); setErr(''); }} placeholder="cth. W01"
           style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.borderInput}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
       </div>
       <div>

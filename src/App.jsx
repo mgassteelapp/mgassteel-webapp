@@ -11,6 +11,7 @@ import PurchasingTab from './PurchasingTab';
 import PurchaseRequestsTab from './PurchaseRequestsTab';
 import StockRequestsTab from './StockRequestsTab';
 import UnbilledDOTab from './UnbilledDOTab';
+import JobSheetTab from './JobSheetTab';
 import TelegramLinkPanel from './TelegramLinkPanel';
 import PushNotifPanel from './PushNotifPanel';
 import EasternSteelTab from './EasternSteelTab';
@@ -139,6 +140,15 @@ function hasPerm(sess, key) {
 function canAccessDaily(sess)      { return hasPerm(sess, "daily"); }
 function canAccessReconcile(sess)  { return hasPerm(sess, "reconcile"); }
 function canAccessPurchasing(sess) { return hasPerm(sess, "purchasing"); }
+// Job Sheet supervisor review — HARD role rule (owner/manager/senior), not
+// permission-matrix overridable, so it stays exactly in sync with the
+// job-sheet edge function's own requireSupervisor() check (profiles.role,
+// not a permissions override) and never shows a tab whose backend calls
+// would 403.
+function canAccessJobSheet(sess) {
+  if (!sess) return false;
+  return ["owner", "manager", "senior"].includes(sess.role);
+}
 // Cost & margin stays a HARD owner-only rule (not permission-managed).
 function canSeeCostMargin(sess) {
   if (!sess) return false;
@@ -215,7 +225,7 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 const NAV = [
   { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices","eastern_steel"] },
   { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
-  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","stock_requests","unbilled"] },
+  { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","stock_requests","unbilled","job_sheet"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
   { type:"group", key:"chat_center",    label:"Chat Center",     icon:"💬", tabs:["broadcast","queries"] },
@@ -703,6 +713,9 @@ export default function App() {
     ...(hasPerm(session, "unbilled") ? [
       { key:"unbilled", label:"🧾 DO Belum Bil" },
     ] : []),
+    ...(canAccessJobSheet(session) ? [
+      { key:"job_sheet", label:"🪚 Job Sheet Bengkel" },
+    ] : []),
     ...(hasPerm(session, "queries") ? [
       { key:"queries", label:"❓ Pertanyaan Harga" },
     ] : []),
@@ -945,6 +958,7 @@ export default function App() {
               />
             )}
             {tab==="unbilled" && hasPerm(session, "unbilled") && <UnbilledDOTab session={session} />}
+            {tab==="job_sheet" && canAccessJobSheet(session) && <JobSheetTab session={session} />}
             {tab==="queries" && canAccessReconcile(session) && <QueriesTab session={session} />}
             {tab==="daily"     && canAccessDaily(session) && <DailyCheckTab session={session} prices={prices} results={dcResults} setResults={setDcResults} ran={dcRan} setRan={setDcRan} />}
             {canAccessReconcile(session) && (

@@ -372,7 +372,14 @@ function LoginScreen({ onLogin, notice }) {
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'listLoginNames' } });
-      if (error || !data?.names) { setListErr("Gagal memuatkan senarai nama."); return; }
+      // Treat "loaded but empty" the same as a failed fetch — falls back to
+      // the manual email field below. Without this, a call that succeeds
+      // but returns zero active profiles would leave the dropdown showing
+      // "Memuatkan..." forever instead of ever switching to "Pilih nama"
+      // or offering a way to type a login in directly (caught on review;
+      // can't happen today with 13 active profiles, but costs nothing to
+      // guard against going forward).
+      if (error || !data?.names?.length) { setListErr("Gagal memuatkan senarai nama."); return; }
       setStaffList(data.names);
     })();
   }, []);

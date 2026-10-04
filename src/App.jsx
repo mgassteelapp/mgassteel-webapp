@@ -363,11 +363,16 @@ function LoginScreen({ onLogin, notice }) {
   // nobody is logged in yet). See the removed-STAFF_LOGIN comment above.
   const [staffList,   setStaffList]   = useState([]);
   const [listErr,     setListErr]     = useState("");
+  // Fallback for when listLoginNames can't be reached — without this, a
+  // down edge function would leave the dropdown empty and lock EVERYONE
+  // out, including the owner who'd need to be logged in to fix it. Lets
+  // anyone type their email directly instead of picking from the list.
+  const [manualEmail, setManualEmail] = useState("");
 
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'listLoginNames' } });
-      if (error || !data?.names) { setListErr("Gagal memuatkan senarai nama. Sila muat semula halaman."); return; }
+      if (error || !data?.names) { setListErr("Gagal memuatkan senarai nama."); return; }
       setStaffList(data.names);
     })();
   }, []);
@@ -375,11 +380,11 @@ function LoginScreen({ onLogin, notice }) {
   const tryLogin = async () => {
     if (locked) return;
     if (!acknowledged) { setErr("Sila baca dan memahami terma dan syarat."); return; }
-    const staff = staffList.find(s => s.name === selected);
-    if (!staff) { setErr("Sila pilih nama anda."); return; }
+    const email = listErr ? manualEmail.trim() : staffList.find(s => s.name === selected)?.email;
+    if (!email) { setErr(listErr ? "Sila isi email log masuk anda." : "Sila pilih nama anda."); return; }
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: staff.email,
+      email,
       password: pin,
     });
 
@@ -410,7 +415,7 @@ function LoginScreen({ onLogin, notice }) {
       return;
     }
 
-    onLogin({ name: profile.name, role: profile.role, email: staff.email, perms: profile.permissions || {} });
+    onLogin({ name: profile.name, role: profile.role, email, perms: profile.permissions || {} });
   };
 
   return (
@@ -433,15 +438,27 @@ function LoginScreen({ onLogin, notice }) {
             </div>
           )}
 
-          {/* Name selector */}
+          {/* Name selector — falls back to a direct email field if the name
+              list can't be loaded (see the manualEmail note above), so a
+              backend hiccup can't lock everyone out of the login screen. */}
           <div style={{ marginBottom:14 }}>
-            <label style={{ display:"block", fontSize:11, fontWeight:700, color:C.muted, marginBottom:5, textTransform:"uppercase" }}>Nama Anda</label>
-            <select value={selected} onChange={e=>{setSelected(e.target.value);setErr("");setPin("");}}
-              style={{ width:"100%", padding:"11px 12px", borderRadius:9, border:`1.5px solid ${C.border}`, fontSize:14, background:C.white, fontFamily:"inherit" }}>
-              <option value="">{staffList.length === 0 && !listErr ? "— Memuatkan... —" : "— Pilih nama —"}</option>
-              {staffList.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
-            </select>
-            {listErr && <div style={{ color:C.red, fontSize:11, fontWeight:600, marginTop:5 }}>{listErr}</div>}
+            <label style={{ display:"block", fontSize:11, fontWeight:700, color:C.muted, marginBottom:5, textTransform:"uppercase" }}>
+              {listErr ? "Email Log Masuk" : "Nama Anda"}
+            </label>
+            {listErr ? (
+              <>
+                <input value={manualEmail} onChange={e=>{setManualEmail(e.target.value);setErr("");setPin("");}}
+                  placeholder="cth. ali@mgas.local" autoCapitalize="none" autoCorrect="off"
+                  style={{ width:"100%", padding:"11px 12px", borderRadius:9, border:`1.5px solid ${C.border}`, fontSize:14, background:C.white, fontFamily:"inherit", boxSizing:"border-box" }} />
+                <div style={{ color:C.red, fontSize:11, fontWeight:600, marginTop:5 }}>{listErr} Sila isi email log masuk anda terus.</div>
+              </>
+            ) : (
+              <select value={selected} onChange={e=>{setSelected(e.target.value);setErr("");setPin("");}}
+                style={{ width:"100%", padding:"11px 12px", borderRadius:9, border:`1.5px solid ${C.border}`, fontSize:14, background:C.white, fontFamily:"inherit" }}>
+                <option value="">{staffList.length === 0 ? "— Memuatkan... —" : "— Pilih nama —"}</option>
+                {staffList.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+              </select>
+            )}
           </div>
 
           {/* KATA LALUAN input */}
@@ -471,8 +488,8 @@ function LoginScreen({ onLogin, notice }) {
             </div>
           </div>
 
-          <button onClick={tryLogin} disabled={locked||!selected||!pin||!acknowledged}
-            style={{ width:"100%", padding:"13px", background:locked||!selected||!pin||!acknowledged?C.muted:C.navy, color:C.white, border:"none", borderRadius:6, fontWeight:700, fontSize:15, cursor:locked||!selected||!pin||!acknowledged?"not-allowed":"pointer", boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
+          <button onClick={tryLogin} disabled={locked||(listErr?!manualEmail.trim():!selected)||!pin||!acknowledged}
+            style={{ width:"100%", padding:"13px", background:locked||(listErr?!manualEmail.trim():!selected)||!pin||!acknowledged?C.muted:C.navy, color:C.white, border:"none", borderRadius:6, fontWeight:700, fontSize:15, cursor:locked||(listErr?!manualEmail.trim():!selected)||!pin||!acknowledged?"not-allowed":"pointer", boxShadow:'0 1px 2px rgba(26,22,24,0.1)' }}>
             {locked ? "🔒 Dikunci" : "Masuk →"}
           </button>
         </Card>
@@ -1772,7 +1789,8 @@ function UsersTab({ session }) {
       <Card style={{ padding:"12px 14px", marginBottom:14, background:"#f0f9ff", border:"1px solid #bae6fd" }}>
         <div style={{ fontWeight:700, fontSize:13, color:"#0369a1", marginBottom:4 }}>👥 Pengurusan Pengguna</div>
         <div style={{ fontSize:12, color:"#0369a1", lineHeight:1.6 }}>
-          Senarai pengguna sebenar sistem (login email &amp; kata laluan — sama untuk app Ledger).
+          Senarai pengguna sebenar sistem (login email &amp; kata laluan untuk app ini SAHAJA — app Ledger
+          guna akaun berasingan, jadi tambah/tetapkan semula di sini tidak menukar log masuk Ledger).
           Nyahaktif menghalang log masuk serta-merta pada semua peranti.
           Tambah pengguna baharu dan tetapkan semula kata laluan terus di bawah.
         </div>

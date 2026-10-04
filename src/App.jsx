@@ -87,23 +87,19 @@ const SAMPLE_PRICES = [
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 // ── Staff PINs ────────────────────────────────────────────────────────────────
-// Format: { name, pin, role }
-// Change any PIN by editing the number here, then re-upload to GitHub
-const STAFF_LOGIN = [
-  { name:"Weelee (Admin)",  email:"weelee@mgas.local" },
-  { name:"Looi (HQ)",       email:"looi@mgas.local" },
-  { name:"Fei (Accounts)",  email:"fei@mgas.local" },
-  { name:"Mira (Purchase)", email:"mira@mgas.local" },
-  { name:"Syahlin (Acc)",   email:"syahlin@mgas.local" },
-  { name:"KY Han",          email:"kyhan@mgas.local" },
-  { name:"Syafiq (Sup)",    email:"syafiq@mgas.local" },
-  { name:"Azhar",           email:"azhar@mgas.local" },
-  { name:"Su",              email:"su@mgas.local" },
-  { name:"Mohd Iqbal",      email:"iqbal@mgas.local" },
-  { name:"Natasha",         email:"natasha@mgas.local" },
-  { name:"Izzati",          email:"izzati@mgas.local" },
-  { name:"Ken",             email:"ken@mgas.local" },
-];
+// REMOVED 2026-10-04 (Wylee: "i need to add user, but it is not able in
+// settings"): this used to be a hardcoded `{ name, email }` array that had
+// to be edited in source + redeployed for every new hire, with a comment
+// literally saying "Change any PIN by editing the number here, then
+// re-upload to GitHub" — the actual root cause of that complaint. The
+// Pengguna/Settings tab could only manage people already in this list
+// (role, active, permissions), never add a new one.
+//
+// The login screen's name picker is now populated live from the new
+// admin-users edge function's `listLoginNames` action (active profiles
+// joined with their auth email) — see LoginScreen's staffList state below.
+// Owners add new logins from the Pengguna tab's "Tambah Pengguna" form,
+// which calls admin-users' `createUser` action — no code change needed.
 
 // ── Feature permissions ──────────────────────────────────────────────────────
 // Role DEFAULTS below; owners can override per user in the Pengguna tab
@@ -362,11 +358,24 @@ function LoginScreen({ onLogin, notice }) {
   const [attempts,    setAttempts]    = useState(0);
   const [locked,      setLocked]      = useState(false);
   const [acknowledged,setAcknowledged]= useState(false);
+  // Replaces the old hardcoded STAFF_LOGIN array — fetched once on mount
+  // from admin-users' listLoginNames (public action, no auth needed, since
+  // nobody is logged in yet). See the removed-STAFF_LOGIN comment above.
+  const [staffList,   setStaffList]   = useState([]);
+  const [listErr,     setListErr]     = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'listLoginNames' } });
+      if (error || !data?.names) { setListErr("Gagal memuatkan senarai nama. Sila muat semula halaman."); return; }
+      setStaffList(data.names);
+    })();
+  }, []);
 
   const tryLogin = async () => {
     if (locked) return;
     if (!acknowledged) { setErr("Sila baca dan memahami terma dan syarat."); return; }
-    const staff = STAFF_LOGIN.find(s => s.name === selected);
+    const staff = staffList.find(s => s.name === selected);
     if (!staff) { setErr("Sila pilih nama anda."); return; }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -429,9 +438,10 @@ function LoginScreen({ onLogin, notice }) {
             <label style={{ display:"block", fontSize:11, fontWeight:700, color:C.muted, marginBottom:5, textTransform:"uppercase" }}>Nama Anda</label>
             <select value={selected} onChange={e=>{setSelected(e.target.value);setErr("");setPin("");}}
               style={{ width:"100%", padding:"11px 12px", borderRadius:9, border:`1.5px solid ${C.border}`, fontSize:14, background:C.white, fontFamily:"inherit" }}>
-              <option value="">— Pilih nama —</option>
-              {STAFF_LOGIN.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+              <option value="">{staffList.length === 0 && !listErr ? "— Memuatkan... —" : "— Pilih nama —"}</option>
+              {staffList.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
             </select>
+            {listErr && <div style={{ color:C.red, fontSize:11, fontWeight:600, marginTop:5 }}>{listErr}</div>}
           </div>
 
           {/* KATA LALUAN input */}
@@ -1572,11 +1582,137 @@ function PricesTab({ prices, setPrices }) {
 // ════════════════════════════════════════════════════════════════════════════
 // USERS & PIN MANAGEMENT TAB
 // ════════════════════════════════════════════════════════════════════════════
+// ── Add User / Reset Password — ADDED 2026-10-04 (Wylee: "i need to add
+// user, but it is not able in settings"). Both call the new admin-users
+// edge function (service-role, owner-gated) — see its file header for the
+// full rationale. AddUserForm creates the Supabase Auth login AND the
+// profiles row in one call; ResetPasswordControl mirrors JobSheetTab's
+// worker ResetPinControl, same idea applied to real logins.
+function AddUserForm({ onDone, onCancel }) {
+  const [name, setName]       = useState('');
+  const [role, setRole]       = useState('staff');
+  const [loginId, setLoginId] = useState('');
+  const [pin, setPin]         = useState('');
+  const [busy, setBusy]       = useState(false);
+  const [err, setErr]         = useState('');
+
+  const submit = async () => {
+    setErr('');
+    if (!name.trim()) { setErr('Sila isi nama.'); return; }
+    const id = loginId.trim().toLowerCase();
+    if (!/^[a-z][a-z0-9]{1,19}$/.test(id)) { setErr('ID log masuk mesti 2-20 huruf/nombor kecil, bermula dengan huruf.'); return; }
+    if (pin.trim().length < 6) { setErr('Kata laluan mesti sekurang-kurangnya 6 aksara.'); return; }
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'createUser', name: name.trim(), role, login_id: id, pin: pin.trim() },
+      });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal menambah pengguna.'); return; }
+      onDone();
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card style={{ padding: 16, marginBottom: 14, maxWidth: 360 }}>
+      <div style={{ fontWeight: 700, fontSize: 13.5, color: C.navy, marginBottom: 10 }}>Tambah Pengguna</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div>
+          <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Nama</label>
+          <input value={name} onChange={e => { setName(e.target.value); setErr(''); }} placeholder="Nama penuh"
+            style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Peranan</label>
+          <select value={role} onChange={e => setRole(e.target.value)}
+            style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12.5, background: C.white, fontFamily: 'inherit' }}>
+            <option value="staff">staff</option>
+            <option value="senior">senior</option>
+            <option value="manager">manager</option>
+            <option value="owner">owner</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>ID Log Masuk</label>
+          <input value={loginId} onChange={e => { setLoginId(e.target.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()); setErr(''); }} placeholder="cth. ali"
+            style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+          <div style={{ fontSize: 10.5, color: C.muted, marginTop: 3 }}>Jadi email log masuk: {loginId.trim() || '…'}@mgas.local</div>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: C.muted, marginBottom: 3, textTransform: 'uppercase' }}>Kata Laluan (min 6 aksara)</label>
+          <input value={pin} onChange={e => { setPin(e.target.value); setErr(''); }} placeholder="Kata laluan awal"
+            style={{ width: '100%', padding: '7px 9px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 12.5, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+        </div>
+        {err && <div style={{ color: C.red, fontSize: 11.5 }}>{err}</div>}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={submit} disabled={busy} style={{ flex: 1, padding: '8px 12px', background: busy ? C.muted : C.navy, color: C.white, border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+            {busy ? '…' : 'Simpan'}
+          </button>
+          <button onClick={onCancel} disabled={busy} style={{ padding: '8px 12px', background: C.gray, color: C.muted, border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+            Batal
+          </button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ResetPasswordControl({ user, onFlash }) {
+  const [open, setOpen] = useState(false);
+  const [pin, setPin]   = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr]   = useState('');
+
+  const submit = async () => {
+    if (pin.trim().length < 6) { setErr('Kata laluan mesti sekurang-kurangnya 6 aksara.'); return; }
+    setBusy(true); setErr('');
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'resetPassword', id: user.id, pin: pin.trim() },
+      });
+      if (error || !data?.ok) { setErr(data?.error || 'Gagal menetapkan semula kata laluan.'); return; }
+      setOpen(false); setPin('');
+      onFlash(`✅ Kata laluan ${user.name} ditetapkan semula.`);
+    } catch {
+      setErr('Ralat sambungan — sila cuba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} style={{ padding: '4px 10px', background: C.gray, color: C.text, border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 11, cursor: 'pointer' }}>
+        Tetapkan Semula
+      </button>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 170 }}>
+      <input value={pin} onChange={e => { setPin(e.target.value); setErr(''); }} placeholder="Kata laluan baharu" type="password"
+        style={{ padding: '6px 8px', borderRadius: 6, border: `1px solid ${C.border}`, fontSize: 11.5, fontFamily: 'inherit' }} />
+      {err && <div style={{ color: C.red, fontSize: 10.5 }}>{err}</div>}
+      <div style={{ display: 'flex', gap: 5 }}>
+        <button onClick={submit} disabled={busy} style={{ flex: 1, padding: '5px 8px', background: busy ? C.muted : C.navy, color: C.white, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
+          {busy ? '…' : 'Sahkan'}
+        </button>
+        <button onClick={() => { setOpen(false); setPin(''); setErr(''); }} style={{ padding: '5px 8px', background: C.gray, color: C.muted, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          Batal
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function UsersTab({ session }) {
   const [users,   setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [saved,   setSaved]   = useState("");
   const [errMsg,  setErrMsg]  = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const load = async () => {
     const { data, error } = await supabase.from('profiles')
@@ -1638,9 +1774,21 @@ function UsersTab({ session }) {
         <div style={{ fontSize:12, color:"#0369a1", lineHeight:1.6 }}>
           Senarai pengguna sebenar sistem (login email &amp; kata laluan — sama untuk app Ledger).
           Nyahaktif menghalang log masuk serta-merta pada semua peranti.
-          Pertukaran kata laluan dibuat oleh admin melalui sistem pusat, bukan di sini.
+          Tambah pengguna baharu dan tetapkan semula kata laluan terus di bawah.
         </div>
       </Card>
+
+      {showAddForm ? (
+        <AddUserForm
+          onDone={() => { setShowAddForm(false); load(); flash('✅ Pengguna baharu ditambah.'); }}
+          onCancel={() => setShowAddForm(false)}
+        />
+      ) : (
+        <button onClick={() => setShowAddForm(true)}
+          style={{ marginBottom:14, padding:"9px 16px", background:C.navy, color:C.white, border:"none", borderRadius:8, fontWeight:700, fontSize:12.5, cursor:"pointer" }}>
+          + Tambah Pengguna
+        </button>
+      )}
 
       <Card>
         <div style={{ overflowX:"auto" }}>
@@ -1673,12 +1821,15 @@ function UsersTab({ session }) {
                     <Badge color={u.active!==false?"green":"red"}>{u.active!==false?"Aktif":"Tidak Aktif"}</Badge>
                   </td>
                   <td style={{ padding:"10px 14px" }}>
-                    {u.name !== session.name && (
-                      <button onClick={() => toggleActive(u)}
-                        style={{ padding:"4px 10px", background:u.active!==false?C.redLight:C.greenLight, color:u.active!==false?C.red:C.green, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>
-                        {u.active!==false ? "Nyahaktif" : "Aktifkan"}
-                      </button>
-                    )}
+                    <div style={{ display:"flex", flexDirection:"column", gap:6, alignItems:"flex-start" }}>
+                      {u.name !== session.name && (
+                        <button onClick={() => toggleActive(u)}
+                          style={{ padding:"4px 10px", background:u.active!==false?C.redLight:C.greenLight, color:u.active!==false?C.red:C.green, border:"none", borderRadius:6, fontWeight:600, fontSize:11, cursor:"pointer" }}>
+                          {u.active!==false ? "Nyahaktif" : "Aktifkan"}
+                        </button>
+                      )}
+                      <ResetPasswordControl user={u} onFlash={flash} />
+                    </div>
                   </td>
                 </tr>
               ))}

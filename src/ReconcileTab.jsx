@@ -583,8 +583,10 @@ export default function ReconcileTab({ session, results, setResults }) {
       if (data && data.error) throw new Error(data.error);
       if (data && data.run_at) {
         setAutoRun(data);
-        setResults(runToResults(data));
+        const mapped = runToResults(data);
+        setResults(mapped);
         setExpandedId(null);
+        annotateLines(mapped.exceptions);
         try { localStorage.setItem('mgas_reconcile_seen', data.run_at); } catch {}
       } else {
         setAutoRun(null);
@@ -630,6 +632,82 @@ export default function ReconcileTab({ session, results, setResults }) {
     localStorage.setItem(WH_KEY, JSON.stringify(updated));
   };
 
+  // ── Query/approval marks — same system as Semak Harga Harian (shared
+  //    price_queries / price_line_approvals tables; both are source-agnostic
+  //    so PO-check rows plug straight into the existing agent popup +
+  //    "❓ Pertanyaan Harga" inbox with zero new tables/components). ──
+  //   queryMarks: line → query state (open/answered/closed) from price_queries
+  //   approvals:  line → approved_by from price_line_approvals
+  const [queryMarks, setQueryMarks] = useState(new Map());
+  const [approvals,  setApprovals]  = useState(new Map());
+  const lineKey = (r) => `${r.poNo}|${r.itemCode}|${r.poQty}`;
+
+  const annotateLines = async (rows) => {
+    const poNos = [...new Set((rows || []).map(r => r.poNo).filter(Boolean))];
+    const qMap = new Map(), aMap = new Map();
+    try {
+      for (let i = 0; i < poNos.length; i += 200) {
+        const chunk = poNos.slice(i, i + 200);
+        const [{ data: qs }, { data: as }] = await Promise.all([
+          supabase.from('price_queries').select('doc_no,item_code,qty,state').in('doc_no', chunk),
+          supabase.from('price_line_approvals').select('doc_no,item_code,qty,approved_by').in('doc_no', chunk),
+        ]);
+        (qs || []).forEach(q => qMap.set(`${q.doc_no}|${q.item_code}|${q.qty}`, q.state));
+        (as || []).forEach(a => aMap.set(`${a.doc_no}|${a.item_code}|${a.qty}`, a.approved_by));
+      }
+    } catch { /* tables may not exist on older deploys */ }
+    setQueryMarks(qMap);
+    setApprovals(aMap);
+  };
+
+  // Re-annotate when the tab is reopened — `results` survives tab switches
+  // (it lives in App state) but this component remounts with empty maps.
+  useEffect(() => {
+    if (results?.exceptions?.length) annotateLines(results.exceptions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Approve a flagged line: it stops appearing in future checks ──
+  const approveLine = async (r) => {
+    if (!window.confirm(`Luluskan baris ini?\n${r.poNo} · ${r.itemCode} · Qty ${r.poQty}\n\nBaris ini tidak akan dipaparkan lagi dalam semakan akan datang.`)) return;
+    const { error: aErr } = await supabase.from('price_line_approvals').insert({
+      doc_no: r.poNo || '', item_code: r.itemCode || '', desc2: r.desc2 || null,
+      qty: r.poQty, actual_price: null, expected_price: null,
+      status_flag: (STATUS_CFG[r.status] || {}).label || r.status,
+      approved_by: session?.name || '',
+    });
+    if (aErr && !String(aErr.message).includes('duplicate')) {
+      alert('Gagal lulus: ' + aErr.message); return;
+    }
+    setApprovals(prev => new Map(prev).set(lineKey(r), session?.name || ''));
+  };
+
+  // ── Raise a live query to the responsible agent — same popup + inbox as
+  //    Semak Harga Harian (❓ Pertanyaan Harga), just a different `source`. ──
+  const askAgent = async (r) => {
+    if (!r.agent) return;
+    const q = window.prompt(
+      `Soalan untuk ${r.agent} (${r.poNo} · ${r.itemCode}):`,
+      `PO ${r.poNo} ada isu "${(STATUS_CFG[r.status]||{}).label || r.status}". Sila beri sebab segera.`
+    );
+    if (!q || !q.trim()) return;
+    const { error: qErr } = await supabase.from('price_queries').insert({
+      source: 'po_check',
+      doc_no: r.poNo || null,
+      item_code: r.itemCode || null,
+      desc2: r.desc2 || null,
+      qty: r.poQty,
+      actual_price: null,
+      expected_price: null,
+      status_flag: (STATUS_CFG[r.status] || {}).label || r.status,
+      agent_code: String(r.agent || '').toUpperCase(),
+      question: q.trim(),
+      asked_by: session?.name || '',
+    });
+    if (qErr) { alert('Gagal hantar pertanyaan: ' + qErr.message); return; }
+    setQueryMarks(prev => new Map(prev).set(lineKey(r), 'open'));
+  };
+
   const run = async () => {
     if (!poFile || !salesFile) {
       setError('Sila muat naik fail PO dan fail Jualan terlebih dahulu.');
@@ -653,6 +731,7 @@ export default function ReconcileTab({ session, results, setResults }) {
 
       const res = runReconciliation(poRows, salesRows, doRows, monCodes, highCodes);
       setResults({ ...res, salesRows: salesRows.length, poRows: poRows.length, doRows: doRows.length, matchedDoRows: res.matchedDoRows });
+      annotateLines(res.exceptions);
     } catch (e) {
       setError('Ralat semasa memproses: ' + e.message);
     }
@@ -989,7 +1068,7 @@ export default function ReconcileTab({ session, results, setResults }) {
                 <tr style={{ background:C.navy }}>
                   {['Status','Kod Item','Desc 2','Pembekal','Pelanggan','Agen',
                     'Tarikh PO','Tarikh Jualan','No PO','No Dok Jualan',
-                    'Qty PO','Qty Jualan','Beza','Gudang'].map(h => (
+                    'Qty PO','Qty Jualan','Beza','Gudang','Tindakan'].map(h => (
                     <th key={h} style={{ padding:'8px 9px', color:C.white, textAlign:'left',
                                          fontWeight:600, whiteSpace:'nowrap', fontSize:10 }}>{h}</th>
                   ))}
@@ -997,7 +1076,7 @@ export default function ReconcileTab({ session, results, setResults }) {
               </thead>
               <tbody>
                 {filteredExc.length === 0 ? (
-                  <tr><td colSpan={14} style={{ padding:32, textAlign:'center', color:C.muted }}>
+                  <tr><td colSpan={15} style={{ padding:32, textAlign:'center', color:C.muted }}>
                     Tiada rekod untuk paparan ini.
                   </td></tr>
                 ) : filteredExc.map(r => {
@@ -1071,6 +1150,48 @@ export default function ReconcileTab({ session, results, setResults }) {
                             </div>
                           )
                         )}
+                      </td>
+                      <td style={{ padding:'7px 9px' }} onClick={e => e.stopPropagation()}>
+                        {(() => {
+                          const k = lineKey(r);
+                          if (approvals.has(k)) return (
+                            <span title={`Diluluskan oleh ${approvals.get(k)}`}
+                              style={{ background:'#dcfce7', color:'#166534', padding:'2px 8px',
+                                       borderRadius:10, fontSize:10, fontWeight:800, whiteSpace:'nowrap' }}>
+                              LULUS ✓
+                            </span>
+                          );
+                          const qs = queryMarks.get(k);
+                          if (qs) {
+                            const cfgq = qs === 'open'     ? { bg:'#fee2e2', tx:'#991b1b', l:'⏳ MENUNGGU' }
+                                       : qs === 'answered' ? { bg:'#fef9c3', tx:'#854d0e', l:'💬 DIJAWAB' }
+                                       :                     { bg:'#e2e8f0', tx:'#334155', l:'✓ SELESAI' };
+                            return (
+                              <span style={{ background:cfgq.bg, color:cfgq.tx, padding:'2px 8px',
+                                             borderRadius:10, fontSize:10, fontWeight:800, whiteSpace:'nowrap' }}>
+                                {cfgq.l}
+                              </span>
+                            );
+                          }
+                          return (
+                            <div style={{ display:'flex', gap:4 }}>
+                              {r.agent ? (
+                                <button onClick={() => askAgent(r)}
+                                  style={{ background:'#dc2626', color:'#fff', border:'none', borderRadius:6,
+                                           padding:'4px 9px', fontSize:10, fontWeight:700, cursor:'pointer',
+                                           whiteSpace:'nowrap' }}>
+                                  🔔 Tanya
+                                </button>
+                              ) : null}
+                              <button onClick={() => approveLine(r)}
+                                style={{ background:'#16a34a', color:'#fff', border:'none', borderRadius:6,
+                                         padding:'4px 9px', fontSize:10, fontWeight:700, cursor:'pointer',
+                                         whiteSpace:'nowrap' }}>
+                                ✓ Lulus
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );

@@ -3291,11 +3291,15 @@ function AgentQueryPopup({ session }) {
             <b>No. Dok</b><span style={{ fontFamily:'monospace' }}>{cur.doc_no || '—'}</span>
             <b>Kod Item</b><span style={{ fontFamily:'monospace' }}>{cur.item_code || '—'}{cur.desc2 ? ` · ${cur.desc2}` : ''}</span>
             <b>Qty</b><span>{cur.qty ?? '—'}</span>
-            <b>Harga Jual</b><span style={{ fontWeight:800, color:'#dc2626' }}>
-              RM {Number(cur.actual_price || 0).toFixed(2)}
-              {cur.expected_price != null &&
-                <span style={{ color:'#64748b', fontWeight:400 }}> (jangkaan RM {Number(cur.expected_price).toFixed(2)})</span>}
-            </span>
+            {cur.actual_price != null && (
+              <>
+                <b>Harga Jual</b><span style={{ fontWeight:800, color:'#dc2626' }}>
+                  RM {Number(cur.actual_price).toFixed(2)}
+                  {cur.expected_price != null &&
+                    <span style={{ color:'#64748b', fontWeight:400 }}> (jangkaan RM {Number(cur.expected_price).toFixed(2)})</span>}
+                </span>
+              </>
+            )}
             <b>Status</b><span>{cur.status_flag || '—'}</span>
             <b>Daripada</b><span>{cur.asked_by || '—'}</span>
           </div>
@@ -3431,7 +3435,8 @@ function QueriesTab({ session }) {
               <span style={{ marginLeft:'auto', fontSize:11, color:C.muted }}>{fmtT(r.created_at)}</span>
             </div>
             <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>
-              Qty {r.qty ?? '—'} · Jual RM {Number(r.actual_price || 0).toFixed(2)}
+              Qty {r.qty ?? '—'}
+              {r.actual_price != null && <> · Jual RM {Number(r.actual_price).toFixed(2)}</>}
               {r.expected_price != null && <> · Jangkaan RM {Number(r.expected_price).toFixed(2)}</>}
               {' '}· Ditanya oleh {r.asked_by || '—'}
             </div>

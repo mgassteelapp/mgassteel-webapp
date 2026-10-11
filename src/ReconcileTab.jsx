@@ -620,6 +620,7 @@ export default function ReconcileTab({ session, results, setResults }) {
   const [filterStatus,setFilterStatus]= useState('ALL');
   const [search,      setSearch]      = useState('');
   const [expandedId,  setExpandedId]  = useState(null);
+  const [showApproved,setShowApproved]= useState(false);
 
   // Warehouse assignments saved in localStorage
   const WH_KEY = 'mgas_wh_reconcile';
@@ -757,8 +758,15 @@ export default function ReconcileTab({ session, results, setResults }) {
   const matchedDoList = results?.matchedDoRows || [];
   const stockList     = results?.stockNoSales || [];
 
-  const filteredExc = exc.filter(r => {
-    if (filterStatus !== 'ALL' && r.status !== filterStatus) return false;
+  // Approved lines are excluded from the normal exceptions view — the Lulus
+  // confirmation promises "tak akan tunjuk lagi dalam semakan akan datang",
+  // so they move under the "✓ Diluluskan" toggle instead of staying mixed in
+  // (same split as Daily Check's activeResults/approvedResults).
+  const activeExc   = exc.filter(r => !approvals.has(lineKey(r)));
+  const approvedExc = exc.filter(r =>  approvals.has(lineKey(r)));
+
+  const filteredExc = (showApproved ? approvedExc : activeExc).filter(r => {
+    if (!showApproved && filterStatus !== 'ALL' && r.status !== filterStatus) return false;
     if (search) {
       const s = search.toLowerCase();
       return (r.itemCode||'').toLowerCase().includes(s) ||
@@ -769,7 +777,7 @@ export default function ReconcileTab({ session, results, setResults }) {
     return true;
   });
 
-  const counts = exc.reduce((a, r) => { a[r.status] = (a[r.status]||0)+1; return a; }, {});
+  const counts = activeExc.reduce((a, r) => { a[r.status] = (a[r.status]||0)+1; return a; }, {});
 
   const FileInput = ({ label, file, setFile, required = false, accept = '.xlsx' }) => (
     <div style={{ flex: 1, minWidth: 200 }}>
@@ -1020,7 +1028,7 @@ export default function ReconcileTab({ session, results, setResults }) {
       {results && (
         <div style={{ display:'flex', gap:4, marginBottom:10 }}>
           {[
-            ['exceptions',  `⚠️ Pengecualian (${exc.length})`],
+            ['exceptions',  `⚠️ Pengecualian (${activeExc.length})`],
             ['matched',     `✅ Sepadan IV (${matchedList.length})`],
             ['matcheddo',   `🚚 Sepadan DO (${matchedDoList.length})`],
             ['stock',       `📦 Stok Gudang (${stockList.length})`],
@@ -1047,12 +1055,19 @@ export default function ReconcileTab({ session, results, setResults }) {
             <div style={{ fontSize:10, color:C.muted, fontStyle:'italic' }}>
               Isu diurutkan: ① Tiada Ref → ② Beza Qty → ③ Ref DO-
             </div>
+            <button onClick={() => setShowApproved(v => !v)}
+              style={{ padding:'5px 10px', border:'none', borderRadius:6,
+                       fontSize:11, fontWeight:700, cursor:'pointer',
+                       background: showApproved ? '#166534' : '#dcfce7',
+                       color:      showApproved ? '#fff'    : '#166534' }}>
+              {showApproved ? '← Balik ke Pengecualian' : `✓ Diluluskan (${approvedExc.length})`}
+            </button>
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Cari kod / pelanggan / no. PO..."
               style={{ marginLeft:'auto', padding:'6px 12px', borderRadius:8,
                        border:`1.5px solid ${C.border}`, fontSize:12,
                        minWidth:220, fontFamily:'inherit' }} />
-            {filterStatus !== 'ALL' && (
+            {!showApproved && filterStatus !== 'ALL' && (
               <button onClick={() => setFilterStatus('ALL')}
                 style={{ padding:'5px 10px', background:C.redLight, color:C.red,
                          border:'none', borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer' }}>

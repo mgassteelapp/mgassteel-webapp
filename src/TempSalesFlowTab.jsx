@@ -719,7 +719,7 @@ export default function TempSalesFlowTab({ session, prices }) {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12.5 }}>
               <thead><tr style={{ color:C.muted, textAlign:'left' }}>
-                <th style={{ padding:'6px 8px' }}>No. Aliran</th><th>Tarikh Mula</th><th>Pelanggan</th>
+                <th style={{ padding:'6px 8px' }}>No. Aliran</th><th>Tarikh Mula</th><th>Pelanggan</th><th>Pegawai</th>
                 <th style={{ textAlign:'right' }}>Jumlah</th><th>Peringkat</th><th>WMS</th><th>Status</th><th></th>
               </tr></thead>
               <tbody>
@@ -738,6 +738,9 @@ export default function TempSalesFlowTab({ session, prices }) {
                         {new Date(r.created_at).toLocaleDateString('en-MY', { timeZone:'Asia/Kuala_Lumpur', day:'2-digit', month:'short' })}
                       </td>
                       <td>{r.customer_name}</td>
+                      <td style={{ color:C.muted, whiteSpace:'nowrap' }}>
+                        {stampFor(r, r.stage).by || '—'}
+                      </td>
                       <td style={{ textAlign:'right', fontWeight:700 }}>{fmtRM(r.total)}</td>
                       <td>
                         <span style={{ background:scfg.bg, color:scfg.tx, borderRadius:6, padding:'3px 8px', fontSize:10.5, fontWeight:800 }}>

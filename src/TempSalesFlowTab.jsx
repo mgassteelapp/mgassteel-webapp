@@ -475,22 +475,21 @@ export default function TempSalesFlowTab({ session, prices }) {
     const printWin = openBlankPrintWindow(); // BEFORE any await — see note above
     setSaving(true);
     try {
-      const { data: no, error: e1 } = await supabase.rpc('next_temp_flow_no');
+      // One atomic RPC: reserves the flow number AND inserts the row in the
+      // same DB transaction, so an interrupted/failed save can't burn a
+      // number without ever using it (previously two separate round-trips —
+      // see create_temp_sales_flow_atomic migration, 2026-10-19).
+      const { data: ins, error: e1 } = await supabase.rpc('create_temp_sales_flow', {
+        p_customer_name: custName.trim(),
+        p_customer_code: custCode || null,
+        p_customer_phone: custPhone.trim() || null,
+        p_customer_address: custAddress.trim() || null,
+        p_items: lines,
+        p_total: Math.round(total * 100) / 100,
+        p_notes: notes.trim() || null,
+        p_created_by: session.name,
+      }).single();
       if (e1) throw e1;
-      const { data: ins, error: e2 } = await supabase.from('temp_sales_flow').insert({
-        flow_no: no,
-        stage: 'so',
-        customer_name: custName.trim(),
-        customer_code: custCode || null,
-        customer_phone: custPhone.trim() || null,
-        customer_address: custAddress.trim() || null,
-        items: lines,
-        total: Math.round(total * 100) / 100,
-        notes: notes.trim() || null,
-        created_by: session.name,
-        so_by: session.name,
-      }).select('*').single();
-      if (e2) throw e2;
       setSavedRow(ins); setSavedStage('so');
       resetForm();
       load();

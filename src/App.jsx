@@ -7,6 +7,7 @@ import KatalogTab from './KatalogTab';
 import QuotationTab from './QuotationTab';
 import TempInvoiceTab from './TempInvoiceTab';
 import TempSalesFlowTab from './TempSalesFlowTab';
+import WmsNoDocTab from './WmsNoDocTab';
 import PurchasingTab from './PurchasingTab';
 import PurchaseRequestsTab from './PurchaseRequestsTab';
 import StockRequestsTab from './StockRequestsTab';
@@ -220,7 +221,7 @@ const UNITS      = ["length","kg","meter","sheet","pc"];
 // where the old "Alat" group used to be.
 const NAV = [
   { type:"group", key:"harga_stok",     label:"Harga & Stok",    icon:"🔍", tabs:["assistant","prices","eastern_steel"] },
-  { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow"] },
+  { type:"group", key:"jualan",         label:"Jualan",          icon:"📝", tabs:["quote","temp_invoice","temp_sales_flow","wms_no_doc"] },
   { type:"group", key:"ai_smart_check", label:"AI Smart Check",  icon:"🤖", tabs:["daily","reconcile","purchasing","purchase_requests","stock_requests","unbilled","job_sheet"] },
   { type:"link",  key:"plate" },   // 🛠️ Service Center — standalone, no sub-group
   { type:"link",  key:"katalog" }, // 📖 Katalog & Kira Berat — standalone, no sub-group
@@ -724,6 +725,7 @@ export default function App() {
     ] : []),
     ...(hasPerm(session, "temp_sales_flow") ? [
       { key:"temp_sales_flow", label:"📝 SO/DO/INV Sementara" },
+      { key:"wms_no_doc", label:"📦 Pesanan WMS tanpa invois" },
     ] : []),
     ...(hasPerm(session, "prices") ? [
       { key:"prices", label:"💰 Senarai Harga" },
@@ -960,6 +962,7 @@ export default function App() {
             {tab==="quote" && <QuotationTab session={session} prices={prices} />}
             {tab==="temp_invoice" && hasPerm(session, "temp_invoice") && <TempInvoiceTab session={session} prices={prices} />}
             {tab==="temp_sales_flow" && hasPerm(session, "temp_sales_flow") && <TempSalesFlowTab session={session} prices={prices} />}
+            {tab==="wms_no_doc" && hasPerm(session, "temp_sales_flow") && <WmsNoDocTab session={session} onGoToFlow={() => setTab("temp_sales_flow")} />}
             {tab==="prices"    && (session.role==="owner"||session.role==="senior"||session.role==="manager") && <PricesTab prices={prices} setPrices={persistPrices} session={session} />}
             {tab==="eastern_steel" && session.role==="owner" && <EasternSteelTab session={session} />}
             {tab==="broadcast" && session.role==="owner" && <BroadcastTab session={session} />}

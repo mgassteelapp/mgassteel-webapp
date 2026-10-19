@@ -20,9 +20,10 @@
 // PDF: same as Invois Sementara — a print-formatted window, "Save as PDF"
 // in the browser's print dialog.
 // ════════════════════════════════════════════════════════════════════════════
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { supabase, invokeReconcile } from './supabase';
 import { C } from './theme';
+import { wmsCfg, wmsPicked, wmsLive, wmsWhen, normaliseSoNo, isValidSoNo } from './wms';
 
 const card = { background:C.white, borderRadius:12, border:`0.5px solid ${C.border}`,
                padding:'16px 18px', marginBottom:12 };
@@ -237,6 +238,129 @@ function clearDraft() {
   try { localStorage.removeItem(DRAFT_KEY); } catch {}
 }
 
+// ── The detail panel · mock panel 3 ────────────────────────────────────────
+//
+// Everything the Hub knows about an order's life in the WMS, plus the two SQL
+// numbers the office keys back once the server is up. Stacked, not tabular, so
+// it reads the same on a 390px phone as on a desktop.
+function WmsDetail({ row, live, picked, draft, onDraft, onSave, saving }) {
+  const wcfg = wmsCfg(row.wms_status);
+  const lbl  = { fontSize:10.5, fontWeight:800, color:C.muted, letterSpacing:0.3,
+                 textTransform:'uppercase', marginBottom:4 };
+  const box  = { background:C.white, border:`1px solid ${C.border}`, borderRadius:9,
+                 padding:'10px 12px', marginBottom:10 };
+  const draftOk = isValidSoNo(draft);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+
+      {/* ── Status dari WMS ────────────────────────────────────────────── */}
+      <div style={box}>
+        <div style={lbl}>Status dari WMS</div>
+        {wcfg ? (
+          <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', gap:8 }}>
+            <span style={{ background:wcfg.bg, color:wcfg.tx, borderRadius:6,
+                           padding:'4px 10px', fontSize:12, fontWeight:800 }}>
+              {wcfg.label}
+            </span>
+            {row.wms_ref && (
+              <span style={{ fontSize:12.5, fontWeight:800, color:C.navy }}>{row.wms_ref}</span>
+            )}
+            {row.wms_status_at && (
+              <span style={{ fontSize:11.5, color:C.muted }}>{wmsWhen(row.wms_status_at)}</span>
+            )}
+          </div>
+        ) : (
+          <div style={{ fontSize:12, color:C.muted }}>
+            Belum ada status dari WMS untuk pesanan ini.
+          </div>
+        )}
+        {/* The bridge's own sentence, shown verbatim. e.g. "Perlu invois
+            sementara sebelum agih trip", or "TMP-2610-048 → SO-1026-1541". */}
+        {row.wms_note && (
+          <div style={{ fontSize:11.5, color:C.muted, marginTop:7, lineHeight:1.55 }}>
+            {row.wms_note}
+          </div>
+        )}
+        {row.so_ref && (
+          <div style={{ fontSize:11.5, color:C.muted, marginTop:7 }}>
+            Untuk SO sedia ada dalam WMS: <b style={{ color:C.text }}>{row.so_ref}</b>
+          </div>
+        )}
+      </div>
+
+      {/* ── The picklist is a backup now ───────────────────────────────── */}
+      {live && (
+        <div style={{ background:C.blueBg, border:`1px solid #93c5fd`, color:C.blue,
+                      borderRadius:9, padding:'9px 12px', marginBottom:10,
+                      fontSize:11.5, fontWeight:700, lineHeight:1.55 }}>
+          Pesanan ini sedang dipetik di WMS. Guna picklist manual hanya jika WMS
+          tidak boleh dibuka.
+        </div>
+      )}
+      {picked && (
+        <div style={{ background:C.greenBg, border:`1px solid #86efac`, color:C.green,
+                      borderRadius:9, padding:'9px 12px', marginBottom:10,
+                      fontSize:11.5, fontWeight:700, lineHeight:1.55 }}>
+          Sudah dipetik di WMS — langkah picking manual tidak diperlukan. Boleh
+          terus ke DO / Invois.
+        </div>
+      )}
+
+      {/* ── The two SQL numbers, side by side ──────────────────────────── */}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
+        <div style={{ ...box, flex:'1 1 220px', marginBottom:0 }}>
+          <div style={lbl}>No. SO SQL sebenar</div>
+          {row.sql_so_no ? (
+            <div style={{ fontSize:14, fontWeight:900, color:C.navy, letterSpacing:0.5 }}>
+              {row.sql_so_no}
+            </div>
+          ) : (
+            <>
+              <div style={{ display:'flex', gap:6 }}>
+                <input value={draft} onChange={e => onDraft(e.target.value)}
+                  placeholder="SO-1026-1541 atau 10261541"
+                  aria-label="No. SO SQL sebenar"
+                  style={{ flex:1, minWidth:0, padding:'8px 10px', borderRadius:8,
+                           border:`1.5px solid ${draft.trim() && !draftOk ? C.red : C.border}`,
+                           fontSize:13, fontFamily:'inherit', boxSizing:'border-box' }} />
+                <button onClick={onSave} disabled={!draftOk || saving}
+                  style={{ padding:'8px 14px', borderRadius:8, border:'none',
+                           background: draftOk ? C.navy : C.border, color:C.white,
+                           fontSize:12.5, fontWeight:700,
+                           cursor: draftOk && !saving ? 'pointer' : 'not-allowed' }}>
+                  {saving ? '…' : 'Simpan'}
+                </button>
+              </div>
+              <div style={{ fontSize:10.5, marginTop:5, lineHeight:1.5,
+                            color: draft.trim() && !draftOk ? C.red : C.muted,
+                            fontWeight: draft.trim() && !draftOk ? 700 : 500 }}>
+                {draft.trim() && !draftOk
+                  ? 'Format salah — cth SO-1026-1541 atau 10261541.'
+                  : 'WMS akan tukar pesanan TMP kepada nombor ini. Tiada pesanan berganda.'}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div style={{ ...box, flex:'1 1 220px', marginBottom:0 }}>
+          <div style={lbl}>No. invois SQL sebenar</div>
+          {row.sql_invoice_no ? (
+            <div style={{ fontSize:14, fontWeight:900, color:C.navy, letterSpacing:0.5 }}>
+              {row.sql_invoice_no}
+            </div>
+          ) : (
+            <div style={{ fontSize:11.5, color:C.muted, lineHeight:1.5 }}>
+              Belum dikunci. Dimasukkan melalui butang <b>✓ Dikeluarkan Semula</b> pada
+              peringkat Invois.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 export default function TempSalesFlowTab({ session, prices }) {
   const isManager = ['owner','senior','manager'].includes(session?.role);
@@ -263,6 +387,13 @@ export default function TempSalesFlowTab({ session, prices }) {
   const [reissueStep, setReissueStep] = useState('input'); // 'input' | 'confirm'
   const [reissueSaving, setReissueSaving] = useState(false);
 
+  // The expanded row IS the detail page. This tab has never had a second
+  // screen and adding routing for one would be a bigger change than the brief
+  // asks for; the WMS block, the notes and the SQL numbers all live in a panel
+  // under the row instead.
+  const [openId,  setOpenId]  = useState(null);
+  const [soNoDraft, setSoNoDraft] = useState({});   // id -> typed value
+  const [soNoSaving, setSoNoSaving] = useState(null);
   const [rows,    setRows]    = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -372,8 +503,15 @@ export default function TempSalesFlowTab({ session, prices }) {
   };
 
   // Advance a flow to its next stage and print that stage's document.
-  const advance = async (row) => {
-    const next = STAGE_CFG[row.stage]?.next;
+  //
+  // `to` overrides the normal next stage so an order already picked in the WMS
+  // can go straight from SO to DO. Wylee 2026-10-19: "The temporary DO /
+  // invoice steps no longer require the manual picking step to be done first
+  // when wms_status is dipetik or later. The WMS picking counts as picked."
+  // picking_by / picking_at stay NULL in that case, which is the honest record:
+  // nobody picked it here, the WMS did, and wms_ref says which order.
+  const advance = async (row, to) => {
+    const next = to || STAGE_CFG[row.stage]?.next;
     if (!next) return;
     const printWin = openBlankPrintWindow(); // BEFORE any await — see note above
     const patch = { stage: next, [`${next}_by`]: session.name, [`${next}_at`]: new Date().toISOString() };
@@ -405,7 +543,26 @@ export default function TempSalesFlowTab({ session, prices }) {
     cancelReissue();
   };
 
+  // ── The real SQL SO number, keyed by the office once SQL is back ────────
+  // Saved on its own, NOT folded into the reissue modal: reissue locks the
+  // record permanently, and the SO number arrives at a different moment from
+  // the invoice number — often before it. The WMS then turns the TMP order
+  // into that SO instead of creating a duplicate.
+  const saveSoNo = async (row) => {
+    const raw = soNoDraft[row.id] ?? '';
+    const no = normaliseSoNo(raw);
+    if (!no) return;
+    setSoNoSaving(row.id);
+    const { error: e } = await supabase.from('temp_sales_flow')
+      .update({ sql_so_no: no }).eq('id', row.id);
+    setSoNoSaving(null);
+    if (e) { alert('Gagal simpan No. SO SQL: ' + e.message); return; }
+    setRows(rs => rs.map(r => r.id === row.id ? { ...r, sql_so_no: no } : r));
+    setSoNoDraft(d => ({ ...d, [row.id]: '' }));
+  };
+
   const filteredRows = rows.filter(r => stageFilter === 'ALL' || r.stage === stageFilter);
+  const openRow = rows.find(r => r.id === openId) || null;
   const pendingCount = rows.filter(r => r.status === 'pending').length;
 
   const inp = { padding:'9px 12px', borderRadius:8, border:`1.5px solid ${C.border}`,
@@ -558,18 +715,24 @@ export default function TempSalesFlowTab({ session, prices }) {
           : loadError ? <div style={{ color:C.red, fontSize:12.5 }}>Gagal memuatkan senarai.</div>
           : filteredRows.length === 0 ? <div style={{ color:C.muted, fontSize:12.5 }}>Tiada rekod.</div>
           : (
+          <>
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12.5 }}>
               <thead><tr style={{ color:C.muted, textAlign:'left' }}>
                 <th style={{ padding:'6px 8px' }}>No. Aliran</th><th>Tarikh Mula</th><th>Pelanggan</th>
-                <th style={{ textAlign:'right' }}>Jumlah</th><th>Peringkat</th><th>Status</th><th></th>
+                <th style={{ textAlign:'right' }}>Jumlah</th><th>Peringkat</th><th>WMS</th><th>Status</th><th></th>
               </tr></thead>
               <tbody>
                 {filteredRows.map(r => {
                   const scfg = STAGE_CFG[r.stage] || STAGE_CFG.so;
                   const stcfg = STATUS_CFG[r.status] || STATUS_CFG.pending;
+                  const wcfg  = wmsCfg(r.wms_status);
+                  const live  = wmsLive(r);
+                  const picked = wmsPicked(r);
+                  const open  = openId === r.id;
                   return (
-                    <tr key={r.id} style={{ borderTop:`1px solid ${C.border}` }}>
+                    <Fragment key={r.id}>
+                    <tr style={{ borderTop:`1px solid ${C.border}` }}>
                       <td style={{ padding:'8px', fontWeight:700 }}>{r.flow_no}</td>
                       <td style={{ color:C.muted, whiteSpace:'nowrap' }}>
                         {new Date(r.created_at).toLocaleDateString('en-MY', { timeZone:'Asia/Kuala_Lumpur', day:'2-digit', month:'short' })}
@@ -580,6 +743,29 @@ export default function TempSalesFlowTab({ session, prices }) {
                         <span style={{ background:scfg.bg, color:scfg.tx, borderRadius:6, padding:'3px 8px', fontSize:10.5, fontWeight:800 }}>
                           {scfg.label}
                         </span>
+                      </td>
+                      <td style={{ minWidth:120 }}>
+                        {wcfg ? (
+                          <>
+                            <span style={{ background:wcfg.bg, color:wcfg.tx, borderRadius:6,
+                                           padding:'3px 8px', fontSize:10.5, fontWeight:800,
+                                           display:'inline-block', whiteSpace:'nowrap' }}>
+                              {wcfg.label}
+                            </span>
+                            {r.wms_ref && (
+                              <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:700 }}>
+                                {r.wms_ref}
+                              </div>
+                            )}
+                            {r.wms_status_at && (
+                              <div style={{ fontSize:9.5, color:C.muted, marginTop:1 }}>
+                                {wmsWhen(r.wms_status_at)}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span style={{ fontSize:10.5, color:C.muted }}>—</span>
+                        )}
                       </td>
                       <td>
                         <span style={{ background:stcfg.bg, color:stcfg.tx, borderRadius:6, padding:'3px 8px', fontSize:10.5, fontWeight:800 }}>
@@ -598,12 +784,37 @@ export default function TempSalesFlowTab({ session, prices }) {
                           🖨️ Cetak{r.stage === 'invoice' ? '' : ` ${scfg.short}`}
                         </button>
                         {scfg.next && r.status === 'pending' && (r.created_by === session.name || isManager) && (
+                          /* THE PICKLIST STEP IS NOW A BACKUP, not the path.
+                             When the order is live in the WMS it is outlined
+                             (secondary) rather than filled — but still enabled,
+                             because the WMS can be unreachable and the paper
+                             picklist is what staff fall back to. */
                           <button onClick={() => advance(r)}
-                            style={{ padding:'4px 9px', background:C.blueBg, color:C.blue, border:'none',
-                                     borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', marginRight:6 }}>
+                            style={ r.stage === 'so' && live
+                              ? { padding:'4px 9px', background:'none', color:C.muted,
+                                  border:`1px solid ${C.border}`, borderRadius:6, fontSize:11,
+                                  fontWeight:600, cursor:'pointer', marginRight:6 }
+                              : { padding:'4px 9px', background:C.blueBg, color:C.blue, border:'none',
+                                  borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', marginRight:6 } }>
                             {scfg.nextLabel}
                           </button>
                         )}
+                        {/* PICKED IN THE WMS => the manual picking step is not
+                            required. Straight to DO, printing the DO. */}
+                        {r.stage === 'so' && picked && r.status === 'pending'
+                          && (r.created_by === session.name || isManager) && (
+                          <button onClick={() => advance(r, 'do')}
+                            style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',
+                                     borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', marginRight:6 }}>
+                            → Terus ke DO (dipetik di WMS)
+                          </button>
+                        )}
+                        <button onClick={() => setOpenId(open ? null : r.id)}
+                          style={{ padding:'4px 9px', background:'none', color:C.muted,
+                                   border:`1px solid ${C.border}`, borderRadius:6, fontSize:11,
+                                   fontWeight:600, cursor:'pointer', marginRight:6 }}>
+                          {open ? 'Tutup' : 'Butiran'}
+                        </button>
                         {isManager && r.stage === 'invoice' && r.status === 'pending' && (
                           <button onClick={() => startReissue(r)}
                             style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',
@@ -613,11 +824,43 @@ export default function TempSalesFlowTab({ session, prices }) {
                         )}
                       </td>
                     </tr>
+                    </Fragment>
                   );
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+            {/* THE DETAIL PANEL SITS OUTSIDE THE SCROLLING TABLE.
+                Inside it, a phone clipped the text: a <td> inherits the TABLE's
+                width, not the screen's, so the panel ran off the right edge at
+                390px and no viewport-minus-a-number guess survives the real
+                app's chrome. Out here it is bounded by the card and wraps on its
+                own. The flow number is repeated in the panel so it stays tied to
+                the row that opened it. */}
+            {openRow && (
+              <div style={{ marginTop:12, paddingTop:12, borderTop:`2px solid ${C.border}` }}>
+                <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center',
+                              justifyContent:'space-between', gap:8, marginBottom:10 }}>
+                  <div style={{ fontWeight:800, fontSize:13.5, color:C.navy }}>
+                    Butiran {openRow.flow_no} — {openRow.customer_name}
+                  </div>
+                  <button onClick={() => setOpenId(null)}
+                    style={{ padding:'4px 10px', background:'none', color:C.muted,
+                             border:`1px solid ${C.border}`, borderRadius:6,
+                             fontSize:11, fontWeight:600, cursor:'pointer' }}>
+                    Tutup
+                  </button>
+                </div>
+                <WmsDetail
+                  row={openRow} live={wmsLive(openRow)} picked={wmsPicked(openRow)}
+                  draft={soNoDraft[openRow.id] ?? ''}
+                  onDraft={v => setSoNoDraft(d => ({ ...d, [openRow.id]: v }))}
+                  onSave={() => saveSoNo(openRow)}
+                  saving={soNoSaving === openRow.id}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -20,7 +20,7 @@
 // PDF: same as Invois Sementara — a print-formatted window, "Save as PDF"
 // in the browser's print dialog.
 // ════════════════════════════════════════════════════════════════════════════
-import { useState, useEffect, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import { supabase, invokeReconcile } from './supabase';
 import { C } from './theme';
 import { wmsCfg, wmsPicked, wmsLive, wmsWhen, normaliseSoNo, isValidSoNo } from './wms';
@@ -430,6 +430,18 @@ export default function TempSalesFlowTab({ session, prices }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [stageFilter, setStageFilter] = useState('ALL');
+
+  // The panel always renders after the whole table (see the comment by
+  // openRow below), so on a long list "Butiran" on an early row opens a
+  // panel that's off-screen below the fold — staff were scrolling down
+  // every time just to see what they'd opened. Scroll it into view as
+  // soon as it appears instead of making them hunt for it.
+  const detailRef = useRef(null);
+  useEffect(() => {
+    if (openId != null && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  }, [openId]);
 
   const priceList = useMemo(() => (prices || []).filter(p => p.itemCode), [prices]);
   const matches = useMemo(() => {
@@ -872,7 +884,7 @@ export default function TempSalesFlowTab({ session, prices }) {
                 own. The flow number is repeated in the panel so it stays tied to
                 the row that opened it. */}
             {openRow && (
-              <div style={{ marginTop:12, paddingTop:12, borderTop:`2px solid ${C.border}` }}>
+              <div ref={detailRef} style={{ marginTop:12, paddingTop:12, borderTop:`2px solid ${C.border}` }}>
                 <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center',
                               justifyContent:'space-between', gap:8, marginBottom:10 }}>
                   <div style={{ fontWeight:800, fontSize:13.5, color:C.navy }}>

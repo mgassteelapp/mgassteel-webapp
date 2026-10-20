@@ -251,8 +251,40 @@ function WmsDetail({ row, live, picked, draft, onDraft, onSave, saving }) {
                  padding:'10px 12px', marginBottom:10 };
   const draftOk = isValidSoNo(draft);
 
+  const items = row.items || [];
+
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+
+      {/* ── Senarai barang — what's actually in this flow, shown first ──── */}
+      <div style={box}>
+        <div style={lbl}>Senarai Barang ({items.length})</div>
+        {items.length ? (
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead><tr style={{ color:C.muted, textAlign:'left' }}>
+                <th style={{ padding:'4px 6px 6px' }}>Kod</th><th style={{ padding:'4px 6px 6px' }}>Nama</th>
+                <th style={{ textAlign:'right', padding:'4px 6px 6px' }}>Kuantiti</th>
+                <th style={{ textAlign:'right', padding:'4px 6px 6px' }}>Harga Seunit</th>
+                <th style={{ textAlign:'right', padding:'4px 6px 6px' }}>Jumlah</th>
+              </tr></thead>
+              <tbody>
+                {items.map((it, i) => (
+                  <tr key={i} style={{ borderTop:`1px solid ${C.border}` }}>
+                    <td style={{ padding:'5px 6px', color:C.muted, whiteSpace:'nowrap' }}>{it.code || '—'}</td>
+                    <td style={{ padding:'5px 6px' }}>{it.name}{it.desc2 ? ' — ' + it.desc2 : ''}</td>
+                    <td style={{ textAlign:'right', padding:'5px 6px', whiteSpace:'nowrap' }}>{it.qty}</td>
+                    <td style={{ textAlign:'right', padding:'5px 6px', whiteSpace:'nowrap' }}>{fmt(it.unitPrice)}</td>
+                    <td style={{ textAlign:'right', padding:'5px 6px', fontWeight:700, whiteSpace:'nowrap' }}>{fmt(it.lineTotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ fontSize:12, color:C.muted }}>Tiada barang direkodkan.</div>
+        )}
+      </div>
 
       {/* ── Status dari WMS ────────────────────────────────────────────── */}
       <div style={box}>

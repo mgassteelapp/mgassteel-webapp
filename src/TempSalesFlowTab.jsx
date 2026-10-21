@@ -822,13 +822,14 @@ export default function TempSalesFlowTab({ session, prices }) {
                             SQL: {r.sql_invoice_no}
                           </div>
                         )}
-                        {/* Catatan wasn't shown anywhere outside the printed
-                            document — same gap as Cash Sales Sementara had.
-                            Wrapped, not truncated, from the start this time. */}
-                        {r.notes && (
-                          <div style={{ fontSize:10, color:C.amber, marginTop:3, fontWeight:600,
-                                     maxWidth:260, whiteSpace:'normal', lineHeight:1.4 }}>
-                            📝 {r.notes}
+                        {/* The matching real SQL SO number was previously only
+                            visible after opening Butiran — staff scanning the
+                            list for which flows still need re-entry had no way
+                            to see it without a click per row. Same spot/style
+                            as the SQL invoice number above it. */}
+                        {r.sql_so_no && (
+                          <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:700 }}>
+                            SO: {r.sql_so_no}
                           </div>
                         )}
                       </td>

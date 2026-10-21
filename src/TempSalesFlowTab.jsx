@@ -822,6 +822,15 @@ export default function TempSalesFlowTab({ session, prices }) {
                             SQL: {r.sql_invoice_no}
                           </div>
                         )}
+                        {/* Catatan wasn't shown anywhere outside the printed
+                            document — same gap as Cash Sales Sementara had.
+                            Wrapped, not truncated, from the start this time. */}
+                        {r.notes && (
+                          <div style={{ fontSize:10, color:C.amber, marginTop:3, fontWeight:600,
+                                     maxWidth:260, whiteSpace:'normal', lineHeight:1.4 }}>
+                            📝 {r.notes}
+                          </div>
+                        )}
                       </td>
                       <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
                         <button onClick={() => openFlowPrint(r, r.stage)}

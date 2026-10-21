@@ -39,6 +39,7 @@ const STAGE_CFG = {
 const STATUS_CFG = {
   pending:  { bg:C.amberBg, tx:C.amber, label:'BELUM DIKELUARKAN SEMULA' },
   reissued: { bg:C.greenBg, tx:C.green, label:'INVOIS DIREKOD ✓' },
+  batal:    { bg:C.redBg,   tx:C.red,   label:'DIBATALKAN' },
 };
 
 function tierPrice(p, qty) {
@@ -419,6 +420,17 @@ export default function TempSalesFlowTab({ session, prices }) {
   const [reissueStep, setReissueStep] = useState('input'); // 'input' | 'confirm'
   const [reissueSaving, setReissueSaving] = useState(false);
 
+  // Batalkan — void a wrongly-raised flow. 2026-10-21: the one fix path left
+  // after the Perubahan (edit) feature was reverted, now that hub_ingest is
+  // confirmed to honour a Hub-side status of 'batal' by cancelling the
+  // matching picking_lists row in the WMS, as long as nothing physical has
+  // started yet (pick_started_at/trip_id/delivered_at all null). If picking
+  // already started it leaves a note instead of silently failing — surfaced
+  // below via wms_note, same spot the WMS note already shows elsewhere.
+  const [cancelRow,    setCancelRow]    = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelSaving, setCancelSaving] = useState(false);
+
   // The expanded row IS the detail page. This tab has never had a second
   // screen and adding routing for one would be a bigger change than the brief
   // asks for; the WMS block, the notes and the SQL numbers all live in a panel
@@ -584,6 +596,31 @@ export default function TempSalesFlowTab({ session, prices }) {
       ? { ...r, status: 'reissued', sql_invoice_no: csNo, status_updated_by: session.name }
       : r));
     cancelReissue();
+  };
+
+  // ── Batalkan — void the flow. See the state comment above for why this is
+  // now the one fix path instead of editing. Hub-side only: setting status to
+  // 'batal' is all it takes — hub_ingest (WMS project) picks it up within a
+  // minute and cancels the matching order there if nothing's been picked yet.
+  const startCancel = (row) => { setCancelRow(row); setCancelReason(''); };
+  const closeCancel = () => { setCancelRow(null); setCancelReason(''); };
+  const confirmCancel = async () => {
+    if (!cancelRow) return;
+    setCancelSaving(true);
+    const reasonNote = cancelReason.trim() ? `Dibatalkan: ${cancelReason.trim()}` : null;
+    const newNotes = reasonNote
+      ? (cancelRow.notes ? `${cancelRow.notes} | ${reasonNote}` : reasonNote)
+      : cancelRow.notes;
+    const { error: e } = await supabase.from('temp_sales_flow').update({
+      status: 'batal', notes: newNotes,
+      status_updated_at: new Date().toISOString(), status_updated_by: session.name,
+    }).eq('id', cancelRow.id);
+    setCancelSaving(false);
+    if (e) { alert('Gagal batalkan: ' + e.message); return; }
+    setRows(rs => rs.map(r => r.id === cancelRow.id
+      ? { ...r, status: 'batal', notes: newNotes, status_updated_by: session.name }
+      : r));
+    closeCancel();
   };
 
   // ── The real SQL SO number, keyed by the office once SQL is back ────────
@@ -832,6 +869,27 @@ export default function TempSalesFlowTab({ session, prices }) {
                             SO: {r.sql_so_no}
                           </div>
                         )}
+                        {/* Batalkan is Hub-only the instant it's clicked — the WMS
+                            side only catches up once hub_ingest runs (~1 min) and
+                            hub_feedback reports back. Say exactly which of the
+                            three states this row is actually in, not just "batal
+                            di Hub" as if that settles it. */}
+                        {r.status === 'batal' && (
+                          r.wms_status === 'batal' ? (
+                            <div style={{ fontSize:10, color:C.green, marginTop:3, fontWeight:700 }}>
+                              ✓ disahkan dibatalkan di WMS
+                            </div>
+                          ) : r.wms_note ? (
+                            <div style={{ fontSize:10, color:C.red, marginTop:3, fontWeight:600,
+                                          maxWidth:200, whiteSpace:'normal', lineHeight:1.4 }}>
+                              ⚠ {r.wms_note}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:600 }}>
+                              ⏳ menunggu pengesahan WMS…
+                            </div>
+                          )
+                        )}
                       </td>
                       <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
                         <button onClick={() => openFlowPrint(r, r.stage)}
@@ -876,6 +934,14 @@ export default function TempSalesFlowTab({ session, prices }) {
                             style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',
                                      borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>
                             ✓ Dikeluarkan Semula
+                          </button>
+                        )}
+                        {r.status === 'pending' && (r.created_by === session.name || isManager) && (
+                          <button onClick={() => startCancel(r)}
+                            style={{ padding:'4px 9px', background:'none', color:C.red,
+                                     border:`1px solid ${C.red}`, borderRadius:6, fontSize:11,
+                                     fontWeight:700, cursor:'pointer', marginLeft:6 }}>
+                            ✕ Batalkan
                           </button>
                         )}
                       </td>
@@ -997,6 +1063,46 @@ export default function TempSalesFlowTab({ session, prices }) {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Batalkan confirmation — voids in the Hub, and in the WMS too if ── */}
+      {/* nothing's been picked there yet (see confirmCancel's comment).      */}
+      {cancelRow && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(15,39,68,0.55)', zIndex:100,
+                       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+          <div style={{ background:C.white, borderRadius:14, padding:'22px 24px', width:420, maxWidth:'100%',
+                        boxShadow:'0 12px 40px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontWeight:800, fontSize:15, color:C.navy, marginBottom:4 }}>
+              Batalkan Pesanan Ini?
+            </div>
+            <div style={{ fontSize:12, color:C.muted, marginBottom:14 }}>
+              {cancelRow.flow_no} — {cancelRow.customer_name}
+            </div>
+            <div style={{ background:C.amberBg, border:`1px solid #eab308`, color:C.amber, borderRadius:8,
+                          padding:'8px 12px', fontSize:11.5, fontWeight:600, lineHeight:1.6, marginBottom:12 }}>
+              ⚠ Jika pesanan ini belum mula dipetik di WMS, ia akan dibatalkan di WMS juga secara
+              automatik (dalam masa seminit). Jika sudah mula dipetik, WMS TIDAK akan dibatalkan —
+              status di sini akan tunjuk sebabnya, dan anda perlu hubungi logistik terus.
+            </div>
+            <textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)} rows={2}
+              placeholder="Sebab dibatalkan (pilihan)"
+              style={{ width:'100%', boxSizing:'border-box', padding:'9px 12px', borderRadius:8,
+                       border:`1.5px solid ${C.border}`, fontSize:13, fontFamily:'inherit',
+                       resize:'vertical', marginBottom:14 }} />
+            <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
+              <button onClick={closeCancel} disabled={cancelSaving}
+                style={{ padding:'9px 16px', background:'none', color:C.muted, border:`1px solid ${C.border}`,
+                         borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                Tutup
+              </button>
+              <button onClick={confirmCancel} disabled={cancelSaving}
+                style={{ padding:'9px 18px', background:C.red, color:C.white, border:'none',
+                         borderRadius:8, fontWeight:700, fontSize:13, cursor: cancelSaving ? 'not-allowed' : 'pointer' }}>
+                {cancelSaving ? 'Menyimpan…' : '✕ Ya, Batalkan'}
+              </button>
+            </div>
           </div>
         </div>
       )}

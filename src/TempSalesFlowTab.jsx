@@ -871,25 +871,30 @@ export default function TempSalesFlowTab({ session, prices }) {
                         )}
                         {/* Batalkan is Hub-only the instant it's clicked — the WMS
                             side only catches up once hub_ingest runs (~1 min) and
-                            hub_feedback reports back. Say exactly which of the
-                            three states this row is actually in, not just "batal
-                            di Hub" as if that settles it. */}
-                        {r.status === 'batal' && (
-                          r.wms_status === 'batal' ? (
-                            <div style={{ fontSize:10, color:C.green, marginTop:3, fontWeight:700 }}>
-                              ✓ disahkan dibatalkan di WMS
-                            </div>
-                          ) : r.wms_note ? (
-                            <div style={{ fontSize:10, color:C.red, marginTop:3, fontWeight:600,
-                                          maxWidth:200, whiteSpace:'normal', lineHeight:1.4 }}>
-                              ⚠ {r.wms_note}
-                            </div>
-                          ) : (
-                            <div style={{ fontSize:10, color:C.muted, marginTop:3, fontWeight:600 }}>
-                              ⏳ menunggu pengesahan WMS…
-                            </div>
-                          )
-                        )}
+                            hub_feedback reports back. Read from wms_status, NOT
+                            wms_note: a too-late cancel is never written to
+                            hub_flows.outcome_note (hub_ingest only returns it in
+                            its run summary), so wms_note would either stay empty
+                            — "waiting" forever — or carry an unrelated note such
+                            as "Perlu invois sementara". hub_ingest refuses to
+                            cancel once picking, a trip or delivery has started,
+                            which is exactly wms_status rank >= sedang_dipetik. */}
+                        {r.status === 'batal' && (() => {
+                          const note = (color, text, weight = 600) => (
+                            <div style={{ fontSize:10, color, marginTop:3, fontWeight:weight,
+                                          maxWidth:200, whiteSpace:'normal', lineHeight:1.4 }}>{text}</div>
+                          );
+                          const rank = wmsCfg(r.wms_status)?.rank ?? -1;
+                          if (r.wms_status === 'batal') return note(C.green, '✓ disahkan dibatalkan di WMS', 700);
+                          // so_ref = a real SQL SO already in the WMS; hub_ingest
+                          // never cancels those from the Hub (Case B skips it).
+                          if (r.so_ref) return note(C.red, `⚠ ${r.so_ref} ialah SO sebenar — tidak dibatalkan di WMS. Hubungi logistik.`);
+                          if (r.wms_status === 'manual' || r.wms_status === 'tiada_dalam_wms')
+                            return note(C.muted, 'Tiada dalam WMS — tiada tindakan di WMS diperlukan.');
+                          if (rank >= wmsCfg('sedang_dipetik').rank)
+                            return note(C.red, `⚠ Sudah ${wmsCfg(r.wms_status).label.replace(' ✓', '').toLowerCase()} di WMS — TIDAK dibatalkan di sana. Hubungi logistik.`);
+                          return note(C.muted, '⏳ menunggu pengesahan WMS…');
+                        })()}
                       </td>
                       <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
                         <button onClick={() => openFlowPrint(r, r.stage)}

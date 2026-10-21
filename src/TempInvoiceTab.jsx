@@ -588,6 +588,19 @@ export default function TempInvoiceTab({ session, prices }) {
                             SQL: {r.sql_cash_sales_no}
                           </div>
                         )}
+                        {/* Catatan previously only surfaced on Edit or on the printed
+                            slip -- a staff member had no way to see it without opening
+                            one of those. A short note (eg. a manual SQL cross-check)
+                            now shows right under the status pill, same spot as the
+                            SQL number above. */}
+                        {r.notes && (
+                          <div title={r.notes}
+                            style={{ fontSize:10, color:C.amber, marginTop:3, fontWeight:600,
+                                     maxWidth:220, overflow:'hidden', textOverflow:'ellipsis',
+                                     whiteSpace:'nowrap' }}>
+                            📝 {r.notes}
+                          </div>
+                        )}
                       </td>
                       <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
                         <button onClick={() => openInvoicePrint(r)}

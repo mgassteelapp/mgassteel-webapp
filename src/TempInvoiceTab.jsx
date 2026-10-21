@@ -593,11 +593,14 @@ export default function TempInvoiceTab({ session, prices }) {
                             one of those. A short note (eg. a manual SQL cross-check)
                             now shows right under the status pill, same spot as the
                             SQL number above. */}
+                        {/* Full text, wrapped -- an earlier version truncated this to
+                            one line with an ellipsis and relied on a hover tooltip to
+                            show the rest, which doesn't work on a touch screen and
+                            wasn't discoverable even with a mouse. Wrapping it is worth
+                            the extra row height. */}
                         {r.notes && (
-                          <div title={r.notes}
-                            style={{ fontSize:10, color:C.amber, marginTop:3, fontWeight:600,
-                                     maxWidth:220, overflow:'hidden', textOverflow:'ellipsis',
-                                     whiteSpace:'nowrap' }}>
+                          <div style={{ fontSize:10, color:C.amber, marginTop:3, fontWeight:600,
+                                     maxWidth:260, whiteSpace:'normal', lineHeight:1.4 }}>
                             📝 {r.notes}
                           </div>
                         )}

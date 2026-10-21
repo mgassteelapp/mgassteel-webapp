@@ -896,10 +896,16 @@ export default function TempSalesFlowTab({ session, prices }) {
                           return note(C.muted, '⏳ menunggu pengesahan WMS…');
                         })()}
                       </td>
-                      <td style={{ textAlign:'right', whiteSpace:'nowrap' }}>
+                      <td style={{ textAlign:'right' }}>
+                        {/* Batalkan pushed this past what one nowrap line fits —
+                            forcing the whole table into horizontal scroll just to
+                            reach the last button. Wrap the group instead of the
+                            table: a flex row that drops to a second line inside
+                            the same cell, so the page stays full-width. */}
+                        <div style={{ display:'flex', flexWrap:'wrap', justifyContent:'flex-end', gap:6 }}>
                         <button onClick={() => openFlowPrint(r, r.stage)}
                           style={{ padding:'4px 9px', background:C.gray, color:C.text, border:`1px solid ${C.border}`,
-                                   borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', marginRight:6 }}>
+                                   borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer' }}>
                           🖨️ Cetak{r.stage === 'invoice' ? '' : ` ${scfg.short}`}
                         </button>
                         {scfg.next && r.status === 'pending' && (r.created_by === session.name || isManager) && (
@@ -912,9 +918,9 @@ export default function TempSalesFlowTab({ session, prices }) {
                             style={ r.stage === 'so' && live
                               ? { padding:'4px 9px', background:'none', color:C.muted,
                                   border:`1px solid ${C.border}`, borderRadius:6, fontSize:11,
-                                  fontWeight:600, cursor:'pointer', marginRight:6 }
+                                  fontWeight:600, cursor:'pointer' }
                               : { padding:'4px 9px', background:C.blueBg, color:C.blue, border:'none',
-                                  borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', marginRight:6 } }>
+                                  borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' } }>
                             {scfg.nextLabel}
                           </button>
                         )}
@@ -924,14 +930,14 @@ export default function TempSalesFlowTab({ session, prices }) {
                           && (r.created_by === session.name || isManager) && (
                           <button onClick={() => advance(r, 'do')}
                             style={{ padding:'4px 9px', background:C.greenBg, color:C.green, border:'none',
-                                     borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer', marginRight:6 }}>
+                                     borderRadius:6, fontSize:11, fontWeight:700, cursor:'pointer' }}>
                             → Terus ke DO (dipetik di WMS)
                           </button>
                         )}
                         <button onClick={() => setOpenId(open ? null : r.id)}
                           style={{ padding:'4px 9px', background:'none', color:C.muted,
                                    border:`1px solid ${C.border}`, borderRadius:6, fontSize:11,
-                                   fontWeight:600, cursor:'pointer', marginRight:6 }}>
+                                   fontWeight:600, cursor:'pointer' }}>
                           {open ? 'Tutup' : 'Butiran'}
                         </button>
                         {isManager && r.stage === 'invoice' && r.status === 'pending' && (
@@ -945,10 +951,11 @@ export default function TempSalesFlowTab({ session, prices }) {
                           <button onClick={() => startCancel(r)}
                             style={{ padding:'4px 9px', background:'none', color:C.red,
                                      border:`1px solid ${C.red}`, borderRadius:6, fontSize:11,
-                                     fontWeight:700, cursor:'pointer', marginLeft:6 }}>
+                                     fontWeight:700, cursor:'pointer' }}>
                             ✕ Batalkan
                           </button>
                         )}
+                        </div>
                       </td>
                     </tr>
                     </Fragment>
